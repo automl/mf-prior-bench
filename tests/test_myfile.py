@@ -1,6 +1,6 @@
 import pytest
 
-from <<package-name>>.myfile import MyClass
+from mfp_bench.myfile import MyClass
 
 
 def test_oreos():

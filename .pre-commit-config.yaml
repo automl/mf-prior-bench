@@ -1,0 +1,38 @@
+# If you see me, please update my `rev` field using the provided links
+# Click the repo and update to latest tags.
+# If things break on update, raise an issue
+repos:
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        name: isort imports mfp_bench
+        files: mfp_bench
+
+      - id: isort
+        name: isort imports tests
+        files: tests
+
+  - repo: https://github.com/ambv/black
+    rev: 22.1.0
+    hooks:
+      - id: black
+        name: black formatter mfp_bench
+        files: mfp_bench
+
+      - id: black
+        name: black formatter tests
+        files: tests
+
+      - id: black
+        name: black formatter examples
+        files: examples
+
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.1.1
+    hooks:
+      - id: pydocstyle
+        files: mfp_bench
+        additional_dependencies: ["toml"] # Needed to parse pyproject.toml
+
+  
