@@ -1,0 +1,29 @@
+mfp\_bench.myfile
+=================
+
+.. automodule:: mfp_bench.myfile
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      MyClass
+   
+   
+
+   
+   
+   
+
+
+
