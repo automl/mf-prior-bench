@@ -2,7 +2,7 @@ import os
 
 import setuptools
 
-from mfp_bench import (
+from mfpbench import (
     author,
     author_email,
     description,
@@ -29,6 +29,8 @@ extras_require = {
         "pytest-timeout",
         # Docs
         "automl_sphinx_theme",
+        # IPython
+        "ipython",
         # Others
         "isort",
         "black",
@@ -49,14 +51,18 @@ setuptools.setup(
     project_urls=project_urls,
     version=version,
     packages=setuptools.find_packages(exclude=["tests"]),
-    python_requires=">=3.8",
+    python_requires=">=3.7",
     install_requires=[
-        "numpy"
+        "numpy",
+        # We need to hardlock the benchmarks to provide consistency
+        "yahpo-gym==1.0.1",
+        "jahs_bench @ git+https://github.com/automl/jahs_bench_201.git@c1e92dd92a0c4906575c4e3e4ee9e7420efca5f1#egg=jahs_bench"
     ],
     extras_require=extras_require,
     test_suite="pytest",
     platforms=["Linux"],
     classifiers=[
+        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",

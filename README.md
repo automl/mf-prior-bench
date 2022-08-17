@@ -6,8 +6,8 @@
 ```
 git clone https://github.com/automl/mf-prior-bench.git
 cd mf-prior-bench
-conda create -n mfp_bench python=3.8
-conda activate mfp_bench
+conda create -n mfpbench python=3.8
+conda activate mfpbench
 
 # Install for usage
 pip install .

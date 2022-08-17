@@ -2,17 +2,16 @@
 # are usually completed in github actions.
 
 NAME := mf-prior-bench
-PACKAGE_NAME := mfp_bench
+PACKAGE_NAME := mfpbench
 
 DIR := "${CURDIR}"
 SOURCE_DIR := ${PACKAGE_NAME}
 DIST := dist
 DOCDIR := docs
 INDEX_HTML := "file://${DIR}/docs/build/html/index.html"
-EXAMPLES_DIR := examples
 TESTS_DIR := tests
 
-.PHONY: help install-dev check format pre-commit clean docs clean-doc examples clean-build build publish test
+.PHONY: help install-dev check format pre-commit clean docs clean-doc clean-build build publish test
 
 help:
 	@echo "Makefile ${NAME}"
@@ -23,7 +22,6 @@ help:
 	@echo "* pre-commit       to run the pre-commit check"
 	@echo "* build            to build a dist"
 	@echo "* docs             to generate and view the html files, checks links"
-	@echo "* examples         to run and generate the examples"
 	@echo "* publish          to help publish the current branch to pypi"
 	@echo "* test             to run the tests"
 
@@ -35,13 +33,18 @@ BLACK ?= black
 ISORT ?= isort
 PYDOCSTYLE ?= pydocstyle
 PRECOMMIT ?= pre-commit
+
 install-dev:
 	$(PIP) install -e ".[dev]"
 	pre-commit install
 
+data-yahpo:
+	git clone --depth 1 --branch "v1.0" https://github.com/slds-lmu/yahpo_data
+
+data: data-yahpo
+
 check-black:
 	$(BLACK) ${SOURCE_DIR} --check || :
-	$(BLACK) ${EXAMPLES_DIR} --check || :
 	$(BLACK) ${TESTS_DIR} --check || :
 
 check-isort:
@@ -59,7 +62,6 @@ pre-commit:
 format-black:
 	$(BLACK) ${SOURCE_DIR}
 	$(BLACK) ${TESTS_DIR}
-	$(BLACK) ${EXAMPLES_DIR}
 
 format-isort:
 	$(ISORT) ${SOURCE_DIR}
@@ -79,15 +81,14 @@ docs:
 	@echo "View docs at:"
 	@echo ${INDEX_HTML}
 
-examples:
-	$(MAKE) -C ${DOCDIR} examples
-	@echo
-	@echo "View docs at:"
-	@echo ${INDEX_HTML}
-
 clean-build:
 	$(PYTHON) setup.py clean
 	rm -rf ${DIST}
+
+clean-yahpo:
+	rm -rf yahpo_data
+
+clean-data: clean-yahpo
 
 # Build a distribution in ./dist
 build:
@@ -117,4 +118,4 @@ publish: clean build
 	@echo "    python -m twine upload dist/*"
 
 # Clean up any builds in ./dist as well as doc, if present
-clean: clean-build clean-doc
+clean: clean-build clean-doc clean-data

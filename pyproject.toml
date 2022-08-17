@@ -4,13 +4,13 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]             # path to the test directory
 minversion = "3.8"
-addopts = "--cov=mfp_bench" # Should be package name
+addopts = "--cov=mfpbench" # Should be package name
 
 [tool.coverage.run]
 branch = true
-context = "mfp_bench" # Should be package name
+context = "mfpbench" # Should be package name
 omit = [
-    "mfp_bench/__init__.py", # Has variables only needed for setup.py
+    "mfpbench/__init__.py", # Has variables only needed for setup.py
 ]
 
 [tool.coverage.report]
@@ -25,15 +25,14 @@ exclude_lines = [
 
 [tool.black]
 target-version = ['py38']
-line-length = 120
 
 [tool.isort]
 py_version = "38"
 profile = "black" # Play nicely with black
-src_paths = ["mfp_bench", "tests"]
+src_paths = ["mfpbench", "tests"]
 known_types = ["typing", "abc"] # We put these in their own section "types"
 known_test = ["tests"]
-known_first_party = ["mfp_bench"]
+known_first_party = ["mfpbench"]
 sections = [
     "FUTURE",
     "TYPES",

@@ -1,6 +1,6 @@
 import automl_sphinx_theme
 
-from mfp_bench import copyright, author, version, name
+from mfpbench import copyright, author, version, name
 
 
 options = {
