@@ -38,11 +38,6 @@ install-dev:
 	$(PIP) install -e ".[dev]"
 	pre-commit install
 
-data-yahpo:
-	git clone --depth 1 --branch "v1.0" https://github.com/slds-lmu/yahpo_data
-
-data: data-yahpo
-
 check-black:
 	$(BLACK) ${SOURCE_DIR} --check || :
 	$(BLACK) ${TESTS_DIR} --check || :
@@ -85,11 +80,6 @@ clean-build:
 	$(PYTHON) setup.py clean
 	rm -rf ${DIST}
 
-clean-yahpo:
-	rm -rf yahpo_data
-
-clean-data: clean-yahpo
-
 # Build a distribution in ./dist
 build:
 	$(PYTHON) setup.py sdist
@@ -118,4 +108,4 @@ publish: clean build
 	@echo "    python -m twine upload dist/*"
 
 # Clean up any builds in ./dist as well as doc, if present
-clean: clean-build clean-doc clean-data
+clean: clean-build clean-doc

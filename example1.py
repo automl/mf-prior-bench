@@ -4,6 +4,11 @@ import numpy as np
 
 from mfpbench import JAHSCifar10, JAHSConfig, JAHSResult
 
+# There's also JAHSFashionMNIST, JAHSColorectalHistology benchmarks
+# They share the same config and results given back so it makes things easier
+# YAHPO will need a specific trio of (benchmark, config, results) for each
+# bench we consider in it
+
 if __name__ == "__main__":
     seed = 724
     benchmark = JAHSCifar10()
@@ -27,7 +32,7 @@ if __name__ == "__main__":
     bad_copy = config.copy(Optimizer="Adam")
     try:
         bad_copy.validate()
-    except AssertionError as e:
+    except AssertionError:
         print("\n")
         print("Error was raised while validating")
         print("\n")
