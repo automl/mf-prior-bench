@@ -29,8 +29,6 @@ extras_require = {
         "pytest-timeout",
         # Docs
         "automl_sphinx_theme",
-        # IPython
-        "ipython",
         # Others
         "isort",
         "black",
