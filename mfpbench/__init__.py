@@ -93,7 +93,7 @@ def get(
     raise RuntimeError("Whoops, please fix me")
 
 
-def iter() -> Iterator[tuple[str, type[Benchmark], str | None]]:
+def available() -> Iterator[tuple[str, type[Benchmark], str | None]]:
     """Iterate over all the possible instantiations of a benchmark
 
     Returns
@@ -128,3 +128,14 @@ __all__ = [
     "JAHSConfig",
     "JAHSResult",
 ]
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--benchmarks", action="store_true")
+    args = parser.parse_args()
+
+    if args.benchmarks is True:
+        for name, cls, task in available():
+            print(f"get(name={name}, task_id={task}) -> {cls.__name__}")

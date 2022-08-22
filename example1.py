@@ -11,10 +11,6 @@ from mfpbench.jahs import JAHSBenchmark, JAHSConfig, JAHSResult
 
 if __name__ == "__main__":
 
-    # Print all possible benchmarks
-    for name, cls, task in mfpbench.iter():
-        print(name, cls.__name__, task)
-
     seed = 724
 
     # Just adding a type here if you want to explore it
