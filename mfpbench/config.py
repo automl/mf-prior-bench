@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Mapping
+
 
 from dataclasses import asdict, dataclass
 
@@ -20,6 +21,11 @@ class Config(ABC):
         provide arguments as required.
     * Easy equality between configs
     """
+
+    @classmethod
+    def from_dict(cls: type[SelfT], d: Mapping[str, Any]) -> SelfT:
+        """Create from a dict or mapping object"""
+        return cls(**d)
 
     def dict(self) -> dict[str, Any]:
         """Converts the config to a raw dictionary"""

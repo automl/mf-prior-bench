@@ -1,4 +1,4 @@
-# Copied from https://github.com/automl/jahs_bench_201/blob/c1e92dd92a0c4906575c4e3e4ee9e7420efca5f1/jahs_bench/lib/core/configspace.py#L4
+# Copied from https://github.com/automl/jahs_bench_201/blob/c1e92dd92a0c4906575c4e3e4ee9e7420efca5f1/jahs_bench/lib/core/configspace.py#L4  # noqa: 501
 # See for why we copy: https://github.com/automl/jahs_bench_201/issues/4
 from __future__ import annotations
 
@@ -7,9 +7,20 @@ import numpy as np
 from jahs_bench.lib.core.constants import Activations
 
 
-def JAHSConfigspace(
+def jahs_configspace(
     seed: int | np.random.RandomState | None = None,
 ) -> CS.ConfigurationSpace:
+    """The configuration space for all datasets in JAHSBench
+
+    Parameters
+    ----------
+    seed : int | np.random.RandomState | None = None
+        The seed to use for the config space
+
+    Returns
+    -------
+    ConfigurationSpace
+    """
     space = CS.ConfigurationSpace(name="jahs_bench_config_space", seed=seed)
 
     if isinstance(seed, np.random.RandomState):
@@ -75,10 +86,10 @@ def JAHSConfigspace(
                 sequence=[0.25, 0.5, 1.0],
                 default_value=1.0,
                 meta=dict(
-                    help="The sample resolution of the input images w.r.t. one side of the "
-                    "actual image size, assuming square images, i.e. for a dataset "
-                    "with 32x32 images, specifying a value of 0.5 corresponds to "
-                    "using downscaled images of size 16x16 as inputs."
+                    help="The sample resolution of the input images w.r.t. one side of"
+                    " the actual image size, assuming square images, i.e. for a dataset"
+                    " with 32x32 images, specifying a value of 0.5 corresponds to using"
+                    " downscaled images of size 16x16 as inputs."
                 ),
             ),
             CS.CategoricalHyperparameter(
@@ -86,19 +97,19 @@ def JAHSConfigspace(
                 choices=[True, False],
                 default_value=False,
                 meta=dict(
-                    help="Controls whether or not TrivialAugment is used for pre-processing "
-                    "data. If False (default), a set of manually chosen transforms is "
-                    "applied during pre-processing. If True, these are skipped in favor of "
-                    "applying random transforms selected by TrivialAugment."
-                ),
+                    help="Controls whether or not TrivialAugment is used for"
+                    " pre-processing data. If False (default), a set of manually chosen"
+                    " transforms is applied during pre-processing. If True, these are"
+                    " skipped in favor of applying random transforms selected by"
+                    " TrivialAugment."),
             ),
             CS.CategoricalHyperparameter(
                 "Activation",
                 choices=list(Activations.__members__.keys()),
                 default_value="ReLU",
                 meta=dict(
-                    help="Which activation function is to be used for the network. "
-                    "Default is ReLU."
+                    help="Which activation function is to be used for the network."
+                    " Default is ReLU."
                 ),
             ),
         ]
@@ -122,9 +133,9 @@ def JAHSConfigspace(
         default_value=1e-1,
         log=True,
         meta=dict(
-            help="The learning rate for the optimizer used during model training. In the "
-            "case of adaptive learning rate optimizers such as Adam, this is the "
-            "initial learning rate."
+            help="The learning rate for the optimizer used during model training. In"
+            " the case of adaptive learning rate optimizers such as Adam, this is the"
+            " initial learning rate."
         ),
     )
     weight_decay = CS.UniformFloatHyperparameter(

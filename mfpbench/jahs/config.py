@@ -11,6 +11,7 @@ class JAHSConfig(Config):
 
     https://github.com/automl/jahs_bench_201/blob/main/jahs_bench/lib/core/configspace.py
     """
+
     # Not fidelities for our use case
     N: int = 1
     W: int = 4
@@ -32,6 +33,7 @@ class JAHSConfig(Config):
     WeightDecay: float = 5e-4
 
     def validate(self) -> None:
+        """Validate this config incase required"""
         # Just being explicit to catch bugs easily, we can remove later
         assert self.N in [1, 3, 5]
         assert self.W in [4, 8, 16]

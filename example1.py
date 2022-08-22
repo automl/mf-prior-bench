@@ -22,6 +22,10 @@ if __name__ == "__main__":
     print(config.dict())  # Cause you might want this
     print("\n")
 
+    # Copy a configuration if you need to for any reason, these are two distinct objects
+    exact_copy = config.copy()
+    assert exact_copy == config
+
     # You can only mutate it by a copy to keep things consistent
     new_copy = config.copy(TrivialAugment=True)
 
@@ -38,7 +42,7 @@ if __name__ == "__main__":
         print("\n")
 
     # Anyways, here's the results for the config
-    result: JAHSResult = benchmark.query(config, fidelity=42)
+    result: JAHSResult = benchmark.query(config, at=42)
 
     # And if you need the full trajectory
     results: list[JAHSResult] = benchmark.trajectory(config)

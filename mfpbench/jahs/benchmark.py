@@ -1,22 +1,21 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import overload
+from typing import Any, overload
 
 from pathlib import Path
 
 import jahs_bench
-from ConfigSpace import ConfigurationSpace
-from numpy.random import RandomState
+from ConfigSpace import Configuration, ConfigurationSpace
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.download import DATAROOT
 from mfpbench.jahs.config import JAHSConfig
 from mfpbench.jahs.result import JAHSResult
-from mfpbench.jahs.spaces import JAHSConfigspace
+from mfpbench.jahs.spaces import jahs_configspace
 
 
-class JAHSBench(Benchmark[JAHSConfig, JAHSResult, int], ABC):
+class JAHSBench(Benchmark, ABC):
     """Manages access to jahs-bench
 
     Use one of the concrete classes below to access a specific version:
@@ -25,67 +24,173 @@ class JAHSBench(Benchmark[JAHSConfig, JAHSResult, int], ABC):
     * JAHSFashionMNIST:
     """
 
+    Config = JAHSConfig
+    Result = JAHSResult
+    fidelity_range: tuple[int, int, int] = (1, 200, 1)
+
     task: jahs_bench.BenchmarkTasks
-    name: str = "jahs-bench-data"
-    max_epoch: int = 200
 
-    def __init__(self, datadir: str | Path | None = None):
+    # Where the data for jahsbench should be located relative to the path given
+    _default_download_dir: Path = DATAROOT / "jahs-bench-data"
+
+    def __init__(self, *, datadir: str | Path | None = None, seed: int | None = None):
+        """
+        Parameters
+        ----------
+        datadir : str | Path | None = None
+            The path to where mfpbench stores it data. If left to default (None), will
+            use the `_default_download_dir = ./data/jahs-bench-data`.
+
+        seed : int | None = None
+            The seed to give this benchmark instance
+        """
+        super().__init__(seed=seed)
+
         if datadir is None:
-            datadir = DATAROOT
+            datadir = JAHSBench._default_download_dir
 
-        if isinstance(datadir, str):
-            datadir = Path(datadir)
+        self.datadir = Path(datadir) if isinstance(datadir, str) else datadir
 
-        save_dir = datadir / self.name
+        # Loaded on demand with `@property`
+        self._bench: jahs_bench.Benchmark | None = None
+        self._configspace = jahs_configspace(self.seed)
 
-        self.bench = jahs_bench.Benchmark(
-            task=self.task,
-            save_dir=save_dir,
-            download=True,
-        )
+    @property
+    def bench(self) -> jahs_bench.Benchmark:
+        """The underlying benchmark used"""
+        if not self._bench:
+            self._bench = jahs_bench.Benchmark(
+                task=self.task,
+                save_dir=self.datadir,
+                download=True,
+            )
+
+        return self._bench
+
+    @property
+    def space(self) -> ConfigurationSpace:
+        """The ConfigurationSpace for this benchmark"""
+        return self._configspace
 
     def query(
         self,
-        config: JAHSConfig,
-        fidelity: int = 200,
+        config: JAHSConfig | dict[str, Any] | Configuration,
+        at: int | None = None,
     ) -> JAHSResult:
-        assert 1 <= fidelity <= 200
+        """Query the results for a config
 
-        results = self.bench.__call__(config.dict(), nepochs=fidelity)
-        result = results[fidelity]
+        Parameters
+        ----------
+        config : JAHSConfig | dict[str, Any] | Configuration
+            The config to query
 
-        return JAHSResult.from_dict(config, result, fidelity)
+        at : int | None = None
+            The epoch at which to query at, defaults to max (200) if left as None
 
-    def trajectory(self, config: JAHSConfig, *, to: int = 200) -> list[JAHSResult]:
-        assert 1 <= to <= 200
+        Returns
+        -------
+        JAHSResult
+            The result for the config at the given epoch
+        """
+        at = at if at is not None else self.end
+        assert 1 <= at <= 200
 
-        results = self.bench.__call__(config.dict(), nepochs=to, full_trajectory=True)
+        if isinstance(config, Configuration):
+            config = {**config}
 
-        return [JAHSResult.from_dict(config, results[i], i) for i in range(1, 201)]
+        if isinstance(config, JAHSConfig):
+            config = config.dict()
+
+        results = self.bench.__call__(config, nepochs=at)
+        result = results[at]
+
+        return JAHSResult.from_dict(
+            config=self.Config(**config),  # Just make sure it's a JAHSConfig
+            result=result,
+            fidelity=at,
+        )
+
+    def trajectory(
+        self,
+        config: JAHSConfig | dict[str, Any] | Configuration,
+        *,
+        frm: int | None = None,
+        to: int | None = None,
+        step: int | None = None,
+    ) -> list[JAHSResult]:
+        """Query the trajectory of a config as it ranges over a fidelity
+
+        Parameters
+        ----------
+        config : JAHSConfig | dict[str, Any] | Configuration
+            The config to query
+
+        frm : int | None = None
+            The start of the trajectory to query from, defaults to 1
+
+        to : int | None = None
+            The end of the trajectory to query to, defaults to 200
+
+        step: int | None = None
+            The step size to take, defaults to 1
+
+        Returns
+        -------
+        list[JAHSResult]
+            The results over that trajectory
+        """
+        frm = frm if frm is not None else self.start
+        to = to if to is not None else self.end
+        step = step if step is not None else self.step
+        assert self.start <= frm <= to <= self.end
+
+        if isinstance(config, Configuration):
+            config = {**config}
+
+        if isinstance(config, JAHSConfig):
+            config = config.dict()
+
+        results = self.bench.__call__(config, nepochs=to, full_trajectory=True)
+
+        return [
+            JAHSResult.from_dict(
+                config=self.Config(**config),
+                result=results[i],
+                fidelity=i,
+            )
+            for i in range(frm, to + 1, step)
+        ]
 
     @overload
-    def sample(self, n: None = None, *, seed: int | None | RandomState = ...) -> JAHSConfig:
+    def sample(self, n: None = None) -> JAHSConfig:
         ...
 
     @overload
-    def sample(self, n: int, *, seed: int | None | RandomState = ...) -> list[JAHSConfig]:
+    def sample(self, n: int) -> list[JAHSConfig]:
         ...
 
     def sample(
         self,
         n: int | None = None,
-        *,
-        seed: int | None | RandomState = None,
     ) -> JAHSConfig | list[JAHSConfig]:
+        """Sample configurations
+
+        Parameters
+        ----------
+        n : int | None = None
+            The amount of configurations to sample, if None, will just return one
+
+        Returns
+        -------
+        JAHSConfig | list[JAHSConfig]
+            The single configuration or a list of configurations
+        """
         if n is None:
-            config = self.configspace(seed=seed).sample_configuration()
+            config = self.space.sample_configuration()
             return JAHSConfig(**config)
         else:
-            configs = self.configspace(seed=seed).sample_configuration(n)
+            configs = self.space.sample_configuration(n)
             return [JAHSConfig(**config) for config in configs]
-
-    def configspace(self, seed: int | RandomState | None = None) -> ConfigurationSpace:
-        return JAHSConfigspace(seed=seed)
 
 
 class JAHSCifar10(JAHSBench):

@@ -22,6 +22,13 @@ project_urls = {
 copyright = f"Copyright {datetime.date.today().strftime('%Y')}, bobby1 and bobby2"
 version = "0.0.1"
 
+_mapping = {
+    "jahs_cifar_10": JAHSCifar10
+}
+
+def get_benchmark(name: str):
+    ...
+
 __all__ = [
     "name",
     "package_name",
