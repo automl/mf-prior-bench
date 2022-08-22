@@ -61,6 +61,17 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         seed : int | None = None
             The seed for the benchmark instance
         """
+        # Validation
+        cls = self.__class__
+        if task_id is None:
+            if self.instances is not None:
+                raise ValueError(f"{cls} requires a task in {self.instances}")
+        else:
+            if self.instances is None:
+                raise ValueError(f"{cls} no instances, you passed {task_id}")
+            elif task_id not in self.instances:
+                raise ValueError(f"{cls} requires a task in {self.instances}")
+
         super().__init__(seed=seed)
         if datadir is None:
             datadir = DATAROOT
@@ -69,11 +80,12 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             datadir = Path(datadir)
 
         self.datadir = Path(datadir) if isinstance(datadir, str) else datadir
+        if not self.datadir.exists():
+            raise FileNotFoundError(
+                f"Can't find folder at {self.datadir}, have you run\n"
+                f"`python -m mfpbench.download --data-dir {self.datadir.parent}`"
+            )
         _ensure_yahpo_config_set(self.datadir)
-
-        if task_id:
-            assert self.instances is not None, f"Task ID not for {self.__class__}"
-            assert task_id in self.instances, f"Must be a task in {self.instances}"
 
         bench = yahpo_gym.BenchmarkSet(self.name, instance=task_id)
 

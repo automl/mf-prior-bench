@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any, overload
+from typing import Any
 
 from pathlib import Path
 
@@ -15,7 +15,7 @@ from mfpbench.jahs.result import JAHSResult
 from mfpbench.jahs.spaces import jahs_configspace
 
 
-class JAHSBench(Benchmark, ABC):
+class JAHSBenchmark(Benchmark, ABC):
     """Manages access to jahs-bench
 
     Use one of the concrete classes below to access a specific version:
@@ -47,9 +47,14 @@ class JAHSBench(Benchmark, ABC):
         super().__init__(seed=seed)
 
         if datadir is None:
-            datadir = JAHSBench._default_download_dir
+            datadir = JAHSBenchmark._default_download_dir
 
         self.datadir = Path(datadir) if isinstance(datadir, str) else datadir
+        if not self.datadir.exists():
+            raise FileNotFoundError(
+                f"Can't find folder at {self.datadir}, have you run\n"
+                f"`python -m mfpbench.download --data-dir {self.datadir.parent}`"
+            )
 
         # Loaded on demand with `@property`
         self._bench: jahs_bench.Benchmark | None = None
@@ -62,7 +67,7 @@ class JAHSBench(Benchmark, ABC):
             self._bench = jahs_bench.Benchmark(
                 task=self.task,
                 save_dir=self.datadir,
-                download=True,
+                download=False,
             )
 
         return self._bench
@@ -161,45 +166,14 @@ class JAHSBench(Benchmark, ABC):
             for i in range(frm, to + 1, step)
         ]
 
-    @overload
-    def sample(self, n: None = None) -> JAHSConfig:
-        ...
 
-    @overload
-    def sample(self, n: int) -> list[JAHSConfig]:
-        ...
-
-    def sample(
-        self,
-        n: int | None = None,
-    ) -> JAHSConfig | list[JAHSConfig]:
-        """Sample configurations
-
-        Parameters
-        ----------
-        n : int | None = None
-            The amount of configurations to sample, if None, will just return one
-
-        Returns
-        -------
-        JAHSConfig | list[JAHSConfig]
-            The single configuration or a list of configurations
-        """
-        if n is None:
-            config = self.space.sample_configuration()
-            return JAHSConfig(**config)
-        else:
-            configs = self.space.sample_configuration(n)
-            return [JAHSConfig(**config) for config in configs]
-
-
-class JAHSCifar10(JAHSBench):
+class JAHSCifar10(JAHSBenchmark):
     task = jahs_bench.BenchmarkTasks.CIFAR10
 
 
-class JAHSColorectalHistology(JAHSBench):
+class JAHSColorectalHistology(JAHSBenchmark):
     task = jahs_bench.BenchmarkTasks.ColorectalHistology
 
 
-class JAHSFashionMNIST(JAHSBench):
+class JAHSFashionMNIST(JAHSBenchmark):
     task = jahs_bench.BenchmarkTasks.FashionMNIST

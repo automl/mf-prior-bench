@@ -1,21 +1,34 @@
 from __future__ import annotations
 
+from typing import cast
+
 import numpy as np
 
-from mfpbench import JAHSCifar10, JAHSConfig, JAHSResult
+import mfpbench
 
-# There's also JAHSFashionMNIST, JAHSColorectalHistology benchmarks
-# They share the same config and results given back so it makes things easier
-# YAHPO will need a specific trio of (benchmark, config, results) for each
-# bench we consider in it
+# Optional imports here just to give typing and so you can look deeper if needed
+from mfpbench.jahs import JAHSBenchmark, JAHSConfig, JAHSResult
 
 if __name__ == "__main__":
+
+    # Print all possible benchmarks
+    for name, cls, task in mfpbench.iter():
+        print(name, cls.__name__, task)
+
     seed = 724
-    benchmark = JAHSCifar10()
+
+    # Just adding a type here if you want to explore it
+    benchmark = mfpbench.get("jahs_cifar_10", seed=seed)  # datadir = ...
+    benchmark = cast(JAHSBenchmark, benchmark)
+
+    # benchmark = mfpbench.get("lcbench", seed=seed, datadir=datadir, task_id="3945")
+    # benchmark = cast(LCBench, benchmark)
 
     # Get a random config just to see it
-    config: JAHSConfig
-    config = benchmark.sample(seed=seed)
+    config: JAHSConfig = benchmark.sample()
+
+    # And the search space
+    print(benchmark.space)
 
     print("\n")
     print(config)  # It's a dataclass
@@ -43,9 +56,14 @@ if __name__ == "__main__":
 
     # Anyways, here's the results for the config
     result: JAHSResult = benchmark.query(config, at=42)
+    result = benchmark.query(config.dict(), at=42)  # You can also use a dict
+    result = benchmark.query(benchmark.space.sample_configuration())  # Or configspace
 
     # And if you need the full trajectory
     results: list[JAHSResult] = benchmark.trajectory(config)
+    sliced_result = benchmark.trajectory(config, to=100)
+    sliced_result_2 = benchmark.trajectory(config, frm=50, to=100)
+
     first = results[0]
     last = results[-1]
 
@@ -60,7 +78,7 @@ if __name__ == "__main__":
     print("\n")
 
     # Now here's 100 configs and we'll get the best configuration
-    configs: list[JAHSConfig] = benchmark.sample(100, seed=seed)
+    configs: list[JAHSConfig] = benchmark.sample(100)
 
     # Get all trajectories for each run
     # [

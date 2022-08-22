@@ -92,7 +92,6 @@ class Benchmark(Generic[C, R, F], ABC):
     def sample(self, n: int) -> list[C]:
         ...
 
-    @abstractmethod
     def sample(self, n: int | None = None) -> C | list[C]:
         """Sample a random possible config
 
@@ -106,7 +105,10 @@ class Benchmark(Generic[C, R, F], ABC):
         C
             Get back a possible Config to use
         """
-        ...
+        if n is None:
+            return self.Config(**self.space.sample_configuration())
+        else:
+            return [self.Config(**c) for c in self.space.sample_configuration(n)]
 
     @property
     @abstractmethod
