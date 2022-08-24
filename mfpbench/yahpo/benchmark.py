@@ -79,13 +79,13 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         if isinstance(datadir, str):
             datadir = Path(datadir)
 
-        self.datadir = Path(datadir) if isinstance(datadir, str) else datadir
-        if not self.datadir.exists():
+        datadir = Path(datadir) if isinstance(datadir, str) else datadir
+        if not datadir.exists():
             raise FileNotFoundError(
-                f"Can't find folder at {self.datadir}, have you run\n"
-                f"`python -m mfpbench.download --data-dir {self.datadir.parent}`"
+                f"Can't find folder at {datadir}, have you run\n"
+                f"`python -m mfpbench.download --data-dir {datadir.parent}`"
             )
-        _ensure_yahpo_config_set(self.datadir)
+        _ensure_yahpo_config_set(datadir)
 
         bench = yahpo_gym.BenchmarkSet(self.name, instance=task_id)
 
@@ -94,6 +94,8 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         remove_hyperparameter("OpenML_task_id", space)
 
         self.bench = bench
+        self.datadir = datadir
+        self.task_id = task_id
         self._configspace = space
 
     def query(
@@ -128,9 +130,15 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         assert isinstance(config, dict), "I assume this is the case by here?"
 
         config[self.fidelity_name] = at
+
+        if self.task_id is not None:
+            config["OpenML_task_id"] = self.task_id
+
         result = self.bench.objective_function(configuration=config, seed=self.seed)
 
         del config[self.fidelity_name]
+        if "OpenML_task_id" in config:
+            del config["OpenML_task_id"]
 
         return self.Result.from_dict(
             config=self.Config(**config), result=result, fidelity=at
