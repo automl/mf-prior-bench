@@ -91,7 +91,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
         # These can have one or two fidelities
         space = bench.get_opt_space(drop_fidelity_params=True, seed=seed)
-        remove_hyperparameter("OpenML_task_id", space)
+        space = remove_hyperparameter("OpenML_task_id", space)
 
         self.bench = bench
         self.datadir = datadir

@@ -1,5 +1,8 @@
 from typing import Callable, Iterable, TypeVar
 
+from copy import copy
+
+import numpy as np
 from ConfigSpace import ConfigurationSpace
 
 T = TypeVar("T")
@@ -24,59 +27,35 @@ def findwhere(itr: Iterable[T], func: Callable[[T], bool], *, default: int = -1)
     return next((i for i, t in enumerate(itr) if func(t)), default)
 
 
-def remove_hyperparameter(name: str, space: ConfigurationSpace) -> None:
-    """Removes a hyperparameter from a configuration space
+def remove_hyperparameter(name: str, space: ConfigurationSpace) -> ConfigurationSpace:
+    """A new configuration space with the hyperparameter removed
 
-    Essentially undoes the operations done by adding a hyperparamter
-    and then runs the same validation checks that is done in ConfigSpace
-
-    NOTE
-    ----
-    * Doesn't account for conditionals
-
-    Parameters
-    ----------
-    name : str
-        The name of the hyperparamter to remove
-
-    space : ConfigurationSpace
-        The space to remove it from
+    Essentially copies hp over and fails if there is conditionals or forbiddens
     """
     if name not in space._hyperparameters:
         raise ValueError(f"{name} not in {space}")
 
+    # Copying conditionals only work on objects and not named entities
+    # Seeing as we copy objects and don't use the originals, transfering these
+    # to the new objects is a bit tedious, possible but not required at this time
+    # ... same goes for forbiddens
     assert name not in space._conditionals, "Can't handle conditionals"
-
     assert not any(
         name != f.hyperparameter.name for f in space.get_forbiddens()
     ), "Can't handle forbiddens"
 
-    # No idea what this is really for
-    root = "__HPOlib_configuration_space_root__"
+    hps = [copy(hp) for hp in space.get_hyperparameters() if hp.name != name]
 
-    # Remove it from children
-    if root in space._children and name in space._children[root]:
-        del space._children[root][name]
+    if isinstance(space.random, np.random.RandomState):
+        new_seed = space.random.randint(2 ** 32 - 1)
+    else:
+        new_seed = copy(space.random)
 
-    # Remove it from parents
-    if root in space._parents and name in space._parents[root]:
-        del space._parents[root][name]
-
-    # Remove it from indices
-    if name in space._hyperparameter_idx:
-        del space._hyperparameter_idx[name]
-
-        # We re-enumerate the dict
-        space._hyperparameter_idx = {
-            name: idx for idx, name in enumerate(space._hyperparameter_idx)
-        }
-
-    # Finally, remove it from the known parameter
-    del space._hyperparameters[name]
-
-    # Update according to what adding does `add_hyperparameter()`
-    space._update_cache()
-    space._check_default_configuration()
-    space._sort_hyperparameters()
-
-    return
+    new_space = ConfigurationSpace(
+        # TODO: not sure if this will have implications, assuming not
+        seed=new_seed,
+        name=copy(space.name),
+        meta=copy(space.meta),
+    )
+    new_space.add_hyperparameters(hps)
+    return new_space
