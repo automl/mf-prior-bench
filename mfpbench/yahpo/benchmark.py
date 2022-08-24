@@ -134,7 +134,11 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         if self.task_id is not None:
             config["OpenML_task_id"] = self.task_id
 
-        result = self.bench.objective_function(configuration=config, seed=self.seed)
+        result: list[dict] = self.bench.objective_function(
+            configuration=config,
+            seed=self.seed,
+        )
+        result = result[0]
 
         del config[self.fidelity_name]
         if "OpenML_task_id" in config:
