@@ -128,7 +128,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         assert isinstance(config, dict), "I assume this is the case by here?"
 
         config[self.fidelity_name] = at
-        result = self.bench.query(config=config, seed=self.seed)
+        result = self.bench.objective_function(configuration=config, seed=self.seed)
 
         del config[self.fidelity_name]
 
