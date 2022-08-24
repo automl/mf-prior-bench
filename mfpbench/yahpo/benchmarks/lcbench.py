@@ -94,6 +94,7 @@ class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
 
 class LCBenchBenchmark(YAHPOBenchmark[LCBenchConfig, LCBenchResult, int]):
     name: str = "lcbench"
+    fidelity_range: tuple[int, int, int] = (1, 52, 1)
     instances: list[str] = [
         "3945",
         "7593",
