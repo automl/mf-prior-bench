@@ -1,6 +1,9 @@
-from typing import Callable, Iterable, TypeVar
+from __future__ import annotations
+
+from typing import Callable, Iterable, Iterator, TypeVar
 
 from copy import copy
+from itertools import chain, tee
 
 import numpy as np
 from ConfigSpace import ConfigurationSpace
@@ -47,7 +50,7 @@ def remove_hyperparameter(name: str, space: ConfigurationSpace) -> Configuration
     hps = [copy(hp) for hp in space.get_hyperparameters() if hp.name != name]
 
     if isinstance(space.random, np.random.RandomState):
-        new_seed = space.random.randint(2 ** 32 - 1)
+        new_seed = space.random.randint(2**32 - 1)
     else:
         new_seed = copy(space.random)
 
@@ -59,3 +62,37 @@ def remove_hyperparameter(name: str, space: ConfigurationSpace) -> Configuration
     )
     new_space.add_hyperparameters(hps)
     return new_space
+
+
+def pairs(itr: Iterable[T]) -> Iterator[tuple[T, T]]:
+    """An iterator over pairs of items in the iterator
+
+    ..code:: python
+
+        # Check if sorted
+        if all(a < b for a, b in pairs(items)):
+            ...
+
+    Parameters
+    ----------
+    itr : Iterable[T]
+        An itr of items
+    Returns
+    -------
+    Iterable[tuple[T, T]]
+        An itr of sequential pairs of the items
+    """
+    itr1, itr2 = tee(itr)
+
+    # Skip first item
+    _ = next(itr2)
+
+    # Check there is a second element
+    peek = next(itr2, None)
+    if peek is None:
+        raise ValueError("Can't create a pair from iterable with 1 item")
+
+    # Put it back in
+    itr2 = chain([peek], itr2)
+
+    return iter((a, b) for a, b in zip(itr1, itr2))
