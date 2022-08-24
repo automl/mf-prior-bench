@@ -33,7 +33,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]             # path to the test directory
-minversion = "3.8"
+minversion = "3.7"
 addopts = "--cov=mfpbench" # Should be package name
 
 [tool.coverage.run]
@@ -54,10 +54,10 @@ exclude_lines = [
 ] # These are lines to exclude from coverage
 
 [tool.black]
-target-version = ['py38']
+target-version = ['py37']
 
 [tool.isort]
-py_version = "38"
+py_version = "37"
 profile = "black" # Play nicely with black
 src_paths = ["mfpbench", "tests"]
 known_types = ["typing", "abc"] # We put these in their own section "types"
