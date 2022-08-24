@@ -7,10 +7,18 @@ from mfpbench.yahpo.config import YAHPOConfig
 from mfpbench.yahpo.result import YAHPOResult
 
 
+@dataclass(frozen=True)
 class LCBenchConfig(YAHPOConfig):
+    """
+    Note
+    ----
+    For ``momentum``, the paper seems to suggest it's (0.1, 0.9) but the configspace
+    says (0.1, 0.99), going with the code version
+    """
+
     batch_size: int  # [16, 512] int log
     learning_rate: float  # [1e-04, 0.1] float log
-    momentum: float  # [0.1, 0.9] float
+    momentum: float  # [0.1, 0.99] float, see note above
     weight_decay: float  # [1e-5, 0.1] float
     num_layers: int  # [1, 5] int
     max_units: int  # [64, 1024] int log
@@ -20,7 +28,7 @@ class LCBenchConfig(YAHPOConfig):
         """Validate this is a correct config"""
         assert 16 <= self.batch_size <= 512
         assert 1e-04 <= self.learning_rate <= 0.1
-        assert 0.1 <= self.momentum <= 0.9
+        assert 0.1 <= self.momentum <= 0.99
         assert 1e-05 <= self.weight_decay <= 0.1
         assert 1 <= self.num_layers <= 5
         assert 64 <= self.max_units <= 1024

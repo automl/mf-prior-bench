@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, overload
 
-from ConfigSpace import ConfigurationSpace, Configuration
+from ConfigSpace import Configuration, ConfigurationSpace
 
 from mfpbench.config import Config
 from mfpbench.result import Result
