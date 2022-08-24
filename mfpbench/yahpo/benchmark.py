@@ -218,4 +218,5 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
     @property
     def space(self) -> ConfigurationSpace:
+        """The ConfigurationSpace for a YAHPO benchmark"""
         return self._configspace
