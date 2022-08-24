@@ -106,7 +106,12 @@ class Benchmark(Generic[C, R, F], ABC):
             Get back a possible Config to use
         """
         if n is None:
-            return self.Config.from_dict(self.space.sample_configuration)
+            return self.Config.from_dict(self.space.sample_configuration())
+
+        # Just because of how configspace works
+        elif n == 1:
+            return [self.Config.from_dict(self.space.sample_configuration())]
+
         else:
             return [
                 self.Config.from_dict(c) for c in self.space.sample_configuration(n)
