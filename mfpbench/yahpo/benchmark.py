@@ -74,7 +74,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
         super().__init__(seed=seed)
         if datadir is None:
-            datadir = DATAROOT
+            datadir = self._default_download_dir
 
         if isinstance(datadir, str):
             datadir = Path(datadir)
