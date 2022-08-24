@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from mfpbench.config import Config
 
 
-@dataclass(frozen=True, eq=True)
+@dataclass(frozen=True, eq=False)
 class JAHSConfig(Config):
     """The config for JAHSBench, useful to have regardless of the configspace used
 

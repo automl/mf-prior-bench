@@ -7,7 +7,7 @@ from mfpbench.yahpo.config import YAHPOConfig
 from mfpbench.yahpo.result import YAHPOResult
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class LCBenchConfig(YAHPOConfig):
     """
     Note
