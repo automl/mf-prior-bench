@@ -64,11 +64,7 @@ class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
         -------
         LCBenchResult
         """
-        return LCBenchResult(
-            epoch=fidelity,
-            config=config,
-            **result
-        )
+        return LCBenchResult(epoch=fidelity, config=config, **result)
 
     @property
     def test_score(self) -> float:
@@ -93,9 +89,12 @@ class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
 
 
 class LCBenchBenchmark(YAHPOBenchmark[LCBenchConfig, LCBenchResult, int]):
-    name: str = "lcbench"
-    fidelity_range: tuple[int, int, int] = (1, 52, 1)
-    instances: list[str] = [
+    name = "lcbench"
+    fidelity_range = (1, 52, 1)
+    Config = LCBenchConfig
+    Result = LCBenchResult
+
+    instances = [
         "3945",
         "7593",
         "34539",
