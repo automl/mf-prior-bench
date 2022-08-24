@@ -31,7 +31,7 @@ class LCBenchConfig(YAHPOConfig):
 class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
     epoch: int
 
-    time: float
+    time: float  # unit?
 
     val_accuracy: float
     val_cross_entropy: float
@@ -64,17 +64,32 @@ class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
         -------
         LCBenchResult
         """
-        return LCBenchResult(epoch=fidelity, config=config, **result)
+        return LCBenchResult(
+            epoch=fidelity,
+            config=config,
+            **result
+        )
 
     @property
-    def score(self) -> float:
-        """The score of interest"""
+    def test_score(self) -> float:
+        """The score on the test set"""
         return self.test_balanced_accuracy
+
+    @property
+    def val_score(self) -> float:
+        """The score on the validation set"""
+        return self.val_balanced_accuracy
 
     @property
     def fidelity(self) -> int:
         """The fidelity used"""
         return self.epoch
+
+    @property
+    def train_time(self) -> float:
+        """Time taken in seconds to train the config"""
+        raise NotImplementedError("TODO: find out unit")
+        return self.time
 
 
 class LCBenchBenchmark(YAHPOBenchmark[LCBenchConfig, LCBenchResult, int]):

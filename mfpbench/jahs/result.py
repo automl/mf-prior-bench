@@ -6,7 +6,7 @@ from mfpbench.jahs.config import JAHSConfig
 from mfpbench.result import Result
 
 
-@dataclass
+@dataclass  # type: ignore[misc]
 class JAHSResult(Result[JAHSConfig, int]):
     epoch: int
 
@@ -58,11 +58,22 @@ class JAHSResult(Result[JAHSConfig, int]):
         )
 
     @property
-    def score(self) -> float:
-        """The score of interest"""
+    def test_score(self) -> float:
+        """The score on the test set"""
         return self.test_acc
+
+    @property
+    def val_score(self) -> float:
+        """The score on the validation set"""
+        return self.valid_acc
 
     @property
     def fidelity(self) -> int:
         """The fidelity used"""
         return self.epoch
+
+    @property
+    def train_time(self) -> float:
+        """The time taken in seconds"""
+        raise NotImplementedError("TODO: find out unit")
+        return self.runtime

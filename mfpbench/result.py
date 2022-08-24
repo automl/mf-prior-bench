@@ -20,6 +20,7 @@ F = TypeVar("F", int, float)
 @dataclass  # type: ignore[misc]
 class Result(ABC, Generic[C, F]):
     """Collect all results in a class for clarity"""
+
     config: C
 
     @classmethod
@@ -42,12 +43,24 @@ class Result(ABC, Generic[C, F]):
 
     @property
     @abstractmethod
-    def score(self) -> float:
-        """The score of interest"""
+    def test_score(self) -> float:
+        """The score on the test set"""
+        ...
+
+    @property
+    @abstractmethod
+    def val_score(self) -> float:
+        """The score on the validation set"""
         ...
 
     @property
     @abstractmethod
     def fidelity(self) -> F:
         """The fidelity used"""
+        ...
+
+    @property
+    @abstractmethod
+    def train_time(self) -> float:
+        """The time taken in seconds to train the config"""
         ...
