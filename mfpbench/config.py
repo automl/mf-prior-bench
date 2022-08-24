@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, TypeVar, Mapping
-
+from typing import Any, Mapping, TypeVar
 
 from dataclasses import asdict, dataclass
+
+from ConfigSpace import Configuration
 
 # Just so `def copy(...)` can give back the correct type
 SelfT = TypeVar("SelfT", bound="Config")
@@ -51,3 +52,14 @@ class Config(ABC):
         AssertionError
         """
         ...
+
+    def __eq__(self, other: Any) -> bool:
+        """Equality is defined in terms of their dictionary repr"""
+        if isinstance(other, dict):
+            return self.dict() == other
+        elif isinstance(other, Configuration):
+            return self.dict() == {**other}
+        elif isinstance(other, self.__class__):
+            return self.dict() == other.dict()
+        else:
+            return False
