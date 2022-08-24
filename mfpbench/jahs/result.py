@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 from mfpbench.jahs.config import JAHSConfig
@@ -75,5 +76,5 @@ class JAHSResult(Result[JAHSConfig, int]):
     @property
     def train_time(self) -> float:
         """The time taken in seconds"""
-        raise NotImplementedError("TODO: find out unit")
+        warnings.warn(f"Unsure of unit for `train_time` on {self.__class__}")
         return self.runtime

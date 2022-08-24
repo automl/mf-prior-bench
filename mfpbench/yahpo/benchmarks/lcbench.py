@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 from mfpbench.yahpo.benchmark import YAHPOBenchmark
@@ -92,7 +93,7 @@ class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
     @property
     def train_time(self) -> float:
         """Time taken in seconds to train the config"""
-        raise NotImplementedError("TODO: find out unit")
+        warnings.warn(f"Unsure of unit for `train_time` on {self.__class__}")
         return self.time
 
 
