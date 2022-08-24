@@ -55,16 +55,21 @@ def remove_hyperparameter(name: str, space: ConfigurationSpace) -> None:
     root = "__HPOlib_configuration_space_root__"
 
     # Remove it from children
-    if name in space._children[root]:
+    if root in space._children and name in space._children[root]:
         del space._children[root][name]
 
     # Remove it from parents
-    if name in space._parents[root]:
-        del space._children[root][name]
+    if root in space._parents and name in space._parents[root]:
+        del space._parents[root][name]
 
     # Remove it from indices
-    idx = findwhere(space._hyperparameters, lambda hp: hp.name == name)
-    del space._hyperparameter_idx[idx]
+    if name in space._hyperparameter_idx:
+        del space._hyperparameter_idx[name]
+
+        # We re-enumerate the dict
+        space._hyperparameter_idx = {
+            name: idx for idx, name in enumerate(space._hyperparameter_idx)
+        }
 
     # Finally, remove it from the known parameter
     del space._hyperparameters[name]
