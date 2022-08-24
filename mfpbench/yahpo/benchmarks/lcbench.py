@@ -90,6 +90,7 @@ class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
 
 class LCBenchBenchmark(YAHPOBenchmark[LCBenchConfig, LCBenchResult, int]):
     name = "lcbench"
+    fidelity_name = "epoch"
     fidelity_range = (1, 52, 1)
     Config = LCBenchConfig
     Result = LCBenchResult

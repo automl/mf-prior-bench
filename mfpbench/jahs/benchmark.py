@@ -26,7 +26,8 @@ class JAHSBenchmark(Benchmark, ABC):
 
     Config = JAHSConfig
     Result = JAHSResult
-    fidelity_range: tuple[int, int, int] = (1, 200, 1)
+    fidelity_name = "epoch"
+    fidelity_range = (1, 200, 1)
 
     task: jahs_bench.BenchmarkTasks
 
