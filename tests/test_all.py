@@ -84,13 +84,10 @@ def test_query_through_entire_fidelity_range(benchmark: Benchmark) -> None:
     * Should be able to query the benchmark over the entire fidelity range
     * All results should have their fidelity between the start and step
     """
-    start, stop, step = benchmark.fidelity_range
-    dtype = int if isinstance(start, int) else float
-    fidelities = np.arange(start=start, stop=step, step=step, dtype=dtype)
-
     config = benchmark.sample()
 
-    results = [benchmark.query(config, at=x) for x in fidelities]
+    results = [benchmark.query(config, at=x) for x in benchmark.iter_fidelities()]
+    start, stop, _ = benchmark.fidelity_range
     for r in results:
         assert start <= r.fidelity <= stop
         assert r.config == config
