@@ -167,7 +167,14 @@ class JAHSBenchmark(Benchmark, ABC):
         if isinstance(config, JAHSConfig):
             config = config.dict()
 
-        results = self.bench.__call__(config, nepochs=to, full_trajectory=True)
+        try:
+            results = self.bench.__call__(config, nepochs=to, full_trajectory=True)
+        except TypeError:
+            # See: https://github.com/automl/jahs_bench_201/issues/5
+            results = [
+                self.bench.__call__(config, nepochs=f)
+                for f in self.iter_fidelities(frm=frm, to=to, step=step)
+            ]
 
         return [
             JAHSResult.from_dict(
