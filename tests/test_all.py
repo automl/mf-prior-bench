@@ -89,6 +89,7 @@ def test_result_api_validity(benchmark: Benchmark) -> None:
     result = benchmark.query(sample)
 
     assert result.score is not None
+    assert result.error is not None
     assert result.fidelity is not None
 
     if isinstance(benchmark, MFHartmannBenchmark):

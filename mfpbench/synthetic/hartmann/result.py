@@ -43,7 +43,12 @@ class MFHartmannResult(Result[C, int]):
 
     @property
     def score(self) -> float:
-        """NA"""
+        """The score of interest"""
+        return -self.value
+
+    @property
+    def error(self) -> float:
+        """The score of interest"""
         return self.value
 
     @property

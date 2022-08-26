@@ -81,6 +81,11 @@ class LCBenchResult(YAHPOResult):
         return self.val_balanced_accuracy
 
     @property
+    def error(self) -> float:
+        """The error of interest"""
+        return 1 - self.val_balanced_accuracy
+
+    @property
     def test_score(self) -> float:
         """The score on the test set"""
         return self.test_balanced_accuracy

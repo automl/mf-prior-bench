@@ -44,14 +44,19 @@ class Result(ABC, Generic[C, F]):
     @property
     @abstractmethod
     def score(self) -> float:
-        """The score of interest for comparison"""
+        """The score of interest"""
+        ...
+
+    @property
+    @abstractmethod
+    def error(self) -> float:
+        """The error of interest"""
         ...
 
     @property
     @abstractmethod
     def test_score(self) -> float:
         """The score on the test set"""
-
         ...
 
     @property
