@@ -65,6 +65,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
             n_fidelities=self.end,
             fidelity_noise=self.noise,
             fidelity_bias=self.bias,
+            seed=self.seed,
         )
         self._configspace: ConfigurationSpace | None = None
 

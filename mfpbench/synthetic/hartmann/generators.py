@@ -17,7 +17,17 @@ class MFHartmannGenerator(ABC):
 
     optimum: tuple[float, ...]
 
-    def __init__(self, n_fidelities: int, fidelity_bias: float, fidelity_noise: float):
+    # We need some kind of seed so that using the same config twice at the same fidelity
+    # will have the same noise
+    _default_seed: int = 1337
+
+    def __init__(
+        self,
+        n_fidelities: int,
+        fidelity_bias: float,
+        fidelity_noise: float,
+        seed: int | None = None,
+    ):
         """
         Parameters
         ----------
@@ -31,8 +41,10 @@ class MFHartmannGenerator(ABC):
             Amount of noise, decreasing linearly (in st.dev.) with fidelity.
         """
         self.z_min, self.z_max = (1, n_fidelities)
+        self.seed = seed if seed else self._default_seed
         self.bias = fidelity_bias
         self.noise = fidelity_noise
+        self.random_state = np.random.default_rng(seed)
 
     def __call__(self, z: int, Xs: tuple[float, ...]) -> float:
         """
@@ -101,7 +113,8 @@ class MFHartmann3(MFHartmannGenerator):
         # H_true = -(np.sum(alpha * np.exp(-inner_sum), axis=-1))
 
         # and add some noise
-        noise = np.random.normal(size=H.size) * self.noise * (1 - norm_z)
+        rng = np.random.default_rng(seed=self.seed)
+        noise = rng.normal(size=H.size) * self.noise * (1 - norm_z)
         return (H + noise)[0]
 
 
@@ -157,5 +170,6 @@ class MFHartmann6(MFHartmannGenerator):
         # H_true = -(np.sum(alpha * np.exp(-inner_sum), axis=-1))
 
         # and add some noise
-        noise = np.random.normal(size=H.size) * self.noise * (1 - norm_z)
+        rng = np.random.default_rng(seed=self.seed * z)
+        noise = rng.normal(size=H.size) * self.noise * (1 - norm_z)
         return (H + noise)[0]
