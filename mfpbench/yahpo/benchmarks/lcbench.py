@@ -37,7 +37,7 @@ class LCBenchConfig(YAHPOConfig):
 
 
 @dataclass
-class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
+class LCBenchResult(YAHPOResult):
     epoch: int
 
     time: float  # unit?
@@ -97,7 +97,7 @@ class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
         return self.time
 
 
-class LCBenchBenchmark(YAHPOBenchmark[LCBenchConfig, LCBenchResult, int]):
+class LCBenchBenchmark(YAHPOBenchmark):
     name = "lcbench"
     fidelity_name = "epoch"
     fidelity_range = (1, 52, 1)

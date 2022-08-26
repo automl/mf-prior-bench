@@ -87,7 +87,7 @@ class Benchmark(Generic[C, R, F], ABC):
 
         Parameters
         ----------
-        query: C | dict | Configuration
+        config: C | dict | Configuration
             The query to use
 
         at: F | None = None

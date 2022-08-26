@@ -113,7 +113,7 @@ class JAHSBenchmark(Benchmark, ABC):
             The result for the config at the given epoch
         """
         at = at if at is not None else self.end
-        assert 1 <= at <= 200
+        assert self.start <= at <= self.end
 
         if isinstance(config, Configuration):
             config = {**config}
@@ -159,13 +159,14 @@ class JAHSBenchmark(Benchmark, ABC):
         list[JAHSResult]
             The results over that trajectory
         """
+        to = to if to is not None else self.end
+
         if isinstance(config, Configuration):
             config = {**config}
 
         if isinstance(config, JAHSConfig):
             config = config.dict()
 
-        to = to if to is not None else self.end
         results = self.bench.__call__(config, nepochs=to, full_trajectory=True)
 
         return [

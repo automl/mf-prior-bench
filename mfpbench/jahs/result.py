@@ -8,7 +8,7 @@ from mfpbench.result import Result
 
 
 @dataclass  # type: ignore[misc]
-class JAHSResult(Result[JAHSConfig, int]):
+class JAHSResult(Result):
     epoch: int
 
     # Info
