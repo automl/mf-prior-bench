@@ -99,6 +99,7 @@ module = [
     "pandas.*",
     "jahs_bench.*",
     "yahpo_gym.*",
+    "pytest.*",
 ]
 ignore_missing_imports = true
 
