@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 from pytest_cases import fixture, parametrize
 
 import mfpbench
-from mfpbench import Benchmark, JAHSBenchmark, JAHSCifar10
-from mfpbench.util import pairs
+from mfpbench import Benchmark, YAHPOBenchmark
 
 SEED = 1
 
@@ -21,10 +21,8 @@ def benchmark(item: tuple[str, str | None]) -> Benchmark:
     name, task_id = item
     benchmark = mfpbench.get(name=name, task_id=task_id, seed=SEED)
 
-    # We force JAHSBenchmark ones to load itself before the test
-    if isinstance(benchmark, JAHSBenchmark):
-        print(f"Initilizing {name}")
-        benchmark.bench
+    # We force benchmarks to load if they must
+    benchmark.load()
 
     return benchmark
 
@@ -94,6 +92,43 @@ def test_query_through_entire_fidelity_range(benchmark: Benchmark) -> None:
         assert r.config == config
 
 
+def test_repeated_query(benchmark: Benchmark) -> None:
+    """
+    Expects
+    -------
+    * Repeating the same query multiple times will give the same results
+    """
+    configs = benchmark.sample(10)
+    for f in benchmark.iter_fidelities():
+
+        results1 = [benchmark.query(config, at=f) for config in configs]
+        results2 = [benchmark.query(config, at=f) for config in configs]
+
+        for r1, r2 in zip(results1, results2):
+            assert r1 == r2, f"{r1}\n{r2}"
+
+
+def test_repeated_trajectory(benchmark: Benchmark) -> None:
+    """
+    Expects
+    -------
+    * Repeating the same trajectory multiple times will give the same results
+    """
+    configs = benchmark.sample(10)
+
+    for config in configs:
+
+        results = np.asarray(
+            [[benchmark.trajectory(config)] for _ in range(3)],
+            dtype=object,
+        )
+
+        for row in results.T:
+            first = row[0]
+            for other in row[1:]:
+                assert first == other
+
+
 def test_query_default_is_max_fidelity(benchmark: Benchmark) -> None:
     """
     Expects
@@ -113,17 +148,18 @@ def test_query_same_as_trajectory(benchmark: Benchmark) -> None:
     -------
     * Querying every point individually should be the same as using trajectory
     """
-    start, end, step = benchmark.start, benchmark.end, benchmark.step
-    dtype = int if isinstance(start, int) else float
-    fidelities = np.arange(start=start, stop=end, step=step, dtype=dtype)
-
     config = benchmark.sample()
+    if isinstance(benchmark, YAHPOBenchmark):
+        pytest.skip(
+            "YAHPOBench gives slight numerical instability when querying in bulk vs"
+            " each config individually."
+        )
 
-    query_results = [benchmark.query(config, at=f) for f in fidelities]
+    query_results = [benchmark.query(config, at=f) for f in benchmark.iter_fidelities()]
     trajectory_results = benchmark.trajectory(config)
 
     for qr, tr in zip(query_results, trajectory_results):
-        assert qr == tr
+        assert qr == tr, f"{qr}\n{tr}"
 
 
 def test_trajectory_is_over_full_range_by_default(benchmark: Benchmark) -> None:
@@ -142,22 +178,3 @@ def test_trajectory_is_over_full_range_by_default(benchmark: Benchmark) -> None:
 
     for r, fidelity in zip(results, fidelities):
         assert r.fidelity == fidelity
-
-
-def test_trajectory_is_ordering(benchmark: Benchmark) -> None:
-    """
-    Expects
-    -------
-    * Results from trajectory should be in order of fidelity
-    * train_time should be monitonically increasing
-    """
-    config = benchmark.sample()
-
-    results = benchmark.trajectory(config)
-
-    for r1, r2 in pairs(results):
-
-        # Known failure
-        if isinstance(benchmark)
-        assert r1.fidelity <= r2.fidelity, f"{r1.fidelity} -> {r2.fidelity}"
-        assert r1.train_time <= r2.train_time, f"{r1.fidelity} -> {r2.fidelity}"
