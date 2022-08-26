@@ -18,7 +18,8 @@ jahs-bench = {git = "https://github.com/automl/jahs_bench_201.git", rev = "3cd00
 
 [tool.poetry.dev-dependencies]
 pytest = "4.6"
-pytest-cov = "^3.0.0"
+pytest-cov = "^3"
+pytest-cases = "^3"
 automl-sphinx-theme = "^0.1.12"
 isort = "^5.10.1"
 black = "^22.6.0"

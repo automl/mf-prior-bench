@@ -27,6 +27,7 @@ extras_require = {
         "pytest-cov",
         "pytest-xdist",
         "pytest-timeout",
+        "pytest-cases"
         # Docs
         "automl_sphinx_theme",
         # Others
