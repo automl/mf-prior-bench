@@ -211,7 +211,7 @@ class MFHartmann3BenchmarkModerate(MFHartmann3Benchmark):
     bias_noise = (1.0, 0.2)
 
 
-class MFHartmann3BenchmarkGood(MFHartmannBenchmark):
+class MFHartmann3BenchmarkGood(MFHartmann3Benchmark):
     bias_noise = (0.5, 0.1)
 
 
@@ -235,5 +235,5 @@ class MFHartmann6BenchmarkModerate(MFHartmann6Benchmark):
     bias_noise = (1.0, 0.2)
 
 
-class MFHartmann6BenchmarkGood(MFHartmannBenchmark):
+class MFHartmann6BenchmarkGood(MFHartmann6Benchmark):
     bias_noise = (0.5, 0.1)
