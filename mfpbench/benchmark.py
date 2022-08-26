@@ -22,14 +22,19 @@ class Benchmark(Generic[C, R, F], ABC):
     """Base class for a Benchmark"""
 
     fidelity_range: tuple[F, F, F]
+    fidelity_name: str
     Config: type[C]
     Result: type[R]
 
-    def __init__(self, seed: int | None = None):
+    def __init__(self, seed: int | None = None, fidelity_in_config: bool = False):
         self.seed = seed
         self.start: F = self.fidelity_range[0]
         self.end: F = self.fidelity_range[1]
         self.step: F = self.fidelity_range[2]
+
+    def load(self) -> None:
+        """Explicitly load the benchmark before querying, optional"""
+        pass
 
     @abstractmethod
     def query(self, config: C | dict | Configuration, at: F | None = None) -> R:

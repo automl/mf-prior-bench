@@ -34,7 +34,12 @@ class JAHSBenchmark(Benchmark, ABC):
     # Where the data for jahsbench should be located relative to the path given
     _default_download_dir: Path = DATAROOT / "jahs-bench-data"
 
-    def __init__(self, *, datadir: str | Path | None = None, seed: int | None = None):
+    def __init__(
+        self,
+        *,
+        datadir: str | Path | None = None,
+        seed: int | None = None,
+    ):
         """
         Parameters
         ----------
@@ -60,6 +65,15 @@ class JAHSBenchmark(Benchmark, ABC):
         # Loaded on demand with `@property`
         self._bench: jahs_bench.Benchmark | None = None
         self._configspace = jahs_configspace(self.seed)
+
+    # explicit overwrite
+    def load(self) -> None:
+        """Pre-load JAHS XGBoost model before querying the first time"""
+        self._bench = jahs_bench.Benchmark(
+            task=self.task,
+            save_dir=self.datadir,
+            download=False,
+        )
 
     @property
     def bench(self) -> jahs_bench.Benchmark:
