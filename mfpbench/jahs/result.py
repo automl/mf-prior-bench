@@ -59,6 +59,11 @@ class JAHSResult(Result):
         )
 
     @property
+    def score(self) -> float:
+        """The score of interest"""
+        return self.valid_acc
+
+    @property
     def test_score(self) -> float:
         """The score on the test set"""
         return self.test_acc

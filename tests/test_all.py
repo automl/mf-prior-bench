@@ -7,7 +7,7 @@ import pytest
 from pytest_cases import fixture, parametrize
 
 import mfpbench
-from mfpbench import Benchmark, YAHPOBenchmark
+from mfpbench import Benchmark, MFHartmannBenchmark, YAHPOBenchmark
 
 SEED = 1
 
@@ -75,6 +75,28 @@ def test_query_api_validity(benchmark: Benchmark) -> None:
     configspace_sample_dict = {**configspace_sample}
     result = benchmark.query(configspace_sample_dict)
     assert result.config == configspace_sample_dict
+
+
+def test_result_api_validity(benchmark: Benchmark) -> None:
+    """
+    Expects
+    -------
+    * Can get all relevant metrics
+    * Can query from a Configuration from config space
+    * Can query with the dict version of either of the above
+    """
+    sample = benchmark.sample()
+    result = benchmark.query(sample)
+
+    assert result.score is not None
+    assert result.fidelity is not None
+
+    if isinstance(benchmark, MFHartmannBenchmark):
+        # These don't make sense for a synthetic benchmark which doesn't
+        # train anything
+        assert result.val_score is not None
+        assert result.test_score is not None
+        assert result.train_time is not None
 
 
 def test_query_through_entire_fidelity_range(benchmark: Benchmark) -> None:
