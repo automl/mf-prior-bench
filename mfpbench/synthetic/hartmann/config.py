@@ -16,9 +16,9 @@ class MFHartmann3Config(MFHartmannConfig):
 
     def validate(self) -> None:
         """Validate this config"""
-        assert isinstance(self.X_0, float)
-        assert isinstance(self.X_1, float)
-        assert isinstance(self.X_2, float)
+        assert 0.0 <= self.X_0 <= 1.0
+        assert 0.0 <= self.X_1 <= 1.0
+        assert 0.0 <= self.X_2 <= 1.0
 
 
 @dataclass(frozen=True, eq=False)  # type: ignore[misc]
@@ -32,9 +32,9 @@ class MFHartmann6Config(MFHartmannConfig):
 
     def validate(self) -> None:
         """Validate this config"""
-        assert isinstance(self.X_0, float)
-        assert isinstance(self.X_1, float)
-        assert isinstance(self.X_2, float)
-        assert isinstance(self.X_3, float)
-        assert isinstance(self.X_4, float)
-        assert isinstance(self.X_5, float)
+        assert 0.0 <= self.X_0 <= 1.0
+        assert 0.0 <= self.X_1 <= 1.0
+        assert 0.0 <= self.X_2 <= 1.0
+        assert 0.0 <= self.X_3 <= 1.0
+        assert 0.0 <= self.X_4 <= 1.0
+        assert 0.0 <= self.X_5 <= 1.0
