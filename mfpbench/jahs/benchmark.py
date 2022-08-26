@@ -145,31 +145,27 @@ class JAHSBenchmark(Benchmark, ABC):
         config : JAHSConfig | dict[str, Any] | Configuration
             The config to query
 
-        frm : int | None = None
-            The start of the trajectory to query from, defaults to 1
+        frm: int | None = None
+            Start of the curve, defaults to the minimum fidelity (1)
 
-        to : int | None = None
-            The end of the trajectory to query to, defaults to 200
+        to: int | None = None
+            End of the curve, defaults to the maximum fidelity (200)
 
         step: int | None = None
-            The step size to take, defaults to 1
+            Step size, defaults to benchmark standard (1 for epoch)
 
         Returns
         -------
         list[JAHSResult]
             The results over that trajectory
         """
-        frm = frm if frm is not None else self.start
-        to = to if to is not None else self.end
-        step = step if step is not None else self.step
-        assert self.start <= frm <= to <= self.end
-
         if isinstance(config, Configuration):
             config = {**config}
 
         if isinstance(config, JAHSConfig):
             config = config.dict()
 
+        to = to if to is not None else self.end
         results = self.bench.__call__(config, nepochs=to, full_trajectory=True)
 
         return [
@@ -178,7 +174,7 @@ class JAHSBenchmark(Benchmark, ABC):
                 result=results[i],
                 fidelity=i,
             )
-            for i in range(frm, to + 1, step)
+            for i in self.iter_fidelities(frm=frm, to=to, step=step)
         ]
 
 

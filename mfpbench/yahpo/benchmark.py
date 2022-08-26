@@ -4,7 +4,6 @@ from typing import Any, TypeVar
 
 from pathlib import Path
 
-import numpy as np
 import yahpo_gym
 from ConfigSpace import Configuration, ConfigurationSpace
 
@@ -129,20 +128,17 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
         assert isinstance(config, dict), "I assume this is the case by here?"
 
-        config[self.fidelity_name] = at
+        if self.fidelity_name in config:
+            msg = f"``query(config, at=...)`` for fidelity, not the config {config}"
+            raise ValueError(msg)
+
+        query: dict = {**config, self.fidelity_name: at}
 
         if self.task_id is not None:
-            config["OpenML_task_id"] = self.task_id
+            query["OpenML_task_id"] = self.task_id
 
-        result: list[dict] = self.bench.objective_function(
-            configuration=config,
-            seed=self.seed,
-        )
-        result = result[0]
-
-        del config[self.fidelity_name]
-        if "OpenML_task_id" in config:
-            del config["OpenML_task_id"]
+        results: list[dict] = self.bench.objective_function(query, seed=self.seed)
+        result = results[0]
 
         return self.Result.from_dict(
             config=self.Config(**config), result=result, fidelity=at
@@ -164,25 +160,19 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             The config to query
 
         frm: F | None = None
-            Start of the curve, should default to the start
+            Start of the curve, defaults to the minimum fidelity
 
         to: F | None = None
-            End of the curve, should default to the total
+            End of the curve, defaults to the maximum fidelity
 
         step: F | None = None
-            Step size to traverse, should default to ``cls.fidelity_range`` which
-            is ``(start, stop, step)``
+            Step size, defaults to benchmark standard (1 for epoch)
 
         Returns
         -------
         list[R]
             A list of the results for this config
         """
-        frm = frm if frm is not None else self.start
-        to = to if to is not None else self.end
-        step = step if step is not None else self.step
-        assert self.start <= frm <= to <= self.end
-
         if isinstance(config, Configuration):
             config = {**config}
 
@@ -191,21 +181,21 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
         assert isinstance(config, dict), "I assume this should be the case by here"
 
-        fidelities = np.arange(frm, to + step, step)
-
-        # Note: Clamping floats on arange
-        #
-        #   There's an annoying detail about floats here, essentially we could over
-        #   (frm=0.03, to + step = 1+ .05, step=0.5) -> [0.03, 0.08, ..., 1.03]
-        #   We just clamp this to the last fidelity
-        #
-        #   This does not effect ints
-        if isinstance(step, float) and fidelities[-1] >= self.end:
-            fidelities[-1] = self.end
+        if self.fidelity_name in config:
+            msg = "``trajectory(config, frm=..., to=..., step=...)`` not config"
+            raise ValueError(msg)
 
         # Copy same config and insert fidelities for each
-        queries = [{**config, self.fidelity_name: f} for f in fidelities]
-        results = self.bench.objective_function(queries)
+        queries: list[dict] = [
+            {**config, self.fidelity_name: f}
+            for f in self.iter_fidelities(frm=frm, to=to, step=step)
+        ]
+
+        if self.task_id is not None:
+            for q in queries:
+                q["OpenML_task_id"] = self.task_id
+
+        results = self.bench.objective_function(queries, seed=self.seed)
 
         return [
             self.Result.from_dict(
