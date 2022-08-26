@@ -11,8 +11,8 @@ from mfpbench import Benchmark, YAHPOBenchmark
 
 SEED = 1
 
-# We can get all the benchmarks her
-available_benchmarks = [(name, task_id) for name, _, task_id in mfpbench.available()]
+# We can get all the benchmarks here
+available_benchmarks = [(name, params) for name, _, params in mfpbench.available()]
 
 
 # We expect the default download location for each
@@ -20,10 +20,10 @@ available_benchmarks = [(name, task_id) for name, _, task_id in mfpbench.availab
 @parametrize(item=available_benchmarks)
 def benchmark(item: tuple[str, dict[str, Any] | None]) -> Benchmark:
     """The JAHSBench series of benchmarks"""
-    name, extra = item
-    if extra is None:
-        extra = {}
-    benchmark = mfpbench.get(name=name, seed=SEED, **extra)
+    name, params = item
+    if params is None:
+        params = {}
+    benchmark = mfpbench.get(name=name, seed=SEED, **params)
 
     # We force benchmarks to load if they must
     benchmark.load()
