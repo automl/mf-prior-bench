@@ -171,10 +171,10 @@ class JAHSBenchmark(Benchmark, ABC):
             results = self.bench.__call__(config, nepochs=to, full_trajectory=True)
         except TypeError:
             # See: https://github.com/automl/jahs_bench_201/issues/5
-            results = [
-                self.bench.__call__(config, nepochs=f)
+            results = {
+                f: self.bench.__call__(config, nepochs=f)[f]
                 for f in self.iter_fidelities(frm=frm, to=to, step=step)
-            ]
+            }
 
         return [
             JAHSResult.from_dict(
