@@ -11,8 +11,6 @@ from mfpbench.jahs import (
     JAHSColorectalHistology,
     JAHSFashionMNIST,
 )
-from mfpbench.yahpo import LCBenchBenchmark, YAHPOBenchmark
-
 from mfpbench.synthetic.hartmann import (
     MFHartmann3Benchmark,
     MFHartmann3BenchmarkBad,
@@ -26,6 +24,7 @@ from mfpbench.synthetic.hartmann import (
     MFHartmann6BenchmarkTerrible,
     MFHartmannBenchmark,
 )
+from mfpbench.yahpo import LCBenchBenchmark, YAHPOBenchmark
 
 name = "mf-prior-bench"
 package_name = "mfpbench"
@@ -143,7 +142,7 @@ def get(name: str, seed: int | None = None, **kwargs: Any) -> Benchmark:
     raise RuntimeError("Whoops, please fix me")
 
 
-def available() -> Iterator[tuple[str, type[Benchmark], str | None]]:
+def available() -> Iterator[tuple[str, type[Benchmark], dict[str, Any] | None]]:
     """Iterate over all the possible instantiations of a benchmark
 
     Returns
@@ -155,11 +154,15 @@ def available() -> Iterator[tuple[str, type[Benchmark], str | None]]:
             yield k, v, None
         elif issubclass(v, YAHPOBenchmark):
             if v.instances is not None:
-                yield from ((k, v, task) for task in v.instances)
+                yield from ((k, v, {"task_id": task}) for task in v.instances)
             else:
                 yield (k, v, None)
+        elif issubclass(v, MFHartmannBenchmark):
+            bias, noise = v.bias_noise
+            extra = {"bias": bias, "noise": noise}
+            yield (k, v, extra)
         else:
-            yield (k, v, None)
+            raise NotImplementedError("Whoops, fix me")
     return
 
 
@@ -202,5 +205,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.benchmarks is True:
-        for name, cls, task in available():
-            print(f"get(name={name}, task_id={task}) -> {cls.__name__}")
+        for name, cls, extra in available():
+            if extra is None:
+                print(f"get(name={name}) -> {cls.__name__}")
+            elif issubclass(cls, MFHartmannBenchmark) and any(
+                s in name for s in ["terrible", "good", "moderate", "bad"]
+            ):
+                print(f"get(name={name}) -> {cls.__name__}")
+            else:
+                kv_str = ", ".join([f"{k}={v}" for k, v in extra.items()])
+                print(f"get(name={name}, {kv_str}) -> {cls.__name__}")

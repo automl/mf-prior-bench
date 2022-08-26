@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pytest
 from pytest_cases import fixture, parametrize
@@ -16,10 +18,12 @@ available_benchmarks = [(name, task_id) for name, _, task_id in mfpbench.availab
 # We expect the default download location for each
 @fixture(scope="module")
 @parametrize(item=available_benchmarks)
-def benchmark(item: tuple[str, str | None]) -> Benchmark:
+def benchmark(item: tuple[str, dict[str, Any] | None]) -> Benchmark:
     """The JAHSBench series of benchmarks"""
-    name, task_id = item
-    benchmark = mfpbench.get(name=name, task_id=task_id, seed=SEED)
+    name, extra = item
+    if extra is None:
+        extra = {}
+    benchmark = mfpbench.get(name=name, seed=SEED, **extra)
 
     # We force benchmarks to load if they must
     benchmark.load()
