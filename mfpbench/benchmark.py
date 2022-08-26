@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, overload
+from typing import Generic, Iterator, TypeVar, overload
 
+import numpy as np
 from ConfigSpace import Configuration, ConfigurationSpace
 
 from mfpbench.config import Config
@@ -26,11 +27,55 @@ class Benchmark(Generic[C, R, F], ABC):
     Config: type[C]
     Result: type[R]
 
-    def __init__(self, seed: int | None = None, fidelity_in_config: bool = False):
+    def __init__(self, seed: int | None = None):
         self.seed = seed
         self.start: F = self.fidelity_range[0]
         self.end: F = self.fidelity_range[1]
         self.step: F = self.fidelity_range[2]
+
+    def iter_fidelities(
+        self,
+        frm: F | None = None,
+        to: F | None = None,
+        step: F | None = None,
+    ) -> Iterator[F]:
+        """Iterate through the advertised fidelity space of the benchmark
+
+        Parameters
+        ----------
+        frm: F | None = None
+            Start of the curve, defaults to the minimum fidelity
+
+        to: F | None = None
+            End of the curve, defaults to the maximum fidelity
+
+        step: F | None = None
+            Step size, defaults to benchmark standard (1 for epoch)
+
+        Returns
+        -------
+        Iterator[F]
+            Returns an iterator over the fidelities
+        """
+        frm = frm if frm is not None else self.start
+        to = to if to is not None else self.end
+        step = step if step is not None else self.step
+        assert self.start <= frm <= to <= self.end
+
+        dtype = int if isinstance(frm, int) else float
+        fidelities = np.arange(start=frm, stop=(to + step), step=step, dtype=dtype)
+
+        # Note: Clamping floats on arange
+        #
+        #   There's an annoying detail about floats here, essentially we could over
+        #   (frm=0.03, to + step = 1+ .05, step=0.5) -> [0.03, 0.08, ..., 1.03]
+        #   We just clamp this to the last fidelity
+        #
+        #   This does not effect ints
+        if isinstance(step, float) and fidelities[-1] >= self.end:
+            fidelities[-1] = self.end
+
+        yield from fidelities
 
     def load(self) -> None:
         """Explicitly load the benchmark before querying, optional"""

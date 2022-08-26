@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from typing import Iterator
+from typing import Any, Iterator
 
 import datetime
-from pathlib import Path
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.jahs import (
@@ -28,19 +27,14 @@ copyright = f"Copyright {datetime.date.today().strftime('%Y')}, bobby1 and bobby
 version = "0.0.1"
 
 _mapping: dict[str, type[Benchmark]] = {
-    "jahs_cifar_10": JAHSCifar10,
+    "jahs_cifar10": JAHSCifar10,
     "jahs_colorectal_histology": JAHSColorectalHistology,
     "jahs_fashion_mnist": JAHSFashionMNIST,
     "lcbench": LCBenchBenchmark,
 }
 
 
-def get(
-    name: str,
-    task_id: str | None = None,
-    datadir: str | Path | None = None,
-    seed: int | None = None,
-) -> Benchmark:
+def get(name: str, seed: int | None = None, **kwargs: Any) -> Benchmark:
     """Get a benchmark
 
     ```python
@@ -65,30 +59,47 @@ def get(
     name : str
         The name of the benchmark
 
-    task_id : str | None = None
-        A task id if it's an instance of a YAHPO benchmark, must be provided if a YAHPO
-        benchmark
-
-    datadir: str | Path | None = None
-        Path to where the benchmark should look for data if it does. Defaults to
-        "./data/<benchmark-specific>"
-
     seed: int | None = None
         The seed to use
+
+    **kwargs: Any
+        Extra arguments, optional or required for other benchmarks
+
+        YAHPOBenchmark
+        --------------
+        datadir: str | Path | None = None
+            Path to where the benchmark should look for data if it does. Defaults to
+            "./data/yahpo-gym-data"
+
+        task_id : str | None = None
+            A task id if the yahpo bench requires one
+
+        JAHSBenchmark
+        -------------
+        datadir: str | Path | None = None
+            Path to where the benchmark should look for data if it does. Defaults to
+            "./data/jahs-bench-data"
     """
     b = _mapping.get(name, None)
     if b is None:
         raise ValueError(f"{name} is not a benchmark in {list(_mapping.keys())}")
 
     if issubclass(b, JAHSBenchmark):
-        if task_id is not None:
-            raise ValueError(f"jahs-bench doesn't take a task_id ({task_id})")
+        if kwargs.get("task_id") is not None:
+            raise ValueError(f"jahs-bench doesn't take a task_id ({kwargs['task_id']})")
 
-        return b(datadir=datadir, seed=seed)
+        return b(
+            seed=seed,
+            datadir=kwargs.get("datadir"),
+        )
 
     # TODO: this might have to change, not sure if all yahpo benchmarks have a task
     if issubclass(b, YAHPOBenchmark):
-        return b(task_id=task_id, datadir=datadir, seed=seed)
+        return b(
+            seed=seed,
+            datadir=kwargs.get("datadir"),
+            task_id=kwargs.get("task_id"),
+        )
 
     raise RuntimeError("Whoops, please fix me")
 
