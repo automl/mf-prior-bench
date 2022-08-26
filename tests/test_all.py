@@ -168,13 +168,8 @@ def test_trajectory_is_over_full_range_by_default(benchmark: Benchmark) -> None:
     -------
     * The trajectory should by default go from the start fidelity to the max
     """
-    start, end, step = benchmark.start, benchmark.end, benchmark.step
-    dtype = int if isinstance(start, int) else float
-    fidelities = np.arange(start=start, stop=end, step=step, dtype=dtype)
-
     config = benchmark.sample()
-
     results = benchmark.trajectory(config)
 
-    for r, fidelity in zip(results, fidelities):
+    for r, fidelity in zip(results, benchmark.iter_fidelities()):
         assert r.fidelity == fidelity
