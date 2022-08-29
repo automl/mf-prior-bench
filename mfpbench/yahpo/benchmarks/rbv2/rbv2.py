@@ -20,7 +20,7 @@ class RBV2Config(YAHPOConfig):
 @dataclass  # type: ignore[misc]
 class RBV2Result(YAHPOResult):
     # Fidelity
-    train_size: float
+    trainsize: float
 
     acc: float
     bac: float
@@ -58,7 +58,7 @@ class RBV2Result(YAHPOResult):
         -------
         RBV2Result
         """
-        return RBV2Result(train_size=fidelity, config=config, **result)
+        return RBV2Result(trainsize=fidelity, config=config, **result)
 
     @property
     def score(self) -> float:
@@ -83,7 +83,7 @@ class RBV2Result(YAHPOResult):
     @property
     def fidelity(self) -> float:
         """The fidelity used"""
-        return self.train_size
+        return self.trainsize
 
     @property
     def train_time(self) -> float:
@@ -94,7 +94,7 @@ class RBV2Result(YAHPOResult):
 class RBV2Benchmark(YAHPOBenchmark):
     # RVB2 class of benchmarks share train size as fidelity
     fidelity_range = (0.03, 1.0, 0.05)
-    fidelity_name = "train_size"
+    fidelity_name = "trainsize"
     _task_id_name = "task_id"
 
     # We have to specify a repl number, not sure what it is but YAHPO gym fix it to 10

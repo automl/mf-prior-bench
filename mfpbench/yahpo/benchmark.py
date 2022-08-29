@@ -46,7 +46,6 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
     # Any hyperparameters that should be forcefully deleted from the space
     # but have default values filled in
     _forced_hps: dict[str, int | float | str] | None = None
-
     # Any replacements that need to be done in hyperparameters
     # [(dataclass_version, dict_version)]
     _replacements_hps: list[tuple[str, str]] | None = None
@@ -106,8 +105,10 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             space = remove_hyperparameter(self._task_id_name, space)
 
         if self._forced_hps is not None:
+            names = space.get_hyperparameter_names()
             for key in self._forced_hps:
-                space = remove_hyperparameter(key, space)
+                if key in names:
+                    space = remove_hyperparameter(key, space)
 
         self.bench = bench
         self.datadir = datadir
@@ -150,7 +151,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             raise ValueError(msg)
 
         # Unfortunatly we need to do some simple renaming for any keys with a `.` in it
-        query = {k.replace(".", "__"): v for k, v in config.items()}
+        query = {**config}
         query[self.fidelity_name] = at
 
         if self._forced_hps is not None:
@@ -173,7 +174,9 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
                 config[to] = config.pop(frm)
 
         return self.Result.from_dict(
-            config=self.Config(**config), result=result, fidelity=at
+            config=self.Config.from_dict(config),
+            result=result,
+            fidelity=at,
         )
 
     def trajectory(
@@ -217,8 +220,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             msg = "``trajectory(config, frm=..., to=..., step=...)`` not config"
             raise ValueError(msg)
 
-        # Need to replace any conditonal/nested hps connector
-        query = {k.replace(".", "__"): v for k, v in config.items()}
+        query = {**config}
 
         if self.task_id is not None:
             assert self._task_id_name is not None

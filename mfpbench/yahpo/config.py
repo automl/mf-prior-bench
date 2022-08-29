@@ -15,7 +15,8 @@ class YAHPOConfig(Config):
     def from_dict(cls: type[Self], d: Mapping[str, Any]) -> Self:
         """Create from a dict or mapping object"""
         # We may have keys that are conditional and hence we need to flatten them
-        return cls(**{k.replace(".", "__"): v for k, v in d.items()})
+        config = {k.replace(".", "__"): v for k, v in d.items()}
+        return cls(**config)
 
     def dict(self) -> dict[str, Any]:
         """Converts the config to a raw dictionary"""

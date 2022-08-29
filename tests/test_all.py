@@ -9,7 +9,7 @@ import pytest
 from pytest_cases import fixture, parametrize
 
 import mfpbench
-from mfpbench import Benchmark, MFHartmannBenchmark, YAHPOBenchmark
+from mfpbench import Benchmark, YAHPOBenchmark
 
 SEED = 1
 CONDITONALS = False  # We currently can't do these
@@ -105,12 +105,7 @@ def test_result_api_validity(benchmark: Benchmark) -> None:
     assert result.error is not None
     assert result.fidelity is not None
 
-    if isinstance(benchmark, MFHartmannBenchmark):
-        # These don't make sense for a synthetic benchmark which doesn't
-        # train anything
-        assert result.val_score is not None
-        assert result.test_score is not None
-        assert result.train_time is not None
+    # There are others but it's not garunteed to be contained
 
 
 def test_query_through_entire_fidelity_range(benchmark: Benchmark) -> None:
