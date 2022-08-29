@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 from pytest_cases import fixture, parametrize
@@ -10,9 +12,16 @@ import mfpbench
 from mfpbench import Benchmark, MFHartmannBenchmark, YAHPOBenchmark
 
 SEED = 1
+CONDITONALS = False  # We currently can't do these
+
+# Edit this if you have data elsewhere
+HERE = Path(__file__).parent.resolve()
+DATADIR: Path | None = None
 
 # We can get all the benchmarks here
-available_benchmarks = [(name, params) for name, _, params in mfpbench.available()]
+available_benchmarks = [
+    (name, params) for name, _, params in mfpbench.available(conditionals=CONDITONALS)
+]
 
 
 # We expect the default download location for each
@@ -23,7 +32,11 @@ def benchmark(item: tuple[str, dict[str, Any] | None]) -> Benchmark:
     name, params = item
     if params is None:
         params = {}
-    benchmark = mfpbench.get(name=name, seed=SEED, **params)
+
+    if DATADIR is None:
+        benchmark = mfpbench.get(name=name, seed=SEED, **params)
+    else:
+        benchmark = mfpbench.get(name=name, seed=SEED, datadir=DATADIR, **params)
 
     # We force benchmarks to load if they must
     benchmark.load()

@@ -38,6 +38,12 @@ def remove_hyperparameter(name: str, space: ConfigurationSpace) -> Configuration
     if name not in space._hyperparameters:
         raise ValueError(f"{name} not in {space}")
 
+    if any(space.get_conditions()):
+        raise NotImplementedError("We do not handle conditionals for now")
+
+    if any(space.get_forbiddens()):
+        raise NotImplementedError("We do not handle forbiddems for now")
+
     # Copying conditionals only work on objects and not named entities
     # Seeing as we copy objects and don't use the originals, transfering these
     # to the new objects is a bit tedious, possible but not required at this time
@@ -61,6 +67,7 @@ def remove_hyperparameter(name: str, space: ConfigurationSpace) -> Configuration
         meta=copy(space.meta),
     )
     new_space.add_hyperparameters(hps)
+
     return new_space
 
 

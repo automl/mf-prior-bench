@@ -35,7 +35,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 testpaths = ["tests"]             # path to the test directory
 minversion = "3.7"
-addopts = "--cov=mfpbench" # Should be package name
+# addopts = "--cov=mfpbench" # Should be package name
 
 [tool.coverage.run]
 branch = true

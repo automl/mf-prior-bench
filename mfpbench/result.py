@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Any, Generic, Mapping, TypeVar
 
 from dataclasses import dataclass
 
@@ -25,7 +25,12 @@ class Result(ABC, Generic[C, F]):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls: type[SelfT], config: C, result: dict, fidelity: F) -> SelfT:
+    def from_dict(
+        cls: type[SelfT],
+        config: C,
+        result: Mapping[str, Any],
+        fidelity: F,
+    ) -> SelfT:
         """
 
         Parameters
@@ -33,7 +38,7 @@ class Result(ABC, Generic[C, F]):
         config : C
             THe config which generated this result
 
-        result : dict
+        result : Mapping[str, Any]
             The results themselves
 
         fidelity : F

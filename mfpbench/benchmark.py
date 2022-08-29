@@ -22,10 +22,16 @@ F = TypeVar("F", int, float)
 class Benchmark(Generic[C, R, F], ABC):
     """Base class for a Benchmark"""
 
+    # The fidelity range and name of this benchmark
     fidelity_range: tuple[F, F, F]
     fidelity_name: str
+
+    # The config and result type of this benchmark
     Config: type[C]
     Result: type[R]
+
+    # Whether this benchmark has conditonals in it or not
+    has_conditionals: bool = False
 
     def __init__(self, seed: int | None = None):
         self.seed = seed

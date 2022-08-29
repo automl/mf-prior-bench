@@ -24,7 +24,17 @@ from mfpbench.synthetic.hartmann import (
     MFHartmann6BenchmarkTerrible,
     MFHartmannBenchmark,
 )
-from mfpbench.yahpo import LCBenchBenchmark, YAHPOBenchmark
+from mfpbench.yahpo import (
+    LCBenchBenchmark,
+    RBV2aknnBenchmark,
+    RBV2glmnetBenchmark,
+    RBV2rangerBenchmark,
+    RBV2rpartBenchmark,
+    RBV2SuperBenchmark,
+    RBV2svmBenchmark,
+    RBV2xgboostBenchmark,
+    YAHPOBenchmark,
+)
 
 name = "mf-prior-bench"
 package_name = "mfpbench"
@@ -54,6 +64,13 @@ _mapping: dict[str, type[Benchmark]] = {
     "mfh6_bad": MFHartmann6BenchmarkBad,
     "mfh6_moderate": MFHartmann6BenchmarkModerate,
     "mfh6_good": MFHartmann6BenchmarkGood,
+    "rbv2_super": RBV2SuperBenchmark,
+    "rbv2_aknn": RBV2aknnBenchmark,
+    "rbv2_glmnet": RBV2glmnetBenchmark,
+    "rbv2_ranger": RBV2rangerBenchmark,
+    "rbv2_rpart": RBV2rangerBenchmark,
+    "rbv2_svm": RBV2svmBenchmark,
+    "rbv2_xgboost": RBV2xgboostBenchmark,
 }
 
 
@@ -142,25 +159,39 @@ def get(name: str, seed: int | None = None, **kwargs: Any) -> Benchmark:
     raise RuntimeError("Whoops, please fix me")
 
 
-def available() -> Iterator[tuple[str, type[Benchmark], dict[str, Any] | None]]:
+def available(
+    conditionals: bool = False,
+) -> Iterator[tuple[str, type[Benchmark], dict[str, Any] | None]]:
     """Iterate over all the possible instantiations of a benchmark
+
+    Parameters
+    ----------
+    conditionals: bool = False
+        Whether to iterate through benchmarks with conditional hyperparameters.
 
     Returns
     -------
     Iterator[tuple[type[Benchmark], str | None]]
     """
     for k, v in _mapping.items():
+        # Skip conditionals if specified
+        if v.has_conditionals and conditionals is False:
+            continue
+
         if issubclass(v, JAHSBenchmark):
             yield k, v, None
+
         elif issubclass(v, YAHPOBenchmark):
             if v.instances is not None:
                 yield from ((k, v, {"task_id": task}) for task in v.instances)
             else:
                 yield (k, v, None)
+
         elif issubclass(v, MFHartmannBenchmark):
             bias, noise = v.bias_noise
             extra = {"bias": bias, "noise": noise}
             yield (k, v, extra)
+
         else:
             raise NotImplementedError("Whoops, fix me")
     return
@@ -176,25 +207,8 @@ __all__ = [
     "project_urls",
     "copyright",
     "version",
-    "JAHSCifar10",
-    "JAHSColorectalHistology",
-    "JAHSFashionMNIST",
-    "JAHSConfigspace",
-    "JAHSConfig",
-    "JAHSResult",
-    "LCBenchBenchmark",
-    "YAHPOBenchmark",
-    "MFHartmann3Benchmark",
-    "MFHartmann3BenchmarkBad",
-    "MFHartmann3BenchmarkGood",
-    "MFHartmann3BenchmarkModerate",
-    "MFHartmann3BenchmarkTerrible",
-    "MFHartmann6Benchmark",
-    "MFHartmann6BenchmarkBad",
-    "MFHartmann6BenchmarkGood",
-    "MFHartmann6BenchmarkModerate",
-    "MFHartmann6BenchmarkTerrible",
-    "MFHartmannBenchmark",
+    "available",
+    "get",
 ]
 
 if __name__ == "__main__":
@@ -202,10 +216,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmarks", action="store_true")
+    parser.add_argument("--has-conditional-hps", action="store_true")
     args = parser.parse_args()
 
     if args.benchmarks is True:
-        for name, cls, extra in available():
+        for name, cls, extra in available(conditionals=args.has_conditional_hps):
             if extra is None:
                 print(f"get(name={name}) -> {cls.__name__}")
             elif issubclass(cls, MFHartmannBenchmark) and any(

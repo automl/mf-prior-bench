@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
+from typing import Any, Mapping
 
 from mfpbench.jahs.config import JAHSConfig
 from mfpbench.result import Result
@@ -26,7 +27,7 @@ class JAHSResult(Result):
     def from_dict(
         cls,
         config: JAHSConfig,
-        result: dict,
+        result: Mapping[str, Any],
         fidelity: int,
     ) -> JAHSResult:
         """
@@ -36,7 +37,7 @@ class JAHSResult(Result):
         config: JAHSConfig
             The config used to generate these results
 
-        result : dict
+        result : Mapping[str, Any]
             The results to pull from
 
         fidelity : int

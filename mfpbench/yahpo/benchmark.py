@@ -40,6 +40,17 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
     # Where the data for yahpo gym data should be located relative to the path given
     _default_download_dir: Path = DATAROOT / "yahpo-gym-data"
 
+    # Name of hp used to indicate task
+    _task_id_name: str | None = None
+
+    # Any hyperparameters that should be forcefully deleted from the space
+    # but have default values filled in
+    _forced_hps: dict[str, int | float | str] | None = None
+
+    # Any replacements that need to be done in hyperparameters
+    # [(dataclass_version, dict_version)]
+    _replacements_hps: list[tuple[str, str]] | None = None
+
     def __init__(
         self,
         task_id: str | None = None,
@@ -90,7 +101,13 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
         # These can have one or two fidelities
         space = bench.get_opt_space(drop_fidelity_params=True, seed=seed)
-        space = remove_hyperparameter("OpenML_task_id", space)
+
+        if self._task_id_name is not None:
+            space = remove_hyperparameter(self._task_id_name, space)
+
+        if self._forced_hps is not None:
+            for key in self._forced_hps:
+                space = remove_hyperparameter(key, space)
 
         self.bench = bench
         self.datadir = datadir
@@ -132,13 +149,28 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             msg = f"``query(config, at=...)`` for fidelity, not the config {config}"
             raise ValueError(msg)
 
-        query: dict = {**config, self.fidelity_name: at}
+        # Unfortunatly we need to do some simple renaming for any keys with a `.` in it
+        query = {k.replace(".", "__"): v for k, v in config.items()}
+        query[self.fidelity_name] = at
+
+        if self._forced_hps is not None:
+            query.update(self._forced_hps)
+
+        if self._replacements_hps is not None:
+            for frm, to in self._replacements_hps:
+                query[to] = query.pop(frm)
 
         if self.task_id is not None:
-            query["OpenML_task_id"] = self.task_id
+            assert self._task_id_name is not None
+            query[self._task_id_name] = self.task_id
 
         results: list[dict] = self.bench.objective_function(query, seed=self.seed)
         result = results[0]
+
+        # Make sure the config object can take it
+        if self._replacements_hps is not None:
+            for to, frm in self._replacements_hps:
+                config[to] = config.pop(frm)
 
         return self.Result.from_dict(
             config=self.Config(**config), result=result, fidelity=at
@@ -185,21 +217,27 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             msg = "``trajectory(config, frm=..., to=..., step=...)`` not config"
             raise ValueError(msg)
 
-        # Copy same config and insert fidelities for each
-        queries: list[dict] = [
-            {**config, self.fidelity_name: f}
-            for f in self.iter_fidelities(frm=frm, to=to, step=step)
-        ]
+        # Need to replace any conditonal/nested hps connector
+        query = {k.replace(".", "__"): v for k, v in config.items()}
 
         if self.task_id is not None:
-            for q in queries:
-                q["OpenML_task_id"] = self.task_id
+            assert self._task_id_name is not None
+            query[self._task_id_name] = self.task_id
+
+        if self._forced_hps is not None:
+            query.update(self._forced_hps)
+
+        # Copy same config and insert fidelities for each
+        queries: list[dict] = [
+            {**query, self.fidelity_name: f}
+            for f in self.iter_fidelities(frm=frm, to=to, step=step)
+        ]
 
         results = self.bench.objective_function(queries, seed=self.seed)
 
         return [
             self.Result.from_dict(
-                config=self.Config(**config),  # Same config for each
+                config=self.Config.from_dict(config),  # Same config for each
                 result=r,
                 fidelity=q[self.fidelity_name],
             )

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, Mapping
+
 import warnings
 from dataclasses import dataclass
 
@@ -53,7 +55,7 @@ class LCBenchResult(YAHPOResult):
     def from_dict(
         cls: type[LCBenchResult],
         config: LCBenchConfig,
-        result: dict,
+        result: Mapping[str, Any],
         fidelity: int,
     ) -> LCBenchResult:
         """
@@ -63,7 +65,7 @@ class LCBenchResult(YAHPOResult):
         config: LCBenchConfig
             The config used to generate these results
 
-        result : dict
+        result : Mapping[str, Any]
             The results to pull from
 
         fidelity : int
@@ -113,6 +115,7 @@ class LCBenchBenchmark(YAHPOBenchmark):
     fidelity_range = (1, 52, 1)
     Config = LCBenchConfig
     Result = LCBenchResult
+    _task_id_name = "OpenML_task_id"
 
     instances = [
         "3945",

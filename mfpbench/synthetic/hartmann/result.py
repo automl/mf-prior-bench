@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Any, Mapping, TypeVar
 
 from dataclasses import dataclass
 
@@ -19,7 +19,7 @@ class MFHartmannResult(Result[C, int]):
     def from_dict(
         cls,
         config: C,
-        result: dict,
+        result: Mapping[str, Any],
         fidelity: int,
     ) -> MFHartmannResult:
         """Create a MFHartmannResult from a dictionary
@@ -29,7 +29,7 @@ class MFHartmannResult(Result[C, int]):
         config : MFHartmannConfig
             The config the result is from
 
-        result : dict
+        result : Mapping[str, Any]
             The result dictionary
 
         fidelity : int
