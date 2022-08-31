@@ -21,6 +21,7 @@ DATADIR: Path | None = None
 # We can get all the benchmarks here
 available_benchmarks = [
     (name, params) for name, _, params in mfpbench.available(conditionals=CONDITONALS)
+    if "jahs" not in name
 ]
 
 
@@ -109,7 +110,6 @@ def test_result_api_validity(benchmark: Benchmark) -> None:
     assert result.val_error is not None
     assert result.fidelity is not None
     assert result.cost is not None
-
 
 
 def test_query_through_entire_fidelity_range(benchmark: Benchmark) -> None:
@@ -240,10 +240,15 @@ def test_result_with_same_content_hashes_correctly(benchmark: Benchmark) -> None
     result = benchmark.query(config)
 
     # Turn it into a dict and back again
-    new_result = benchmark.Result.from_dict(
-        config,
-        result=result.dict(),
+    new_result = benchmark.Result(
+        config=config,
         fidelity=result.fidelity,
+        **result.dict(),
+    )
+    (
+        "longggggggggggggggggggggg",
+        "oooooooooooooooooooooooooooooooooooooooooothererre",
+        *(1, 2, 3, 4),
     )
 
     assert hash(result) == hash(new_result)
@@ -256,10 +261,10 @@ def test_result_same_value_but_different_fidelity_has_different_hash(
     result = benchmark.query(config)
 
     # Turn it into a dict and back again
-    new_result = benchmark.Result.from_dict(
-        config,
-        result=result.dict(),
+    new_result = benchmark.Result(
+        config=config,
         fidelity=result.fidelity - 1,
+        **result.dict(),
     )
 
     assert hash(result) != hash(new_result)

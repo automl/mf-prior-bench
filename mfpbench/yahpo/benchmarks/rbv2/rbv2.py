@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Mapping, TypeVar
+from typing import TypeVar
 
 from dataclasses import dataclass
 
@@ -18,9 +18,9 @@ class RBV2Config(YAHPOConfig):
 
 
 @dataclass(frozen=True)  # type: ignore[misc]
-class RBV2Result(YAHPOResult):
+class RBV2Result(YAHPOResult[C, float]):
     # Fidelity
-    trainsize: float
+    fidelity: float
 
     acc: float
     bac: float
@@ -33,32 +33,6 @@ class RBV2Result(YAHPOResult):
     timepredict: float
 
     memory: float
-
-    @classmethod
-    def from_dict(
-        cls: type[RBV2Result],
-        config: C,
-        result: Mapping[str, Any],
-        fidelity: float,
-    ) -> RBV2Result:
-        """
-
-        Parameters
-        ----------
-        config: RBV2Config
-            The config used to generate these results
-
-        result : dict
-            The results to pull from
-
-        fidelity : float
-            The fidelity at which this config was evaluated, epochs
-
-        Returns
-        -------
-        RBV2Result
-        """
-        return RBV2Result(trainsize=fidelity, config=config, **result)
 
     @property
     def score(self) -> float:
@@ -91,14 +65,9 @@ class RBV2Result(YAHPOResult):
         return self.error
 
     @property
-    def fidelity(self) -> float:
-        """The fidelity used"""
-        return self.trainsize
-
-    @property
     def cost(self) -> float:
         """The time taken in seconds to train the config"""
-        return self.train_time
+        return self.timetrain
 
 
 class RBV2Benchmark(YAHPOBenchmark):

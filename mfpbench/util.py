@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Iterable, Iterator, TypeVar
+from typing import Callable, Iterable, Iterator, Mapping, TypeVar
 
 from copy import copy
 from functools import reduce
@@ -127,3 +127,21 @@ def intersection(*items: Iterable[T]) -> set[T]:
         return set()
 
     return set(reduce(lambda s1, s2: set(s1) & set(s2), items, items[0]))
+
+
+K = TypeVar("K")
+V = TypeVar("V")
+
+
+def invert(d: Mapping[K, V]) -> Mapping[V, K]:
+    """Invert the key value pairs of a dictionary"""
+    return {v: k for k, v in d.items()}
+
+
+K1 = TypeVar("K1")
+K2 = TypeVar("K2")
+
+
+def rename(d: Mapping[K1, V], keys: Mapping[K1, K2]) -> dict[K1 | K2, V]:
+    """Rename keys of a dictionary based on a set of keys to update"""
+    return {keys.get(k1, k1): v for k1, v in d.items()}

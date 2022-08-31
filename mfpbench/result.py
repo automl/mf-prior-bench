@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Generic, Mapping, TypeVar
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from mfpbench.config import Config
 
@@ -22,29 +22,16 @@ class Result(ABC, Generic[C, F]):
     """Collect all results in a class for clarity"""
 
     config: C
+    fidelity: F
 
     @classmethod
-    @abstractmethod
     def from_dict(
         cls: type[SelfT],
         config: C,
         result: Mapping[str, Any],
         fidelity: F,
     ) -> SelfT:
-        """
-
-        Parameters
-        ----------
-        config : C
-            THe config which generated this result
-
-        result : Mapping[str, Any]
-            The results themselves
-
-        fidelity : F
-            The fidelity at which this was sampled
-        """
-        ...
+        return cls(config=config, fidelity=fidelity, **result)
 
     @property
     @abstractmethod
@@ -84,12 +71,13 @@ class Result(ABC, Generic[C, F]):
 
     @property
     @abstractmethod
-    def fidelity(self) -> F:
-        """The fidelity used"""
-        ...
-
-    @property
-    @abstractmethod
     def cost(self) -> float:
         """The time cost for evaluting this config"""
         ...
+
+    def dict(self) -> dict[str, Any]:
+        """Create a dict from this result"""
+        d = asdict(self)
+        del d["config"]
+        del d["fidelity"]
+        return d

@@ -173,10 +173,10 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             for to, frm in self._replacements_hps:
                 config[to] = config.pop(frm)
 
-        return self.Result.from_dict(
+        return self.Result(
             config=self.Config.from_dict(config),
-            result=result,
             fidelity=at,
+            **result
         )
 
     def trajectory(
@@ -238,12 +238,12 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         results = self.bench.objective_function(queries, seed=self.seed)
 
         return [
-            self.Result.from_dict(
+            self.Result(
                 config=self.Config.from_dict(config),  # Same config for each
-                result=r,
-                fidelity=q[self.fidelity_name],
+                fidelity=query[self.fidelity_name],
+                **result
             )
-            for r, q in zip(results, queries)  # We need to loop over q's for fidelity
+            for result, query in zip(results, queries)  # We need to loop over q's for fidelity
         ]
 
     @property

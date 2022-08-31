@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
-
 import warnings
 from dataclasses import dataclass
 
@@ -38,10 +36,8 @@ class LCBenchConfig(YAHPOConfig):
         assert 0.0 <= self.max_dropout <= 1.0
 
 
-@dataclass(frozen=True)
-class LCBenchResult(YAHPOResult):
-    epoch: int
-
+@dataclass(frozen=True)  # type: ignore[misc]
+class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
     time: float  # unit?
 
     val_accuracy: float
@@ -50,32 +46,6 @@ class LCBenchResult(YAHPOResult):
 
     test_cross_entropy: float
     test_balanced_accuracy: float
-
-    @classmethod
-    def from_dict(
-        cls: type[LCBenchResult],
-        config: LCBenchConfig,
-        result: Mapping[str, Any],
-        fidelity: int,
-    ) -> LCBenchResult:
-        """
-
-        Parameters
-        ----------
-        config: LCBenchConfig
-            The config used to generate these results
-
-        result : Mapping[str, Any]
-            The results to pull from
-
-        fidelity : int
-            The fidelity at which this config was evaluated, epochs
-
-        Returns
-        -------
-        LCBenchResult
-        """
-        return LCBenchResult(epoch=fidelity, config=config, **result)
 
     @property
     def score(self) -> float:
@@ -106,11 +76,6 @@ class LCBenchResult(YAHPOResult):
     def val_error(self) -> float:
         """The score on the validation set"""
         return 1 - self.val_balanced_accuracy
-
-    @property
-    def fidelity(self) -> int:
-        """The fidelity used"""
-        return self.epoch
 
     @property
     def cost(self) -> float:

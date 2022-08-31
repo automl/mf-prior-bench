@@ -13,6 +13,7 @@ from mfpbench.download import DATAROOT
 from mfpbench.jahs.config import JAHSConfig
 from mfpbench.jahs.result import JAHSResult
 from mfpbench.jahs.spaces import jahs_configspace
+from mfpbench.util import rename
 
 
 class JAHSBenchmark(Benchmark, ABC):
@@ -33,6 +34,13 @@ class JAHSBenchmark(Benchmark, ABC):
 
     # Where the data for jahsbench should be located relative to the path given
     _default_download_dir: Path = DATAROOT / "jahs-bench-data"
+    _result_renames = {
+        "size_MB": "size",
+        "FLOPS": "flops",
+        "valid-acc": "valid_acc",
+        "test-acc": "test_acc",
+        "train-acc": "train_acc",
+    }
 
     def __init__(
         self,
@@ -124,10 +132,10 @@ class JAHSBenchmark(Benchmark, ABC):
         results = self.bench.__call__(config, nepochs=at)
         result = results[at]
 
-        return JAHSResult.from_dict(
+        return self.Result(
             config=self.Config(**config),  # Just make sure it's a JAHSConfig
-            result=result,
             fidelity=at,
+            **rename(result, keys=self._result_renames),
         )
 
     def trajectory(
@@ -177,10 +185,10 @@ class JAHSBenchmark(Benchmark, ABC):
             }
 
         return [
-            JAHSResult.from_dict(
+            self.Result(
                 config=self.Config(**config),
-                result=results[i],
                 fidelity=i,
+                **rename(results[i], keys=self._result_renames),
             )
             for i in self.iter_fidelities(frm=frm, to=to, step=step)
         ]

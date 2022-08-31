@@ -107,10 +107,10 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         )
         result = self.mfh(z=at, Xs=Xs)
 
-        return self.Result.from_dict(
+        return self.Result(
             config=self.Config(**config),
             fidelity=at,
-            result={"value": result},
+            **{"value": result},
         )
 
     def trajectory(
@@ -160,11 +160,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         results_fidelities = [(self.mfh(z=f, Xs=Xs), f) for f in fidelities]
 
         return [
-            self.Result.from_dict(
-                config=self.Config(**config),
-                fidelity=f,
-                result={"value": r},
-            )
+            self.Result(config=self.Config(**config), fidelity=f, **{"value": r})
             for r, f in results_fidelities
         ]
 
