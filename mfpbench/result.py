@@ -17,7 +17,7 @@ C = TypeVar("C", bound=Config)
 F = TypeVar("F", int, float)
 
 
-@dataclass  # type: ignore[misc]
+@dataclass(frozen=True)  # type: ignore[misc]
 class Result(ABC, Generic[C, F]):
     """Collect all results in a class for clarity"""
 

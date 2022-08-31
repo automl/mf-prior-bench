@@ -5,6 +5,6 @@ from dataclasses import dataclass
 from mfpbench.result import Result
 
 
-@dataclass  # type: ignore[misc]
+@dataclass(frozen=True)  # type: ignore[misc]
 class YAHPOResult(Result):
     ...

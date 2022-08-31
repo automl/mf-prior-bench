@@ -10,7 +10,7 @@ from mfpbench.yahpo.config import YAHPOConfig
 from mfpbench.yahpo.result import YAHPOResult
 
 
-@dataclass(frozen=True, eq=False)
+@dataclass(frozen=True, eq=False, unsafe_hash=True)
 class LCBenchConfig(YAHPOConfig):
     """
     Note
@@ -38,7 +38,7 @@ class LCBenchConfig(YAHPOConfig):
         assert 0.0 <= self.max_dropout <= 1.0
 
 
-@dataclass
+@dataclass(frozen=True)
 class LCBenchResult(YAHPOResult):
     epoch: int
 

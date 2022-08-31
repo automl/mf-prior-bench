@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from mfpbench.config import Config
 
 
-@dataclass(frozen=True, eq=False)  # type: ignore[misc]
+@dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class MFHartmannConfig(Config):
     ...
 
 
-@dataclass(frozen=True, eq=False)  # type: ignore[misc]
+@dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class MFHartmann3Config(MFHartmannConfig):
     X_0: float
     X_1: float
@@ -21,7 +21,7 @@ class MFHartmann3Config(MFHartmannConfig):
         assert 0.0 <= self.X_2 <= 1.0
 
 
-@dataclass(frozen=True, eq=False)  # type: ignore[misc]
+@dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class MFHartmann6Config(MFHartmannConfig):
     X_0: float
     X_1: float

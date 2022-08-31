@@ -11,7 +11,7 @@ from ConfigSpace import Configuration
 SelfT = TypeVar("SelfT", bound="Config")
 
 
-@dataclass(frozen=True, eq=False)  # type: ignore[misc]
+@dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class Config(ABC):
     """A Config used to query a benchmark
 
