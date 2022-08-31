@@ -34,6 +34,11 @@ from mfpbench.yahpo import (
     RBV2svmBenchmark,
     RBV2xgboostBenchmark,
     YAHPOBenchmark,
+    IAMLglmnetBenchmark,
+    IAMLrangerBenchmark,
+    IAMLrpartBenchmark,
+    IAMLSuperBenchmark,
+    IAMLxgboostBenchmark,
 )
 
 name = "mf-prior-bench"
@@ -68,9 +73,14 @@ _mapping: dict[str, type[Benchmark]] = {
     "rbv2_aknn": RBV2aknnBenchmark,
     "rbv2_glmnet": RBV2glmnetBenchmark,
     "rbv2_ranger": RBV2rangerBenchmark,
-    "rbv2_rpart": RBV2rangerBenchmark,
+    "rbv2_rpart": RBV2rpartBenchmark,
     "rbv2_svm": RBV2svmBenchmark,
     "rbv2_xgboost": RBV2xgboostBenchmark,
+    "iaml_glmnet": IAMLglmnetBenchmark,
+    "iaml_ranger": IAMLrangerBenchmark,
+    "iaml_rpart": IAMLrpartBenchmark,
+    "iaml_super": IAMLSuperBenchmark,
+    "iaml_xgboost": IAMLxgboostBenchmark,
 }
 
 

@@ -8,6 +8,11 @@ from mfpbench.yahpo.benchmarks import (
     RBV2SuperBenchmark,
     RBV2svmBenchmark,
     RBV2xgboostBenchmark,
+    IAMLglmnetBenchmark,
+    IAMLrangerBenchmark,
+    IAMLrpartBenchmark,
+    IAMLSuperBenchmark,
+    IAMLxgboostBenchmark,
 )
 
 __all__ = [
@@ -20,4 +25,9 @@ __all__ = [
     "RBV2SuperBenchmark",
     "RBV2svmBenchmark",
     "RBV2xgboostBenchmark",
+    "IAMLglmnetBenchmark",
+    "IAMLrangerBenchmark",
+    "IAMLrpartBenchmark",
+    "IAMLSuperBenchmark",
+    "IAMLxgboostBenchmark",
 ]
