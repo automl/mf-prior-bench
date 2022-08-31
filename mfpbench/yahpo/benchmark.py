@@ -161,8 +161,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             for frm, to in self._replacements_hps:
                 query[to] = query.pop(frm)
 
-        if self.task_id is not None:
-            assert self._task_id_name is not None
+        if self.task_id is not None and self._task_id_name is not None:
             query[self._task_id_name] = self.task_id
 
         results: list[dict] = self.bench.objective_function(query, seed=self.seed)
@@ -173,10 +172,10 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             for to, frm in self._replacements_hps:
                 config[to] = config.pop(frm)
 
-        return self.Result(
+        return self.Result.from_dict(
             config=self.Config.from_dict(config),
+            result=result,
             fidelity=at,
-            **result
         )
 
     def trajectory(
@@ -222,8 +221,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
         query = {**config}
 
-        if self.task_id is not None:
-            assert self._task_id_name is not None
+        if self.task_id is not None and self._task_id_name is not None:
             query[self._task_id_name] = self.task_id
 
         if self._forced_hps is not None:
@@ -241,9 +239,10 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             self.Result(
                 config=self.Config.from_dict(config),  # Same config for each
                 fidelity=query[self.fidelity_name],
-                **result
+                **result,
             )
-            for result, query in zip(results, queries)  # We need to loop over q's for fidelity
+            # We need to loop over q's for fidelity
+            for result, query in zip(results, queries)
         ]
 
     @property

@@ -26,6 +26,7 @@ from mfpbench.synthetic.hartmann import (
 )
 from mfpbench.yahpo import (
     LCBenchBenchmark,
+    NB301Benchmark,
     RBV2aknnBenchmark,
     RBV2glmnetBenchmark,
     RBV2rangerBenchmark,
@@ -59,6 +60,7 @@ _mapping: dict[str, type[Benchmark]] = {
     "jahs_colorectal_histology": JAHSColorectalHistology,
     "jahs_fashion_mnist": JAHSFashionMNIST,
     "lcbench": LCBenchBenchmark,
+    "nb301": NB301Benchmark,
     "mfh3": MFHartmann3Benchmark,
     "mfh3_terrible": MFHartmann3BenchmarkTerrible,
     "mfh3_bad": MFHartmann3BenchmarkBad,

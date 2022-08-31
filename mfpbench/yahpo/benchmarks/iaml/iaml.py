@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Any, TypeVar, Mapping
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from mfpbench.yahpo.benchmark import YAHPOBenchmark
 from mfpbench.yahpo.config import YAHPOConfig
@@ -14,45 +14,59 @@ R = TypeVar("R", bound="IAMLResult")
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class IAMLConfig(YAHPOConfig):
-    ...
+
+    @classmethod
+    def from_dict(cls: type[C], d: Mapping[str, Any]) -> C:
+        """Create from a dict or mapping object"""
+        # We may have keys that are conditional and hence we need to flatten them
+        config = {k.replace(".", "__"): v for k, v in d.items()}
+        return cls(**config)
+
+    def dict(self) -> dict[str, Any]:
+        """Converts the config to a raw dictionary"""
+        d = asdict(self)
+        return {k.replace("__", "."): v for k, v in d.items() if v is not None}
 
 
 @dataclass(frozen=True)  # type: ignore[misc]
 class IAMLResult(YAHPOResult[C, float]):
-    # Fidelity
     fidelity: float
 
-    acc: float
-    bac: float
-    auc: float
-    brier: float
+    mmce: float
     f1: float
+    auc: float
     logloss: float
 
     timetrain: float
     timepredict: float
 
-    memory: float
+    ramtrain: float
+    rammodel: float
+    rampredict: float
+
+    mec: float
+    ias: float
+    nf: float
 
     @property
     def score(self) -> float:
         """The score of interest"""
-        return self.bac
+        return self.f1
 
     @property
     def error(self) -> float:
         """The error of interest"""
-        return 1 - self.bac
+        return 1 - self.f1
 
     @property
     def test_score(self) -> float:
         """The score on the test set"""
-        return self.score
+        return self.f1
 
     @property
     def test_error(self) -> float:
         """The error on the test set"""
-        return self.error
+        return 1 - self.f1
 
     @property
     def val_score(self) -> float:

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Any, Mapping, TypeVar
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from mfpbench.yahpo.benchmark import YAHPOBenchmark
 from mfpbench.yahpo.config import YAHPOConfig
@@ -14,7 +14,17 @@ R = TypeVar("R", bound="RBV2Result")
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class RBV2Config(YAHPOConfig):
-    ...
+    @classmethod
+    def from_dict(cls: type[C], d: Mapping[str, Any]) -> C:
+        """Create from a dict or mapping object"""
+        # We may have keys that are conditional and hence we need to flatten them
+        config = {k.replace(".", "__"): v for k, v in d.items()}
+        return cls(**config)
+
+    def dict(self) -> dict[str, Any]:
+        """Converts the config to a raw dictionary"""
+        d = asdict(self)
+        return {k.replace("__", "."): v for k, v in d.items() if v is not None}
 
 
 @dataclass(frozen=True)  # type: ignore[misc]
