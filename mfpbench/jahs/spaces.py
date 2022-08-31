@@ -28,16 +28,16 @@ def jahs_configspace(
 
     space.add_hyperparameters(
         [
-            CS.OrdinalHyperparameter(
+            CS.Constant(
                 "N",
-                sequence=[1, 3, 5],
-                default_value=1,
+                # sequence=[1, 3, 5],
+                value=5,  # This is the value for NB201
                 meta=dict(help="Number of cell repetitions"),
             ),
-            CS.OrdinalHyperparameter(
+            CS.Constant(
                 "W",
-                sequence=[4, 8, 16],
-                default_value=4,
+                # sequence=[4, 8, 16],
+                value=16,  # This is the value for NB201
                 meta=dict(
                     help="The width of the first channel in the cell. Each of the "
                     "subsequent cell's first channels is twice as wide as the "

@@ -21,7 +21,6 @@ DATADIR: Path | None = None
 # We can get all the benchmarks here
 available_benchmarks = [
     (name, params) for name, _, params in mfpbench.available(conditionals=CONDITONALS)
-    if "jahs" not in name
 ]
 
 
