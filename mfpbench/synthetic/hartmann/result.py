@@ -53,17 +53,13 @@ class MFHartmannResult(Result[C, int]):
 
     @property
     def test_score(self) -> float:
-        """NA"""
-        raise RuntimeError(
-            "Hartmann synthetic benchmarks have no train/test/val, use ``result.score``"
-        )
+        """Just returns the score"""
+        return self.score
 
     @property
     def val_score(self) -> float:
-        """NA"""
-        raise RuntimeError(
-            "Hartmann synthetic benchmarks have no train/test/val, use ``result.score``"
-        )
+        """Just returns the score"""
+        return self.score
 
     @property
     def fidelity(self) -> int:
@@ -72,5 +68,5 @@ class MFHartmannResult(Result[C, int]):
 
     @property
     def train_time(self) -> float:
-        """NA"""
-        raise RuntimeError("Hartmann synthetic benchmarks have no training time")
+        """Just retuns the fidelity"""
+        return self.z
