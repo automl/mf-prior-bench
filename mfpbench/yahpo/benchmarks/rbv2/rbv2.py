@@ -73,12 +73,22 @@ class RBV2Result(YAHPOResult):
     @property
     def test_score(self) -> float:
         """The score on the test set"""
-        return self.bac
+        return self.score
+
+    @property
+    def test_error(self) -> float:
+        """The error on the test set"""
+        return self.error
 
     @property
     def val_score(self) -> float:
         """The score on the validation set"""
-        raise NotImplementedError("No validation score for RBV2 set of datasets")
+        return self.score
+
+    @property
+    def val_error(self) -> float:
+        """The error on the validation set"""
+        return self.error
 
     @property
     def fidelity(self) -> float:
@@ -86,7 +96,7 @@ class RBV2Result(YAHPOResult):
         return self.trainsize
 
     @property
-    def train_time(self) -> float:
+    def cost(self) -> float:
         """The time taken in seconds to train the config"""
         return self.train_time
 

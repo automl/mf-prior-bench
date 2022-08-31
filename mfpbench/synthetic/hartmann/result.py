@@ -57,9 +57,19 @@ class MFHartmannResult(Result[C, int]):
         return self.score
 
     @property
+    def test_error(self) -> float:
+        """Just returns the error"""
+        return self.error
+
+    @property
     def val_score(self) -> float:
         """Just returns the score"""
         return self.score
+
+    @property
+    def val_error(self) -> float:
+        """Just returns the error"""
+        return self.error
 
     @property
     def fidelity(self) -> int:
@@ -67,6 +77,6 @@ class MFHartmannResult(Result[C, int]):
         return self.z
 
     @property
-    def train_time(self) -> float:
+    def cost(self) -> float:
         """Just retuns the fidelity"""
         return self.z

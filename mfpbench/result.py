@@ -66,7 +66,19 @@ class Result(ABC, Generic[C, F]):
 
     @property
     @abstractmethod
+    def test_error(self) -> float:
+        """The error on the test set"""
+        ...
+
+    @property
+    @abstractmethod
     def val_score(self) -> float:
+        """The score on the validation set"""
+        ...
+
+    @property
+    @abstractmethod
+    def val_error(self) -> float:
         """The score on the validation set"""
         ...
 
@@ -78,6 +90,6 @@ class Result(ABC, Generic[C, F]):
 
     @property
     @abstractmethod
-    def train_time(self) -> float:
-        """The time taken in seconds to train the config"""
+    def cost(self) -> float:
+        """The time cost for evaluting this config"""
         ...

@@ -75,9 +75,19 @@ class JAHSResult(Result):
         return self.test_acc
 
     @property
+    def test_error(self) -> float:
+        """The error on the test set"""
+        return 1 - self.test_acc
+
+    @property
     def val_score(self) -> float:
         """The score on the validation set"""
         return self.valid_acc
+
+    @property
+    def val_error(self) -> float:
+        """The error on the validation set"""
+        return 1 - self.valid_acc
 
     @property
     def fidelity(self) -> int:
@@ -85,7 +95,7 @@ class JAHSResult(Result):
         return self.epoch
 
     @property
-    def train_time(self) -> float:
+    def cost(self) -> float:
         """The time taken in seconds"""
-        warnings.warn(f"Unsure of unit for `train_time` on {self.__class__}")
+        warnings.warn(f"Unsure of unit for `cost` on {self.__class__}")
         return self.runtime

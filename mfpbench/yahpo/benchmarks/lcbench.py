@@ -93,9 +93,19 @@ class LCBenchResult(YAHPOResult):
         return self.test_balanced_accuracy
 
     @property
+    def test_error(self) -> float:
+        """The score on the test set"""
+        return 1 - self.test_balanced_accuracy
+
+    @property
     def val_score(self) -> float:
         """The score on the validation set"""
         return self.val_balanced_accuracy
+
+    @property
+    def val_error(self) -> float:
+        """The score on the validation set"""
+        return 1 - self.val_balanced_accuracy
 
     @property
     def fidelity(self) -> int:
@@ -103,9 +113,9 @@ class LCBenchResult(YAHPOResult):
         return self.epoch
 
     @property
-    def train_time(self) -> float:
+    def cost(self) -> float:
         """Time taken in seconds to train the config"""
-        warnings.warn(f"Unsure of unit for `train_time` on {self.__class__}")
+        warnings.warn(f"Unsure of unit for `cost` on {self.__class__}")
         return self.time
 
 
