@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Callable, Iterable, Iterator, TypeVar
 
 from copy import copy
+from functools import reduce
 from itertools import chain, tee
 
 import numpy as np
@@ -103,3 +104,26 @@ def pairs(itr: Iterable[T]) -> Iterator[tuple[T, T]]:
     itr2 = chain([peek], itr2)
 
     return iter((a, b) for a, b in zip(itr1, itr2))
+
+
+def intersection(*items: Iterable[T]) -> set[T]:
+    """Does an intersection over all collection of items
+
+    ..code:: python
+        ans = intersection(["a", "b", "c"], "ab", ("b", "c"))
+        items = [(1, 2, 3), (2, 3), (4, 5)]
+        ans = intesection(*items)
+
+    Parameters
+    ----------
+    *items : Iterable[T]
+        A list of lists
+    Returns
+    -------
+    Set[T]
+        The intersection of all items
+    """
+    if len(items) == 0:
+        return set()
+
+    return set(reduce(lambda s1, s2: set(s1) & set(s2), items, items[0]))

@@ -8,6 +8,7 @@ from ConfigSpace import Configuration, ConfigurationSpace
 
 from mfpbench.config import Config
 from mfpbench.result import Result
+from mfpbench.resultframe import ResultFrame
 
 # The kind of Config to the benchmark
 C = TypeVar("C", bound=Config)
@@ -182,3 +183,7 @@ class Benchmark(Generic[C, R, F], ABC):
         ConfigurationSpace
         """
         ...
+
+    def frame(self) -> ResultFrame[C, F, R]:
+        """Get an empty frame to record with"""
+        return ResultFrame[C, F, R]()
