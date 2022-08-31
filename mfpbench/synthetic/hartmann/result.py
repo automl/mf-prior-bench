@@ -10,7 +10,7 @@ from mfpbench.synthetic.hartmann.config import MFHartmannConfig
 C = TypeVar("C", bound=MFHartmannConfig)
 
 
-@dataclass
+@dataclass(frozen=True)
 class MFHartmannResult(Result[C, int]):
     z: int
     value: float
@@ -44,12 +44,12 @@ class MFHartmannResult(Result[C, int]):
     @property
     def score(self) -> float:
         """The score of interest"""
-        return -self.value
+        return self.value
 
     @property
     def error(self) -> float:
         """The score of interest"""
-        return self.value
+        return -self.value
 
     @property
     def test_score(self) -> float:
