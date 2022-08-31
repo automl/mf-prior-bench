@@ -103,9 +103,13 @@ def test_result_api_validity(benchmark: Benchmark) -> None:
 
     assert result.score is not None
     assert result.error is not None
+    assert result.test_score is not None
+    assert result.test_error is not None
+    assert result.val_score is not None
+    assert result.val_error is not None
     assert result.fidelity is not None
+    assert result.cost is not None
 
-    # There are others but it's not garunteed to be contained
 
 
 def test_query_through_entire_fidelity_range(benchmark: Benchmark) -> None:
