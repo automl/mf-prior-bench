@@ -205,3 +205,57 @@ def test_trajectory_is_over_full_range_by_default(benchmark: Benchmark) -> None:
 
     for r, fidelity in zip(results, benchmark.iter_fidelities()):
         assert r.fidelity == fidelity
+
+
+def test_configs_hashable_and_unique(benchmark: Benchmark) -> None:
+    configs = benchmark.sample(10)
+
+    s = {c for c in configs}
+    assert len(s) == len(configs)
+
+
+def test_results_hashable_and_unique(benchmark: Benchmark) -> None:
+    configs = benchmark.sample(10)
+    results = [benchmark.query(c) for c in configs]
+
+    s = {r for r in results}
+    assert len(s) == len(results)
+
+
+def test_config_with_same_content_hashes_correctly(benchmark: Benchmark) -> None:
+    config = benchmark.sample()
+
+    # Turn it into a dict and back again
+    new_config = benchmark.Config.from_dict(config.dict())
+
+    assert hash(config) == hash(new_config)
+
+
+def test_result_with_same_content_hashes_correctly(benchmark: Benchmark) -> None:
+    config = benchmark.sample()
+    result = benchmark.query(config)
+
+    # Turn it into a dict and back again
+    new_result = benchmark.Result.from_dict(
+        config,
+        result=result.dict(),
+        fidelity=result.fidelity,
+    )
+
+    assert hash(result) == hash(new_result)
+
+
+def test_result_same_value_but_different_fidelity_has_different_hash(
+    benchmark: Benchmark,
+) -> None:
+    config = benchmark.sample()
+    result = benchmark.query(config)
+
+    # Turn it into a dict and back again
+    new_result = benchmark.Result.from_dict(
+        config,
+        result=result.dict(),
+        fidelity=result.fidelity - 1,
+    )
+
+    assert hash(result) != hash(new_result)

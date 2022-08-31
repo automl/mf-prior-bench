@@ -9,7 +9,7 @@ from typing_extensions import Literal
 from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
 
 
-@dataclass(frozen=True, eq=False)
+@dataclass(frozen=True, eq=False, unsafe_hash=True)
 class RBV2SuperConfig(RBV2Config):
     """Config has conditionals and as such, we use None to indicate not set."""
 
@@ -194,7 +194,7 @@ class RBV2SuperConfig(RBV2Config):
             raise NotImplementedError()
 
 
-@dataclass
+@dataclass(frozen=True)
 class RBV2SuperResult(RBV2Result):
     config: RBV2SuperConfig
 

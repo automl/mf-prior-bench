@@ -9,7 +9,7 @@ from typing_extensions import Literal
 from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
 
 
-@dataclass(frozen=True, eq=False)
+@dataclass(frozen=True, eq=False, unsafe_hash=True)
 class RBV2rangerConfig(RBV2Config):
 
     num__impute__selected__cpo: Literal["impute.mean", "impute.median", "impute.hist"]
@@ -47,7 +47,7 @@ class RBV2rangerConfig(RBV2Config):
             assert 1 <= self.num__random__splits <= 100
 
 
-@dataclass
+@dataclass(frozen=True)
 class RBV2rangerResult(RBV2Result):
     config: RBV2rangerConfig
 

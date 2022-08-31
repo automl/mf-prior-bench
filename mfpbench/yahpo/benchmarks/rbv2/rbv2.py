@@ -12,12 +12,12 @@ C = TypeVar("C", bound="RBV2Config")
 R = TypeVar("R", bound="RBV2Result")
 
 
-@dataclass(frozen=True, eq=False)  # type: ignore[misc]
+@dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class RBV2Config(YAHPOConfig):
     ...
 
 
-@dataclass  # type: ignore[misc]
+@dataclass(frozen=True)  # type: ignore[misc]
 class RBV2Result(YAHPOResult):
     # Fidelity
     trainsize: float

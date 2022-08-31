@@ -9,7 +9,7 @@ from typing_extensions import Literal
 from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
 
 
-@dataclass(frozen=True, eq=False)
+@dataclass(frozen=True, eq=False, unsafe_hash=True)
 class RBV2glmnetConfig(RBV2Config):
 
     num__impute__selected__cpo: Literal["impute.mean", "impute.median", "impute.hist"]
@@ -29,7 +29,7 @@ class RBV2glmnetConfig(RBV2Config):
         assert 0.0009118819655545162 <= self.s <= 1096.6331584284585
 
 
-@dataclass
+@dataclass(frozen=True)
 class RBV2glmnetResult(RBV2Result):
     config: RBV2glmnetConfig
 
