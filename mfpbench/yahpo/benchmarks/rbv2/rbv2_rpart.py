@@ -27,7 +27,7 @@ class RBV2rpartConfig(RBV2Config):
             "impute.median",
             "impute.hist",
         ]
-        assert 0.0009118819655545162 <= self.rpart__cp <= 1.0
+        assert 0.0009118819655545162 <= self.cp <= 1.0
         assert 1 <= self.maxdepth <= 30
         assert 1 <= self.minbucket <= 100
         assert 1 <= self.minsplit <= 100
