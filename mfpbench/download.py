@@ -69,6 +69,41 @@ class JAHSBenchSource(Source):
         subprocess.run(self.cmd.split())
 
 
+@dataclass(frozen=True)
+class PD1Source(Source):
+
+    url: str = "http://storage.googleapis.com/gresearch/pint/pd1.tar.gz"
+    unpacked_folder_name: str = "pd1"
+
+    @property
+    def name(self) -> str:
+        return "pd1-data"
+
+    def download(self) -> None:
+        import urllib.request
+
+        tarpath = self.path / "data.tar.gz"
+
+        # Download the file
+        print(f"Downloading from {self.url} to {tarpath}")
+        with urllib.request.urlopen(self.url) as response, open(tarpath, "wb") as f:
+            shutil.copyfileobj(response, f)
+
+        # Unpack it to the datadir
+        print(f"Unpacking {tarpath}")
+        shutil.unpack_archive(tarpath, self.path)
+
+        unpacked_folder = self.path / self.unpacked_folder_name
+
+        print(f"Moving files from {unpacked_folder} to {self.path}")
+        for filepath in unpacked_folder.iterdir():
+            to = self.path / filepath.name
+            print(f"Move {filepath} to {to}")
+            shutil.move(str(filepath), str(to))
+
+        shutil.rmtree(str(unpacked_folder))
+
+
 sources = {source.name: source for source in [YAHPOSource(), JAHSBenchSource()]}
 
 if __name__ == "__main__":
@@ -85,6 +120,7 @@ if __name__ == "__main__":
     download_sources = [
         YAHPOSource(root=root),
         JAHSBenchSource(root=root),
+        PD1Source(root=root),
     ]
 
     for source in download_sources:
@@ -92,6 +128,7 @@ if __name__ == "__main__":
             shutil.rmtree(source.path)
 
         if not source.exists():
+            source.path.mkdir(exist_ok=True)
             source.download()
         else:
             print(f"Source already downloaded: {source}")
