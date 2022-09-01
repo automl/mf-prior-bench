@@ -14,7 +14,7 @@ if __name__ == "__main__":
     seed = 724
 
     # Just adding a type here if you want to explore it
-    benchmark = mfpbench.get("jahs_cifar_10", seed=seed)  # datadir = ...
+    benchmark = mfpbench.get("jahs_cifar10", seed=seed)  # datadir = ...
     benchmark = cast(JAHSBenchmark, benchmark)
 
     # benchmark = mfpbench.get("lcbench", seed=seed, datadir=datadir, task_id="3945")
@@ -54,6 +54,20 @@ if __name__ == "__main__":
     result: JAHSResult = benchmark.query(config, at=42)
     result = benchmark.query(config.dict(), at=42)  # You can also use a dict
     result = benchmark.query(benchmark.space.sample_configuration())  # Or configspace
+
+    # All results have the following properties mapped to some metrics that are returned
+    # by the benchmark
+    print(result.score)
+    print(result.error)
+    print(result.cost)
+
+    print(result.test_error)
+    print(result.test_score)
+    print(result.val_error)
+    print(result.val_score)
+
+    # The full result object
+    print(result)
 
     # And if you need the full trajectory
     results: list[JAHSResult] = benchmark.trajectory(config)
