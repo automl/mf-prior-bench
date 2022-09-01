@@ -16,9 +16,7 @@ The PD1 Neural Net Tuning Dataset data are stored in JSON Lines format (https://
 
 We collected two types of data: matched and unmatched data. 
 
-Matched data used the same set of
-uniformly-sampled (Halton sequence) hyperparameter points across all tasks and unmatched data sampled new points
-for each task. All other training pipeline hyperparameters were fixed to hand-selected, task-specific default values that are described in the various task-specific .json config files that are also included. Since all the neural networks were trained using the code at https://github.com/google/init2winit, that repository is the best source for understanding the precise semantics of any hyperparameter or task-specific configuration parameter. The JSON config files should be human readable, minimally-redacted examples of the actual configuration files used to create the data. Every pair of dataset and model used in the paper has a corresponding JSON config example, but only one batch size is included (configs for other batch sizes would be identical except for the batch size).
+Matched data used the same set of uniformly-sampled (Halton sequence) hyperparameter points across all tasks and unmatched data sampled new points for each task. All other training pipeline hyperparameters were fixed to hand-selected, task-specific default values that are described in the various task-specific .json config files that are also included. Since all the neural networks were trained using the code at https://github.com/google/init2winit, that repository is the best source for understanding the precise semantics of any hyperparameter or task-specific configuration parameter. The JSON config files should be human readable, minimally-redacted examples of the actual configuration files used to create the data. Every pair of dataset and model used in the paper has a corresponding JSON config example, but only one batch size is included (configs for other batch sizes would be identical except for the batch size).
 
 
 
