@@ -28,7 +28,7 @@ class JAHSBenchmark(Benchmark, ABC):
     Config = JAHSConfig
     Result = JAHSResult
     fidelity_name = "epoch"
-    fidelity_range = (1, 200, 1)
+    fidelity_range = (3, 200, 1)  # TODO: min budget plays a huge role in SH/HB algos
 
     task: jahs_bench.BenchmarkTasks
 
