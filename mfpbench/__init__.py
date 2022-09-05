@@ -57,6 +57,8 @@ version = "0.0.1"
 
 _mapping: dict[str, type[Benchmark]] = {
     "jahs_cifar10": JAHSCifar10,
+    "jahs_cifar10_good": JAHSCifar10,
+    "jahs_cifar10_bad": JAHSCifar10,
     "jahs_colorectal_histology": JAHSColorectalHistology,
     "jahs_fashion_mnist": JAHSFashionMNIST,
     "lcbench": LCBenchBenchmark,
@@ -151,6 +153,7 @@ def get(name: str, seed: int | None = None, **kwargs: Any) -> Benchmark:
         return b(
             seed=seed,
             datadir=kwargs.get("datadir"),
+            prior=None if "prior" not in kwargs else kwargs["prior"],
         )
 
     # TODO: this might have to change, not sure if all yahpo benchmarks have a task

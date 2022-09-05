@@ -47,6 +47,7 @@ class JAHSBenchmark(Benchmark, ABC):
         *,
         datadir: str | Path | None = None,
         seed: int | None = None,
+        prior: str = None
     ):
         """
         Parameters
@@ -54,9 +55,11 @@ class JAHSBenchmark(Benchmark, ABC):
         datadir : str | Path | None = None
             The path to where mfpbench stores it data. If left to default (None), will
             use the `_default_download_dir = ./data/jahs-bench-data`.
-
         seed : int | None = None
             The seed to give this benchmark instance
+        prior : str = None
+            Can be one of {"good", "bad"} to set the defaults as the good and bad priors.
+            If left to the default None, the default set here remains.
         """
         super().__init__(seed=seed)
 
@@ -72,7 +75,8 @@ class JAHSBenchmark(Benchmark, ABC):
 
         # Loaded on demand with `@property`
         self._bench: jahs_bench.Benchmark | None = None
-        self._configspace = jahs_configspace(self.seed)
+        self.prior = prior
+        self._configspace = jahs_configspace(self.seed, self.prior)
 
     # explicit overwrite
     def load(self) -> None:
