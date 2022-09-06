@@ -32,7 +32,8 @@ C = TypeVar("C", bound=MFHartmannConfig)
 
 class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
-    fidelity_range = (1, 5, 1)
+    # fidelity_range = (1, 5, 1)
+    fidelity_range = (1, 10, 1)  # scaling original fidelity space [0, 1] to [1, 10]
     fidelity_name = "z"
 
     Result = MFHartmannResult
@@ -107,10 +108,23 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         )
         result = self.mfh(z=at, Xs=Xs)
 
+        # return self.Result(
+        #     config=self.Config(**config),
+        #     fidelity=at,
+        #     **{"value": result},
+        # )
+
+        _min, _max, _ = self.fidelity_range
+        z_norm = (at - _min) / (_max - _min)
+        # λ(z) on Pg 18 from https://arxiv.org/pdf/1703.06240.pdf
+        cost = 0.05 + (1 - 0.05) * z_norm**2
         return self.Result(
             config=self.Config(**config),
             fidelity=at,
-            **{"value": result},
+            **{
+                "value": result,
+                "fid_cost": cost
+            },
         )
 
     def trajectory(

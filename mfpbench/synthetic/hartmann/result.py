@@ -13,6 +13,7 @@ C = TypeVar("C", bound=MFHartmannConfig)
 @dataclass(frozen=True)  # type: ignore[misc]
 class MFHartmannResult(Result[C, int]):
     value: float
+    fid_cost: float
 
     @property
     def score(self) -> float:
@@ -47,4 +48,5 @@ class MFHartmannResult(Result[C, int]):
     @property
     def cost(self) -> float:
         """Just retuns the fidelity"""
-        return self.fidelity
+        # return self.fidelity
+        return self.fid_cost
