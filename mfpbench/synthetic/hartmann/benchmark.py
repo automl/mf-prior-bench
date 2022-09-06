@@ -25,6 +25,8 @@ from mfpbench.synthetic.hartmann.generators import (
     MFHartmannGenerator,
 )
 from mfpbench.synthetic.hartmann.result import MFHartmannResult
+from mfpbench.synthetic.hartmann.hartmann_priors import HARTMANN3D, HARTMANN6D
+
 
 G = TypeVar("G", bound=MFHartmannGenerator)
 C = TypeVar("C", bound=MFHartmannConfig)
@@ -47,6 +49,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         seed: int | None = None,
         bias: float | None = None,
         noise: float | None = None,
+        prior: str = None
     ):
         """
         Parameters
@@ -62,6 +65,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         super().__init__(seed)
         self.bias = bias if bias is not None else self.bias_noise[0]
         self.noise = noise if noise is not None else self.bias_noise[1]
+        self.prior = prior
         self.mfh = self.Generator(
             n_fidelities=self.end,
             fidelity_noise=self.noise,
@@ -185,6 +189,13 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         -------
         ConfigurationSpace
         """
+        if self.prior == "good":
+            defaults = HARTMANN6D.GOOD_PRIOR if self.mfh.dims == 6 else HARTMANN3D.GOOD_PRIOR
+        elif self.prior == "bad":
+            defaults = HARTMANN6D.BAD_PRIOR if self.mfh.dims == 6 else HARTMANN3D.BAD_PRIOR
+        else:
+            defaults = HARTMANN6D.DEFAULT if self.mfh.dims == 6 else HARTMANN3D.DEFAULT
+
         if self._configspace is None:
             cs = ConfigurationSpace(
                 name=f"{self.__class__.__name__}(bias={self.bias}, noise={self.noise})",
@@ -192,8 +203,9 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
             )
             cs.add_hyperparameters(
                 [
-                    UniformFloatHyperparameter(f"X_{i}", lower=0.0, upper=1.0)
-                    for i in range(self.mfh.dims)
+                    UniformFloatHyperparameter(
+                        f"X_{i}", lower=0.0, upper=1.0, default_value=defaults[f"X_{i}"]
+                    ) for i in range(self.mfh.dims)
                 ]
             )
             self._configspace = cs

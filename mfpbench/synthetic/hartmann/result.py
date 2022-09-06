@@ -18,12 +18,21 @@ class MFHartmannResult(Result[C, int]):
     @property
     def score(self) -> float:
         """The score of interest"""
+        # TODO: what should be an appropriate score since flipping signs may not be
+        #  adequate or meaningful. When is the property score used?
+        # Hartmann functions have multiple minimas with the global valued at < 0
+        # The function evaluates to a y-value that needs to be minimized
+        #  https://www.sfu.ca/~ssurjano/hart3.html
         return self.value
 
     @property
     def error(self) -> float:
         """The score of interest"""
-        return -self.value
+        # TODO: verify
+        # Hartmann functions have multiple minimas with the global valued at < 0
+        # The function evaluates to a y-value that needs to be minimized
+        #  https://www.sfu.ca/~ssurjano/hart3.html
+        return self.value
 
     @property
     def test_score(self) -> float:
