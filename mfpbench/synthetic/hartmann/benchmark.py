@@ -189,6 +189,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         -------
         ConfigurationSpace
         """
+        # Chanding defaults to prior configurations
         if self.prior == "good":
             defaults = HARTMANN6D.GOOD_PRIOR if self.mfh.dims == 6 else HARTMANN3D.GOOD_PRIOR
         elif self.prior == "bad":
