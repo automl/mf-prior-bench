@@ -86,7 +86,6 @@ class MFHartmann3(MFHartmannGenerator):
         float
             The function value
         """
-        print(z)
         assert len(Xs) == self.dims
         X_0, X_1, X_2 = Xs
 

@@ -113,7 +113,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         )
         log_z = np.log(at)
         log_lb, log_ub = np.log([self.fidelity_range[0], self.fidelity_range[1]])
-        log_z_scaled = (log_z - log_lb) / log_ub
+        log_z_scaled = (log_z - log_lb) / (log_ub - log_lb)
         result = self.mfh(z=log_z_scaled, Xs=Xs)
 
         # return self.Result(
