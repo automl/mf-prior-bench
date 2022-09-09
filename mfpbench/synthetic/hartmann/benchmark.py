@@ -36,7 +36,7 @@ C = TypeVar("C", bound=MFHartmannConfig)
 class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
     # fidelity_range = (1, 5, 1)
-    fidelity_range = (1, 100, 1)  # scaling original fidelity space [0, 1] to [1, 10]
+    fidelity_range = (3, 100, 1)  # scaling original fidelity space [0, 1] to [1, 10]
     fidelity_name = "z"
 
     Result = MFHartmannResult
