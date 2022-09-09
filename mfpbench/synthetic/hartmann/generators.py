@@ -86,11 +86,12 @@ class MFHartmann3(MFHartmannGenerator):
         float
             The function value
         """
-        assert self.z_min <= z <= self.z_max
+        print(z)
         assert len(Xs) == self.dims
         X_0, X_1, X_2 = Xs
 
-        norm_z = (z - self.z_min) / (self.z_max - self.z_min)
+        # Change by Carl - z now comes in normalized
+        norm_z = z
         # Highest fidelity (1) accounts for the regular Hartmann
         X = np.array([X_0, X_1, X_2]).reshape(1, -1)
         alpha = np.array([1.0, 1.2, 3.0, 3.2])
@@ -137,11 +138,11 @@ class MFHartmann6(MFHartmannGenerator):
         float
             The function value
         """
-        assert self.z_min <= z <= self.z_max
         assert len(Xs) == self.dims
         X_0, X_1, X_2, X_3, X_4, X_5 = Xs
 
-        norm_z = (z - self.z_min) / (self.z_max - self.z_min)
+        # Change by Carl - z now comes in normalized
+        norm_z = z
         # Highest fidelity (1) accounts for the regular Hartmann
         X = np.array([X_0, X_1, X_2, X_3, X_4, X_5]).reshape(1, -1)
         alpha = np.array([1.0, 1.2, 3.0, 3.2])

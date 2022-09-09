@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Generic, TypeVar
 
+import numpy as np
 from ConfigSpace import Configuration, ConfigurationSpace, UniformFloatHyperparameter
 
 from mfpbench.benchmark import Benchmark
@@ -35,7 +36,7 @@ C = TypeVar("C", bound=MFHartmannConfig)
 class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
     # fidelity_range = (1, 5, 1)
-    fidelity_range = (1, 10, 1)  # scaling original fidelity space [0, 1] to [1, 10]
+    fidelity_range = (1, 100, 1)  # scaling original fidelity space [0, 1] to [1, 10]
     fidelity_name = "z"
 
     Result = MFHartmannResult
@@ -110,7 +111,10 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         Xs = tuple(
             config[s] for s in sorted(config, key=lambda k: int(k.split("_")[-1]))
         )
-        result = self.mfh(z=at, Xs=Xs)
+        log_z = np.log(at)
+        log_lb, log_ub = np.log([self.fidelity_range[0], self.fidelity_range[1]])
+        log_z_scaled = (log_z - log_lb) / log_ub
+        result = self.mfh(z=log_z_scaled, Xs=Xs)
 
         # return self.Result(
         #     config=self.Config(**config),
@@ -118,10 +122,8 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         #     **{"value": result},
         # )
 
-        _min, _max, _ = self.fidelity_range
-        z_norm = (at - _min) / (_max - _min)
         # λ(z) on Pg 18 from https://arxiv.org/pdf/1703.06240.pdf
-        cost = 0.05 + (1 - 0.05) * z_norm**2
+        cost = 0.05 + (1 - 0.05) * (at / self.fidelity_range[1]) ** 2
         return self.Result(
             config=self.Config(**config),
             fidelity=at,
