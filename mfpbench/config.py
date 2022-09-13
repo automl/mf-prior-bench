@@ -71,7 +71,7 @@ class Config(ABC):
         elif isinstance(that, Configuration):
             that = {**that}
         elif isinstance(that, self.__class__):
-            that == that.dict()
+            that = that.dict()
         else:
             return False
 
