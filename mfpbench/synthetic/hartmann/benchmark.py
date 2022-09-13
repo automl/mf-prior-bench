@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import Generic, TypeVar
 
+from pathlib import Path
+
 from ConfigSpace import Configuration, ConfigurationSpace, UniformFloatHyperparameter
 
 from mfpbench.benchmark import Benchmark
@@ -48,7 +50,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         seed: int | None = None,
         bias: float | None = None,
         noise: float | None = None,
-        prior: str | None = None,
+        prior: str | Path | C | None = None,
     ):
         """
         Parameters
@@ -60,7 +62,12 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
         noise : float | None
 
-        prior: str = "good" | "bad" | None
+        prior: str | Path | MFHartmannConfig | None = None
+            The prior to use for the benchmark.
+            * str - A preset
+            * Path - path to a file
+            * Config - A Config object
+            * None - Use the default if available
         """
         super().__init__(seed=seed, prior=prior)
         self.bias = bias if bias is not None else self.bias_noise[0]

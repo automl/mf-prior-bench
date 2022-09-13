@@ -47,7 +47,7 @@ class JAHSBenchmark(Benchmark, ABC):
         *,
         datadir: str | Path | None = None,
         seed: int | None = None,
-        prior: str = None,
+        prior: str | Path | JAHSConfig | None = None,
     ):
         """
         Parameters
@@ -55,11 +55,16 @@ class JAHSBenchmark(Benchmark, ABC):
         datadir : str | Path | None = None
             The path to where mfpbench stores it data. If left to default (None), will
             use the `_default_download_dir = ./data/jahs-bench-data`.
+
         seed : int | None = None
             The seed to give this benchmark instance
-        prior : str = None
-            Can be one of "good", "bad" to set the defaults as the good and bad priors.
-            If left to the default None, the default set here remains.
+
+        prior: str | Path | JAHSConfig | None = None
+            The prior to use for the benchmark.
+            * str - A preset
+            * Path - path to a file
+            * Config - A Config object
+            * None - Use the default if available
         """
         super().__init__(seed=seed)
 

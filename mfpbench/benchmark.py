@@ -40,7 +40,11 @@ class Benchmark(Generic[C, R, F], ABC):
     # Whether this benchmark has conditonals in it or not
     has_conditionals: bool = False
 
-    def __init__(self, seed: int | None = None, prior: str | Path | C | None = None):
+    def __init__(
+        self,
+        seed: int | None = None,
+        prior: str | Path | C | None = None,
+    ):
         self.seed = seed
         self.start: F = self.fidelity_range[0]
         self.end: F = self.fidelity_range[1]

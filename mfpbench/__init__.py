@@ -3,8 +3,11 @@ from __future__ import annotations
 from typing import Any, Iterator
 
 import datetime
+from itertools import product
+from pathlib import Path
 
 from mfpbench.benchmark import Benchmark
+from mfpbench.config import Config
 from mfpbench.jahs import (
     JAHSBenchmark,
     JAHSCifar10,
@@ -99,6 +102,7 @@ _mapping: dict[str, type[Benchmark]] = {
 def get(
     name: str,
     seed: int | None = None,
+    prior: str | Path | Config | None = None,
     preload: bool = False,
     **kwargs: Any,
 ) -> Benchmark:
@@ -128,6 +132,13 @@ def get(
 
     seed: int | None = None
         The seed to use
+
+    prior: str | Path | Config | None = None
+        The prior to use for the benchmark.
+        * str - A preset
+        * Path - path to a file
+        * Config - A Config object
+        * None - Use the default if available
 
     preload: bool = False
         Whether to preload the benchmark data in
@@ -168,9 +179,12 @@ def get(
         if kwargs.get("task_id") is not None:
             raise ValueError(f"jahs-bench doesn't take a task_id ({kwargs['task_id']})")
 
+        if isinstance(prior, Config) and not isinstance(prior, JAHSBenchmark.Config):
+            raise ValueError(f"config {prior} must be a {JAHSBenchmark.Config}")
+
         bench = b(
             seed=seed,
-            prior=kwargs.get("prior"),
+            prior=prior,
             datadir=kwargs.get("datadir"),
         )
 
@@ -178,7 +192,7 @@ def get(
     elif issubclass(b, YAHPOBenchmark):
         bench = b(
             seed=seed,
-            prior=kwargs.get("prior"),
+            prior=prior,
             datadir=kwargs.get("datadir"),
             task_id=kwargs.get("task_id"),
         )
@@ -186,7 +200,7 @@ def get(
     elif issubclass(b, MFHartmannBenchmark):
         bench = b(
             seed=seed,
-            prior=kwargs.get("prior"),
+            prior=prior,
             bias=kwargs.get("bias"),
             noise=kwargs.get("noise"),
         )
@@ -213,24 +227,43 @@ def available(
     -------
     Iterator[tuple[type[Benchmark], str | None]]
     """
-    for k, v in _mapping.items():
+    for name, cls in _mapping.items():
         # Skip conditionals if specified
-        if v.has_conditionals and conditionals is False:
+        if cls.has_conditionals and conditionals is False:
             continue
 
-        if issubclass(v, JAHSBenchmark):
-            yield k, v, None
+        if cls.available_priors is not None:
+            priors = list(cls.available_priors)
 
-        elif issubclass(v, YAHPOBenchmark):
-            if v.instances is not None:
-                yield from ((k, v, {"task_id": task}) for task in v.instances)
+        if issubclass(cls, JAHSBenchmark):
+            if priors:
+                yield from ((name, cls, {"prior": p}) for p in priors)
             else:
-                yield (k, v, None)
+                yield name, cls, None
 
-        elif issubclass(v, MFHartmannBenchmark):
-            bias, noise = v.bias_noise
-            extra = {"bias": bias, "noise": noise}
-            yield (k, v, extra)
+        elif issubclass(cls, YAHPOBenchmark):
+            if cls.instances is not None:
+                if priors is not None:
+                    yield from (
+                        (name, cls, {"task_id": t, "prior": p})
+                        for t, p in product(cls.instances, priors)
+                    )
+                else:
+                    yield from ((name, cls, {"task_id": t}) for t in cls.instances)
+            else:
+                if priors is not None:
+                    yield from ((name, cls, {"prior": p}) for p in priors)
+                else:
+                    yield (name, cls, None)
+
+        elif issubclass(cls, MFHartmannBenchmark):
+            bias, noise = cls.bias_noise
+            params: dict[str, Any] = {"bias": bias, "noise": noise}
+            if priors is not None:
+                itr = ((name, cls, {"prior": p, **params}) for p in priors)
+                yield from itr
+            else:
+                yield (name, cls, params)
 
         else:
             raise NotImplementedError("Whoops, fix me")
