@@ -6,31 +6,47 @@ repos:
     rev: 5.10.1
     hooks:
       - id: isort
-        name: isort imports mfp_bench
-        files: mfp_bench
+        name: isort imports mfpbench
+        files: mfpbench
 
       - id: isort
         name: isort imports tests
         files: tests
 
   - repo: https://github.com/ambv/black
-    rev: 22.1.0
+    rev: 22.8.0
     hooks:
       - id: black
-        name: black formatter mfp_bench
-        files: mfp_bench
+        name: black formatter mfpbench
+        files: mfpbench
 
       - id: black
         name: black formatter tests
         files: tests
 
-      - id: black
-        name: black formatter examples
-        files: examples
-
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.1.1
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.971
     hooks:
-      - id: pydocstyle
-        files: mfp_bench
-        additional_dependencies: ["toml"] # Needed to parse pyproject.toml
+      - id: mypy
+        name: mypy
+        files: mfpbench/.*
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 5.0.4
+    hooks:
+      - id: flake8
+        name: flake8 src
+        files: mfpbench/.*
+
+      - id: flake8
+        name: flake8 test
+        files: tests/.*
+
+
+
+  #- repo: https://github.com/pycqa/pydocstyle
+  # rev: 6.1.1
+  # hooks:
+  #   - id: pydocstyle
+  #     files: mfpbench
+  #     additional_dependencies: ["toml"] # Needed to parse pyproject.toml
