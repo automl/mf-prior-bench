@@ -13,24 +13,24 @@ class JAHSConfig(Config):
     """
 
     # Not fidelities for our use case
-    N: int = 1
-    W: int = 4
+    N: int
+    W: int
 
     # Categoricals
-    Op1: int = 0
-    Op2: int = 0
-    Op3: int = 0
-    Op4: int = 0
-    Op5: int = 0
-    Op6: int = 0
-    TrivialAugment: bool = False
-    Activation: str = "ReLU"
-    Optimizer: str = "SGD"
+    Op1: int
+    Op2: int
+    Op3: int
+    Op4: int
+    Op5: int
+    Op6: int
+    TrivialAugment: bool
+    Activation: str
+    Optimizer: str
 
     # Continuous Numericals
-    Resolution: float = 1.0
-    LearningRate: float = 1e-1
-    WeightDecay: float = 5e-4
+    Resolution: float
+    LearningRate: float
+    WeightDecay: float
 
     def validate(self) -> None:
         """Validate this config incase required"""
