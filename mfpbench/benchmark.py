@@ -73,7 +73,7 @@ class Benchmark(Generic[C, R, F], ABC):
                 self.prior = self.Config.from_dict(prior)
 
             elif isinstance(prior, Configuration):
-                self.prior = self.Config.from_configuration(**prior)
+                self.prior = self.Config.from_configuration(prior)
 
             else:
                 self.prior = prior
@@ -86,6 +86,7 @@ class Benchmark(Generic[C, R, F], ABC):
             self.prior = self._default_prior
 
         # Whatever prior we end up with, make sure it's valid
+        # And seed the space of this benchmark
         if self.prior is not None:
             self.prior.validate()
 

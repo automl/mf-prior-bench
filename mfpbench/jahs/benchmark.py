@@ -70,7 +70,7 @@ class JAHSBenchmark(Benchmark, ABC):
             * if dict, Config, Configuration - A config
             * None - Use the default if available
         """
-        super().__init__(seed=seed)
+        super().__init__(seed=seed, prior=prior)
 
         if datadir is None:
             datadir = JAHSBenchmark._default_download_dir
@@ -82,11 +82,12 @@ class JAHSBenchmark(Benchmark, ABC):
                 f"`python -m mfpbench.download --data-dir {self.datadir.parent}`"
             )
 
-        self.prior = prior
-
         # Loaded on demand with `@property`
         self._bench: jahs_bench.Benchmark | None = None
         self._configspace = jahs_configspace(name=str(self), seed=self.seed)
+
+        if self.prior is not None:
+            self.prior.set_as_default_prior(self._configspace)
 
     # explicit overwrite
     def load(self) -> None:
@@ -137,19 +138,20 @@ class JAHSBenchmark(Benchmark, ABC):
         at = at if at is not None else self.end
         assert self.start <= at <= self.end
 
-        if isinstance(config, Configuration):
-            config = {**config}
+        if isinstance(config, (Configuration, dict)):
+            config = self.Config.from_dict(config)
 
-        if isinstance(config, JAHSConfig):
-            config = config.dict()
+        assert isinstance(config, self.Config)
 
-        results = self.bench.__call__(config, nepochs=at)
+        query = config.dict()
+
+        results = self.bench.__call__(query, nepochs=at)
         result = results[at]
 
-        return self.Result(
-            config=self.Config(**config),  # Just make sure it's a JAHSConfig
+        return self.Result.from_dict(
+            config=config,
+            result=rename(result, keys=self._result_renames),
             fidelity=at,
-            **rename(result, keys=self._result_renames),
         )
 
     def trajectory(
@@ -183,26 +185,27 @@ class JAHSBenchmark(Benchmark, ABC):
         """
         to = to if to is not None else self.end
 
-        if isinstance(config, Configuration):
-            config = {**config}
+        if isinstance(config, (Configuration, dict)):
+            config = self.Config.from_dict(config)
 
-        if isinstance(config, JAHSConfig):
-            config = config.dict()
+        assert isinstance(config, self.Config)
+
+        query = config.dict()
 
         try:
-            results = self.bench.__call__(config, nepochs=to, full_trajectory=True)
+            results = self.bench.__call__(query, nepochs=to, full_trajectory=True)
         except TypeError:
             # See: https://github.com/automl/jahs_bench_201/issues/5
             results = {
-                f: self.bench.__call__(config, nepochs=f)[f]
+                f: self.bench.__call__(query, nepochs=f)[f]
                 for f in self.iter_fidelities(frm=frm, to=to, step=step)
             }
 
         return [
-            self.Result(
-                config=self.Config(**config),
+            self.Result.from_dict(
+                config=config,
                 fidelity=i,
-                **rename(results[i], keys=self._result_renames),
+                result=rename(results[i], keys=self._result_renames),
             )
             for i in self.iter_fidelities(frm=frm, to=to, step=step)
         ]

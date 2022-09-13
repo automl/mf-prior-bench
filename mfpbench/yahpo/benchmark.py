@@ -88,7 +88,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             elif task_id not in self.instances:
                 raise ValueError(f"{cls} requires a task in {self.instances}")
 
-        super().__init__(seed=seed)
+        super().__init__(seed=seed, prior=prior)
         if datadir is None:
             datadir = self._default_download_dir
 
@@ -122,6 +122,9 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         self.task_id = task_id
         self._configspace = space
 
+        if self.prior is not None:
+            self.prior.set_as_default_prior(self._configspace)
+
     def query(
         self,
         config: C | dict[str, Any] | Configuration,
@@ -145,42 +148,26 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         at = at if at is not None else self.end
         assert self.start <= at <= self.end
 
-        if isinstance(config, Configuration):
-            config = {**config}
+        if isinstance(config, (Configuration, dict)):
+            config = self.Config.from_dict(config)
 
-        if isinstance(config, YAHPOConfig):
-            config = config.dict()
+        assert isinstance(config, self.Config)
 
-        assert isinstance(config, dict), "I assume this is the case by here?"
-
-        if self.fidelity_name in config:
-            msg = f"``query(config, at=...)`` for fidelity, not the config {config}"
-            raise ValueError(msg)
-
-        # Unfortunatly we need to do some simple renaming for any keys with a `.` in it
-        query = {**config}
-        query[self.fidelity_name] = at
+        query = config.dict()
 
         if self._forced_hps is not None:
             query.update(self._forced_hps)
 
-        if self._replacements_hps is not None:
-            for frm, to in self._replacements_hps:
-                query[to] = query.pop(frm)
-
         if self.task_id is not None and self._task_id_name is not None:
             query[self._task_id_name] = self.task_id
+
+        query[self.fidelity_name] = at
 
         results: list[dict] = self.bench.objective_function(query, seed=self.seed)
         result = results[0]
 
-        # Make sure the config object can take it
-        if self._replacements_hps is not None:
-            for to, frm in self._replacements_hps:
-                config[to] = config.pop(frm)
-
         return self.Result.from_dict(
-            config=self.Config.from_dict(config),
+            config=config,
             result=result,
             fidelity=at,
         )
@@ -214,25 +201,18 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         list[R]
             A list of the results for this config
         """
-        if isinstance(config, Configuration):
-            config = {**config}
+        if isinstance(config, (Configuration, dict)):
+            config = self.Config.from_dict(config)
 
-        if isinstance(config, YAHPOConfig):
-            config = config.dict()
+        assert isinstance(config, self.Config)
 
-        assert isinstance(config, dict), "I assume this should be the case by here"
-
-        if self.fidelity_name in config:
-            msg = "``trajectory(config, frm=..., to=..., step=...)`` not config"
-            raise ValueError(msg)
-
-        query = {**config}
-
-        if self.task_id is not None and self._task_id_name is not None:
-            query[self._task_id_name] = self.task_id
+        query = config.dict()
 
         if self._forced_hps is not None:
             query.update(self._forced_hps)
+
+        if self.task_id is not None and self._task_id_name is not None:
+            query[self._task_id_name] = self.task_id
 
         # Copy same config and insert fidelities for each
         queries: list[dict] = [
@@ -243,10 +223,10 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         results = self.bench.objective_function(queries, seed=self.seed)
 
         return [
-            self.Result(
-                config=self.Config.from_dict(config),  # Same config for each
+            self.Result.from_dict(
+                config=config,
+                result=result,
                 fidelity=query[self.fidelity_name],
-                **result,
             )
             # We need to loop over q's for fidelity
             for result, query in zip(results, queries)

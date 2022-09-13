@@ -20,18 +20,22 @@ DATADIR: Path | None = None
 
 # We can get all the benchmarks here
 # Using a dictionary, we make sure we only have one of each named benchmark
-benchmarks = {
-    name: (name, prior, params)
-    for name, _, prior, params in mfpbench.available(conditionals=CONDITONALS)
+_benchmarks = {
+    name: (name, cls, prior, params)
+    for name, cls, prior, params in mfpbench.available(conditionals=CONDITONALS)
 }
+
+benchmarks = list(_benchmarks.values())
 
 
 # We expect the default download location for each
 @fixture(scope="module")
-@parametrize(item=list(benchmarks.values()))
-def benchmark(item: tuple[str, str | None, dict[str, Any] | None]) -> Benchmark:
+@parametrize(item=benchmarks)
+def benchmark(
+    item: tuple[str, type[Benchmark], str | None, dict[str, Any] | None]
+) -> Benchmark:
     """The JAHSBench series of benchmarks"""
-    name, prior, params = item
+    name, _, prior, params = item
     if params is None:
         params = {}
 
@@ -271,3 +275,205 @@ def test_result_same_value_but_different_fidelity_has_different_hash(
     )
 
     assert hash(result) != hash(new_result)
+
+
+@parametrize(item=benchmarks)
+def test_prior_from_available_priors(
+    item: tuple[str, type[Benchmark], str | None, dict[str, Any] | None]
+) -> None:
+    """
+    Expects
+    -------
+    * Getting a benchmark with an available prior should have its configspace seeded
+      with that prior
+    """
+    # Setup
+    name, cls, _, params = item
+    if cls.available_priors is None:
+        pytest.skip(msg=f"Benchmark {cls} does not have `available_priors`")
+        return
+
+    if params is None:
+        params = {}
+
+    # Incase we need to seed it
+    if DATADIR is not None:
+        params["datadir"] = DATADIR
+
+    # Test begins
+    # We seed it with all the priors advertised
+    for prior in cls.available_priors:
+
+        bench = mfpbench.get(name=name, prior=prior, seed=SEED, **params)
+
+        # The default configuration for the benchmark should be the same as the prior
+        prior_config = cls.available_priors[prior]
+        default = bench.space.get_default_configuration()
+        assert default == prior_config, f"{prior}, {prior_config}, {default}"
+
+
+@parametrize(item=benchmarks)
+def test_prior_from_yaml_file(
+    item: tuple[str, type[Benchmark], str | None, dict[str, Any] | None], tmp_path: Path
+) -> None:
+    """
+    Expects
+    -------
+    * Using a prior from a yaml file will have the configspace for the benchmark seeded
+    with that config
+    """
+    name, cls, _, params = item
+
+    if params is None:
+        params = {}
+
+    # Incase we need to seed it
+    if DATADIR is not None:
+        params["datadir"] = DATADIR
+
+    bench = mfpbench.get(name=name, seed=SEED, **params)
+
+    # Get a random config and save it temporarily
+    random_config = bench.sample()
+
+    path = tmp_path / "config.yaml"
+    random_config.save(path, format="yaml")
+
+    # Use the path of the saved config as the prior config
+    bench = mfpbench.get(prior=path, name=name, seed=SEED, **params)
+
+    # The default configuration for the benchmark should be the same as the prior
+    default = bench.space.get_default_configuration()
+    assert default == random_config, f"{random_config}, {default}"
+
+
+@parametrize(item=benchmarks)
+def test_prior_from_json_file(
+    item: tuple[str, type[Benchmark], str | None, dict[str, Any] | None], tmp_path: Path
+) -> None:
+    """
+    Expects
+    -------
+    * Using a prior from a json file will have the configspace for the benchmark seeded
+    with that config
+    """
+    name, cls, _, params = item
+
+    if params is None:
+        params = {}
+
+    # Incase we need to seed it
+    if DATADIR is not None:
+        params["datadir"] = DATADIR
+
+    bench = mfpbench.get(name=name, seed=SEED, **params)
+
+    # Get a random config and save it temporarily
+    random_config = bench.sample()
+
+    path = tmp_path / "config.json"
+    random_config.save(path, format="json")
+
+    # Use the path of the saved config as the prior config
+    bench = mfpbench.get(prior=path, name=name, seed=SEED, **params)
+
+    # The default configuration for the benchmark should be the same as the prior
+    default = bench.space.get_default_configuration()
+    assert default == random_config, f"{random_config}, {default}"
+
+
+@parametrize(item=benchmarks)
+def test_prior_from_config(
+    item: tuple[str, type[Benchmark], str | None, dict[str, Any] | None]
+) -> None:
+    """
+    Expects
+    -------
+    * Using a prior from a config will have the configspace for the benchmark seeded
+    with that config
+    """
+    name, cls, _, params = item
+
+    if params is None:
+        params = {}
+
+    # Incase we need to seed it
+    if DATADIR is not None:
+        params["datadir"] = DATADIR
+
+    bench = mfpbench.get(name=name, seed=SEED, **params)
+
+    # Get a random config
+    random_config = bench.sample()
+
+    # Use the path of the saved config as the prior config
+    bench = mfpbench.get(prior=random_config, name=name, seed=SEED, **params)
+
+    # The default configuration for the benchmark should be the same as the prior
+    default = bench.space.get_default_configuration()
+    assert default == random_config, f"{random_config}, {default}"
+
+
+@parametrize(item=benchmarks)
+def test_prior_from_configuration(
+    item: tuple[str, type[Benchmark], str | None, dict[str, Any] | None]
+) -> None:
+    """
+    Expects
+    -------
+    * Using a prior from a config will have the configspace for the benchmark seeded
+    with that config
+    """
+    name, cls, _, params = item
+
+    if params is None:
+        params = {}
+
+    # Incase we need to seed it
+    if DATADIR is not None:
+        params["datadir"] = DATADIR
+
+    bench = mfpbench.get(name=name, seed=SEED, **params)
+
+    # Get a random config
+    random_config = bench.space.sample_configuration()
+
+    # Use the path of the saved config as the prior config
+    bench = mfpbench.get(prior=random_config, name=name, seed=SEED, **params)
+
+    # The default configuration for the benchmark should be the same as the prior
+    default = bench.space.get_default_configuration()
+    default = bench.Config.from_configuration(default)
+    assert default == random_config, f"{random_config}, {default}"
+
+
+@parametrize(item=benchmarks)
+def test_prior_from_dict(
+    item: tuple[str, type[Benchmark], str | None, dict[str, Any] | None]
+) -> None:
+    """
+    Expects
+    -------
+    * Using a prior from a config will have the configspace for the benchmark seeded
+    with that config
+    """
+    name, cls, _, params = item
+
+    if params is None:
+        params = {}
+
+    # Incase we need to seed it
+    if DATADIR is not None:
+        params["datadir"] = DATADIR
+
+    bench = mfpbench.get(name=name, seed=SEED, **params)
+
+    # Get a random config
+    random_config = bench.sample()
+
+    # Use the path of the saved config as the prior config
+    bench = mfpbench.get(prior=random_config.dict(), name=name, seed=SEED, **params)
+
+    # The default configuration for the benchmark should be the same as the prior
+    default = bench.space.get_default_configuration()
+    assert default == random_config, f"{random_config}, {default}"

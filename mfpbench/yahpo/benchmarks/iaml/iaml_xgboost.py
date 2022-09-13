@@ -4,7 +4,6 @@ from typing import no_type_check
 
 from dataclasses import dataclass
 
-from ConfigSpace import ConfigurationSpace
 from typing_extensions import Literal
 
 from mfpbench.yahpo.benchmarks.iaml.iaml import IAMLBenchmark, IAMLConfig, IAMLResult
@@ -68,27 +67,6 @@ class IAMLxgboostConfig(IAMLConfig):
         if self.skip_drop is not None:
             assert self.booster in ["dart"]
             assert 0.0 <= self.skip_drop <= 1.0
-
-    def set_as_default_prior(self, configspace: ConfigurationSpace) -> None:
-        """Applies this configuration as a prior on a configspace
-
-        Note
-        ----
-        This overwrites the default behaviour because of _lambda
-
-        Parameters
-        ----------
-        configspace: ConfigurationSpace
-            The space to apply this config to
-        """
-        exceptions = ["_lambda"]
-        keys = [
-            k for k in self.__annotations__ if not k.startswith("_") or k in exceptions
-        ]
-        for attr in keys:
-            hp = configspace[attr]
-            value = getattr(self, attr)
-            hp.default_value = hp.check_default(value)
 
 
 @dataclass(frozen=True)

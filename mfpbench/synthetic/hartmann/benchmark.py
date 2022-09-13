@@ -78,7 +78,19 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
             fidelity_bias=self.bias,
             seed=self.seed,
         )
-        self._configspace: ConfigurationSpace | None = None
+
+        # Create the configspace
+        self._configspace = ConfigurationSpace(name=str(self), seed=self.seed)
+        self._configspace.add_hyperparameters(
+            [
+                UniformFloatHyperparameter(f"X_{i}", lower=0.0, upper=1.0)
+                for i in range(self.mfh.dims)
+            ]
+        )
+
+        # Chanding defaults to prior configurations
+        if self.prior is not None:
+            self.prior.set_as_default_prior(self._configspace)
 
     def query(
         self,
@@ -103,25 +115,23 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         at = at if at is not None else self.end
         assert self.start <= at <= self.end
 
-        if isinstance(config, Configuration):
-            config = {**config}
+        if isinstance(config, (Configuration, dict)):
+            config = self.Config.from_dict(config)
 
-        if isinstance(config, MFHartmannConfig):
-            config = config.dict()
+        assert isinstance(config, self.Config)
 
-        assert isinstance(config, dict), "I assume this is the case by here?"
+        query = config.dict()
 
         # It's important here that we still have X_0, X_1, ..., X_n
         # We strip out the numerical part and sort by that
-        Xs = tuple(
-            config[s] for s in sorted(config, key=lambda k: int(k.split("_")[-1]))
-        )
-        result = self.mfh(z=at, Xs=Xs)
+        Xs = tuple(query[s] for s in sorted(query, key=lambda k: int(k.split("_")[-1])))
+        value = self.mfh(z=at, Xs=Xs)
+        cost = self._fidelity_cost(at)
 
-        return self.Result(
-            config=self.Config(**config),
+        return self.Result.from_dict(
+            config=config,
             fidelity=at,
-            **{"value": result, "fid_cost": self._fidelity_cost(at)},
+            result={"value": value, "fid_cost": cost},
         )
 
     def trajectory(
@@ -153,28 +163,25 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         list[MFHartmannResult]
             A list of the results for this config
         """
-        if isinstance(config, Configuration):
-            config = {**config}
+        if isinstance(config, (Configuration, dict)):
+            config = self.Config.from_dict(config)
 
-        if isinstance(config, MFHartmannConfig):
-            config = config.dict()
+        assert isinstance(config, self.Config)
 
-        assert isinstance(config, dict), "I assume this is the case by here?"
+        query = config.dict()
 
         # It's important here that we still have X_0, X_1, ..., X_n
         # We strip out the numerical part and sort by that
-        Xs = tuple(
-            config[s] for s in sorted(config, key=lambda k: int(k.split("_")[-1]))
-        )
+        Xs = tuple(query[s] for s in sorted(query, key=lambda k: int(k.split("_")[-1])))
 
         fidelities = list(self.iter_fidelities())
         results_fidelities = [(self.mfh(z=f, Xs=Xs), f) for f in fidelities]
 
         return [
-            self.Result(
-                config=self.Config(**config),
+            self.Result.from_dict(
+                config=config,
                 fidelity=f,
-                **{"value": r, "fid_cost": self._fidelity_cost(f)},
+                result={"value": r, "fid_cost": self._fidelity_cost(f)},
             )
             for r, f in results_fidelities
         ]
@@ -190,21 +197,6 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         -------
         ConfigurationSpace
         """
-        # Chanding defaults to prior configurations
-        if self._configspace is None:
-            cs = ConfigurationSpace(name=str(self), seed=self.seed)
-            cs.add_hyperparameters(
-                [
-                    UniformFloatHyperparameter(f"X_{i}", lower=0.0, upper=1.0)
-                    for i in range(self.mfh.dims)
-                ]
-            )
-
-            if self.prior is not None:
-                self.prior.set_as_default_prior(cs)
-
-            self._configspace = cs
-
         return self._configspace
 
     def __repr__(self) -> str:
