@@ -37,7 +37,7 @@ def test_extend(bench: MFHartmann3BenchmarkGood) -> None:
 
     frame = bench.frame()
     for result in results:
-        frame.add(results)
+        frame.add(result)
 
     assert len(frame) == 3
 
@@ -51,32 +51,32 @@ def test_getitem(bench: MFHartmann3BenchmarkGood) -> None:
     """
     config1, config2 = bench.sample(2)
 
-    result11 = bench.query(config1, at=1)
-    result12 = bench.query(config1, at=2)
+    result11 = bench.query(config1, at=bench.start)
+    result12 = bench.query(config1, at=bench.start + 1)
 
-    result21 = bench.query(config2, at=1)
-    result22 = bench.query(config2, at=2)
+    result21 = bench.query(config2, at=bench.start)
+    result22 = bench.query(config2, at=bench.start + 1)
 
     frame = bench.frame()
     for result in [result11, result12, result21, result22]:
         frame.add(result)
 
-    assert frame[2] == [result12, result22]
+    assert frame[bench.start + 1] == [result12, result22]
     assert frame[config1] == [result11, result12]
 
 
 def test_delitem(bench: MFHartmann3BenchmarkGood) -> None:
     config1, config2 = bench.sample(2)
 
-    result11 = bench.query(config1, at=1)
-    result12 = bench.query(config1, at=2)
+    result11 = bench.query(config1, at=bench.start)
+    result12 = bench.query(config1, at=bench.start + 1)
 
-    result21 = bench.query(config2, at=1)
-    result22 = bench.query(config2, at=2)
+    result21 = bench.query(config2, at=bench.start)
+    result22 = bench.query(config2, at=bench.start + 1)
 
     rf = bench.frame()
     for result in [result11, result12, result21, result22]:
         rf.add(result)
 
-    assert rf[2] == [result12, result22]
+    assert rf[bench.start + 1] == [result12, result22]
     assert rf[config1] == [result11, result12]
