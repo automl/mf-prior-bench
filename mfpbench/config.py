@@ -31,6 +31,11 @@ class Config(ABC):
         """Create from a dict or mapping object"""
         return cls(**d)
 
+    @classmethod
+    def from_configuration(cls: type[SelfT], config: Configuration) -> SelfT:
+        """Create from a ConfigSpace.Configuration"""
+        return cls.from_dict(**config)
+
     def dict(self) -> dict[str, Any]:
         """Converts the config to a raw dictionary"""
         return asdict(self)

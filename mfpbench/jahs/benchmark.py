@@ -51,7 +51,7 @@ class JAHSBenchmark(Benchmark, ABC):
         *,
         datadir: str | Path | None = None,
         seed: int | None = None,
-        prior: str | Path | JAHSConfig | None = None,
+        prior: str | Path | JAHSConfig | dict[str, Any] | Configuration | None = None,
     ):
         """
         Parameters
@@ -65,9 +65,9 @@ class JAHSBenchmark(Benchmark, ABC):
 
         prior: str | Path | JAHSConfig | None = None
             The prior to use for the benchmark.
-            * str - A preset
-            * Path - path to a file
-            * Config - A Config object
+            * if str - A preset
+            * if Path - path to a file
+            * if dict, Config, Configuration - A config
             * None - Use the default if available
         """
         super().__init__(seed=seed)

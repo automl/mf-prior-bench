@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, Iterator, TypeVar, overload
+from typing import Any, Generic, Iterator, TypeVar, overload
 
 from pathlib import Path
 
@@ -43,7 +43,7 @@ class Benchmark(Generic[C, R, F], ABC):
     def __init__(
         self,
         seed: int | None = None,
-        prior: str | Path | C | None = None,
+        prior: str | Path | C | dict[str, Any] | Configuration | None = None,
     ):
         self.seed = seed
         self.start: F = self.fidelity_range[0]
@@ -69,6 +69,12 @@ class Benchmark(Generic[C, R, F], ABC):
             elif isinstance(prior, Path):
                 self.prior = self.Config.from_file(prior)
 
+            elif isinstance(prior, dict):
+                self.prior = self.Config.from_dict(prior)
+
+            elif isinstance(prior, Configuration):
+                self.prior = self.Config.from_configuration(**prior)
+
             else:
                 self.prior = prior
 
@@ -78,6 +84,10 @@ class Benchmark(Generic[C, R, F], ABC):
                 assert self._default_prior is not None, "No default prior?"
 
             self.prior = self._default_prior
+
+        # Whatever prior we end up with, make sure it's valid
+        if self.prior is not None:
+            self.prior.validate()
 
     def iter_fidelities(
         self,

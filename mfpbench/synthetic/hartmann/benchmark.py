@@ -9,7 +9,7 @@ Moreover, this works with any number of fidelitiy levels
 """
 from __future__ import annotations
 
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from pathlib import Path
 
@@ -50,7 +50,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         seed: int | None = None,
         bias: float | None = None,
         noise: float | None = None,
-        prior: str | Path | C | None = None,
+        prior: str | Path | C | dict[str, Any] | Configuration | None = None,
     ):
         """
         Parameters
@@ -62,11 +62,11 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
         noise : float | None
 
-        prior: str | Path | MFHartmannConfig | None = None
+        prior: str | Path | MFHartmannConfig | dict | Configuration | None = None
             The prior to use for the benchmark.
-            * str - A preset
-            * Path - path to a file
-            * Config - A Config object
+            * if str - A preset
+            * if Path - path to a file
+            * if dict, Config, Configuration - A config
             * None - Use the default if available
         """
         super().__init__(seed=seed, prior=prior)
