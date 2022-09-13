@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Mapping, TypeVar
+from typing import TypeVar
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 from mfpbench.config import Config
 
