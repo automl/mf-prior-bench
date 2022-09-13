@@ -82,7 +82,7 @@ class JAHSBenchmark(Benchmark, ABC):
 
         # Loaded on demand with `@property`
         self._bench: jahs_bench.Benchmark | None = None
-        self._configspace = jahs_configspace(self.seed, self.prior)
+        self._configspace = jahs_configspace(name=str(self), seed=self.seed)
 
     # explicit overwrite
     def load(self) -> None:
@@ -202,6 +202,11 @@ class JAHSBenchmark(Benchmark, ABC):
             )
             for i in self.iter_fidelities(frm=frm, to=to, step=step)
         ]
+
+    def __repr__(self) -> str:
+        name = self.__class__.__name__
+        paramstr = f"(seed={self.seed}, prior={self.prior})"
+        return f"{name}({paramstr})"
 
 
 class JAHSCifar10(JAHSBenchmark):
