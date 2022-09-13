@@ -11,7 +11,12 @@ from ConfigSpace import Configuration, ConfigurationSpace
 from mfpbench.benchmark import Benchmark
 from mfpbench.download import DATAROOT
 from mfpbench.jahs.config import JAHSConfig
-from mfpbench.jahs.priors import JAHS_PRIORS
+from mfpbench.jahs.priors import (
+    CIFAR10_PRIORS,
+    COLORECTAL_HISTOLOGY_PRIORS,
+    DEFAULT_PRIOR,
+    FASHION_MNIST_PRIORS,
+)
 from mfpbench.jahs.result import JAHSResult
 from mfpbench.jahs.spaces import jahs_configspace
 from mfpbench.util import rename
@@ -33,8 +38,7 @@ class JAHSBenchmark(Benchmark, ABC):
 
     task: jahs_bench.BenchmarkTasks
 
-    available_priors = JAHS_PRIORS
-    _default_prior = JAHS_PRIORS["default"]
+    _default_prior = DEFAULT_PRIOR
 
     # Where the data for jahsbench should be located relative to the path given
     _default_download_dir: Path = DATAROOT / "jahs-bench-data"
@@ -217,12 +221,15 @@ class JAHSBenchmark(Benchmark, ABC):
 
 
 class JAHSCifar10(JAHSBenchmark):
+    available_priors = CIFAR10_PRIORS
     task = jahs_bench.BenchmarkTasks.CIFAR10
 
 
 class JAHSColorectalHistology(JAHSBenchmark):
+    available_priors = COLORECTAL_HISTOLOGY_PRIORS
     task = jahs_bench.BenchmarkTasks.ColorectalHistology
 
 
 class JAHSFashionMNIST(JAHSBenchmark):
+    available_priors = FASHION_MNIST_PRIORS
     task = jahs_bench.BenchmarkTasks.FashionMNIST
