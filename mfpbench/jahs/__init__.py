@@ -5,8 +5,8 @@ from mfpbench.jahs.benchmark import (
     JAHSFashionMNIST,
 )
 from mfpbench.jahs.config import JAHSConfig
-from mfpbench.jahs.result import JAHSResult
 from mfpbench.jahs.priors import JAHS_PRIORS
+from mfpbench.jahs.result import JAHSResult
 
 __all__ = [
     "JAHSCifar10",

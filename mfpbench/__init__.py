@@ -215,7 +215,7 @@ def get(
 
 def available(
     conditionals: bool = False,
-) -> Iterator[tuple[str, type[Benchmark], dict[str, Any] | None]]:
+) -> Iterator[tuple[str, type[Benchmark], str | None, dict[str, Any] | None]]:
     """Iterate over all the possible instantiations of a benchmark
 
     Parameters
@@ -225,7 +225,8 @@ def available(
 
     Returns
     -------
-    Iterator[tuple[type[Benchmark], str | None]]
+    Iterator[tuple[str, type[Benchmark], str | None, dict[str, Any] | None]]
+        (name: str, cls: type[Benchmark], prior: str | None, params: dict | None)
     """
     for name, cls in _mapping.items():
         # Skip conditionals if specified
@@ -237,33 +238,35 @@ def available(
 
         if issubclass(cls, JAHSBenchmark):
             if priors:
-                yield from ((name, cls, {"prior": p}) for p in priors)
+                yield from ((name, cls, p, None) for p in priors)
             else:
-                yield name, cls, None
+                yield (name, cls, None, None)
 
         elif issubclass(cls, YAHPOBenchmark):
             if cls.instances is not None:
                 if priors is not None:
                     yield from (
-                        (name, cls, {"task_id": t, "prior": p})
+                        (name, cls, p, {"task_id": t})
                         for t, p in product(cls.instances, priors)
                     )
                 else:
-                    yield from ((name, cls, {"task_id": t}) for t in cls.instances)
+                    yield from (
+                        (name, cls, None, {"task_id": t}) for t in cls.instances
+                    )
             else:
                 if priors is not None:
-                    yield from ((name, cls, {"prior": p}) for p in priors)
+                    yield from ((name, cls, p, None) for p in priors)
                 else:
-                    yield (name, cls, None)
+                    yield (name, cls, None, None)
 
         elif issubclass(cls, MFHartmannBenchmark):
             bias, noise = cls.bias_noise
             params: dict[str, Any] = {"bias": bias, "noise": noise}
             if priors is not None:
-                itr = ((name, cls, {"prior": p, **params}) for p in priors)
+                itr = ((name, cls, p, params) for p in priors)
                 yield from itr
             else:
-                yield (name, cls, params)
+                yield (name, cls, None, params)
 
         else:
             raise NotImplementedError("Whoops, fix me")
@@ -293,13 +296,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.benchmarks is True:
-        for name, cls, extra in available(conditionals=args.has_conditional_hps):
+        for name, cls, prior, extra in available(conditionals=args.has_conditional_hps):
+            c = cls.__name__
+            root = f"get(name={name}, prior={prior}"
             if extra is None:
-                print(f"get(name={name}) -> {cls.__name__}")
+                print(f"{root}) -> {c}")
+
             elif issubclass(cls, MFHartmannBenchmark) and any(
                 s in name for s in ["terrible", "good", "moderate", "bad"]
             ):
-                print(f"get(name={name}) -> {cls.__name__}")
+                print(f"{root}) -> {c}")
+
             else:
                 kv_str = ", ".join([f"{k}={v}" for k, v in extra.items()])
-                print(f"get(name={name}, {kv_str}) -> {cls.__name__}")
+                print(f"{root}, {kv_str}) -> {c}")

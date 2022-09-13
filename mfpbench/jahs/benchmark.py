@@ -11,9 +11,9 @@ from ConfigSpace import Configuration, ConfigurationSpace
 from mfpbench.benchmark import Benchmark
 from mfpbench.download import DATAROOT
 from mfpbench.jahs.config import JAHSConfig
+from mfpbench.jahs.priors import JAHS_PRIORS
 from mfpbench.jahs.result import JAHSResult
 from mfpbench.jahs.spaces import jahs_configspace
-from mfpbench.jahs.priors import JAHS_PRIORS
 from mfpbench.util import rename
 
 

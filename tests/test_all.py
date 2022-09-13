@@ -19,24 +19,28 @@ HERE = Path(__file__).parent.resolve()
 DATADIR: Path | None = None
 
 # We can get all the benchmarks here
-available_benchmarks = [
-    (name, params) for name, _, params in mfpbench.available(conditionals=CONDITONALS)
-]
+# Using a dictionary, we make sure we only have one of each named benchmark
+benchmarks = {
+    name: (name, prior, params)
+    for name, _, prior, params in mfpbench.available(conditionals=CONDITONALS)
+}
 
 
 # We expect the default download location for each
 @fixture(scope="module")
-@parametrize(item=available_benchmarks)
-def benchmark(item: tuple[str, dict[str, Any] | None]) -> Benchmark:
+@parametrize(item=list(benchmarks.values()))
+def benchmark(item: tuple[str, str | None, dict[str, Any] | None]) -> Benchmark:
     """The JAHSBench series of benchmarks"""
-    name, params = item
+    name, prior, params = item
     if params is None:
         params = {}
 
     if DATADIR is None:
-        benchmark = mfpbench.get(name=name, seed=SEED, **params)
+        benchmark = mfpbench.get(name=name, prior=prior, seed=SEED, **params)
     else:
-        benchmark = mfpbench.get(name=name, seed=SEED, datadir=DATADIR, **params)
+        benchmark = mfpbench.get(
+            name=name, prior=prior, seed=SEED, datadir=DATADIR, **params
+        )
 
     # We force benchmarks to load if they must
     benchmark.load()

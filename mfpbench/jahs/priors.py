@@ -52,8 +52,4 @@ DEFAULT = JAHSConfig(
     WeightDecay=0.0005,
 )
 
-JAHS_PRIORS = {
-    "good": GOOD,
-    "bad": BAD,
-    "default": DEFAULT
-}
+JAHS_PRIORS = {"good": GOOD, "bad": BAD, "default": DEFAULT}
