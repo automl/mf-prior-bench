@@ -1,9 +1,4 @@
 from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
-from mfpbench.yahpo.benchmarks.rbv2.rbv2_super import (
-    RBV2SuperBenchmark,
-    RBV2SuperConfig,
-    RBV2SuperResult,
-)
 from mfpbench.yahpo.benchmarks.rbv2.rbv2_aknn import (
     RBV2aknnBenchmark,
     RBV2aknnConfig,
@@ -23,6 +18,11 @@ from mfpbench.yahpo.benchmarks.rbv2.rbv2_rpart import (
     RBV2rpartBenchmark,
     RBV2rpartConfig,
     RBV2rpartResult,
+)
+from mfpbench.yahpo.benchmarks.rbv2.rbv2_super import (
+    RBV2SuperBenchmark,
+    RBV2SuperConfig,
+    RBV2SuperResult,
 )
 from mfpbench.yahpo.benchmarks.rbv2.rbv2_svm import (
     RBV2svmBenchmark,

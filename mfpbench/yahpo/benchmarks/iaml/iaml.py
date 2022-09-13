@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, TypeVar, Mapping
+from typing import Any, Mapping, TypeVar
 
 from dataclasses import asdict, dataclass
 
@@ -14,7 +14,6 @@ R = TypeVar("R", bound="IAMLResult")
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class IAMLConfig(YAHPOConfig):
-
     @classmethod
     def from_dict(cls: type[C], d: Mapping[str, Any]) -> C:
         """Create from a dict or mapping object"""

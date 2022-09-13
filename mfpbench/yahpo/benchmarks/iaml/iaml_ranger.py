@@ -51,4 +51,4 @@ class IAMLrangerBenchmark(IAMLBenchmark):
     Config = IAMLrangerConfig
     has_conditionals = True
 
-    instances = ['40981', '41146', '1489', '1067']
+    instances = ["40981", "41146", "1489", "1067"]

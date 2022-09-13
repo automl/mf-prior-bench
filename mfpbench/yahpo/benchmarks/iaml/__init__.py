@@ -1,9 +1,4 @@
 from mfpbench.yahpo.benchmarks.iaml.iaml import IAMLBenchmark, IAMLConfig, IAMLResult
-from mfpbench.yahpo.benchmarks.iaml.iaml_super import (
-    IAMLSuperBenchmark,
-    IAMLSuperConfig,
-    IAMLSuperResult,
-)
 from mfpbench.yahpo.benchmarks.iaml.iaml_glmnet import (
     IAMLglmnetBenchmark,
     IAMLglmnetConfig,
@@ -18,6 +13,11 @@ from mfpbench.yahpo.benchmarks.iaml.iaml_rpart import (
     IAMLrpartBenchmark,
     IAMLrpartConfig,
     IAMLrpartResult,
+)
+from mfpbench.yahpo.benchmarks.iaml.iaml_super import (
+    IAMLSuperBenchmark,
+    IAMLSuperConfig,
+    IAMLSuperResult,
 )
 from mfpbench.yahpo.benchmarks.iaml.iaml_xgboost import (
     IAMLxgboostBenchmark,

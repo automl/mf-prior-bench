@@ -14,10 +14,10 @@ class RBV2rpartConfig(RBV2Config):
 
     num__impute__selected__cpo: Literal["impute.mean", "impute.median", "impute.hist"]
 
-    cp: float   # (0.0009118819655545162, 1.0), log
-    maxdepth: int   # (1, 30)
-    minbucket: int   # (1, 100)
-    minsplit: int   # (1, 100)
+    cp: float  # (0.0009118819655545162, 1.0), log
+    maxdepth: int  # (1, 30)
+    minbucket: int  # (1, 100)
+    minsplit: int  # (1, 100)
 
     @no_type_check
     def validate(self) -> None:

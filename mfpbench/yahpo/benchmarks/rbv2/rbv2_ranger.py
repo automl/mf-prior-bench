@@ -14,14 +14,14 @@ class RBV2rangerConfig(RBV2Config):
 
     num__impute__selected__cpo: Literal["impute.mean", "impute.median", "impute.hist"]
 
-    min__node__size: int   # (1, 100)
-    mtry__power: int   # (0, 1)
-    num__trees: int   # (1, 2000)
+    min__node__size: int  # (1, 100)
+    mtry__power: int  # (0, 1)
+    num__trees: int  # (1, 2000)
     respect__unordered__factors: Literal["ignore", "order", "partition"]
-    sample__fraction: float   # (0.1, 1.0)
+    sample__fraction: float  # (0.1, 1.0)
     splitrule: Literal["gini", "extratrees"]
 
-    num__random__splits: int | None = None   # (1, 100)
+    num__random__splits: int | None = None  # (1, 100)
 
     @no_type_check
     def validate(self) -> None:

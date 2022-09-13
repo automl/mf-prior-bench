@@ -1,5 +1,10 @@
 from mfpbench.yahpo.benchmark import YAHPOBenchmark
 from mfpbench.yahpo.benchmarks import (
+    IAMLglmnetBenchmark,
+    IAMLrangerBenchmark,
+    IAMLrpartBenchmark,
+    IAMLSuperBenchmark,
+    IAMLxgboostBenchmark,
     LCBenchBenchmark,
     NB301Benchmark,
     RBV2aknnBenchmark,
@@ -9,11 +14,6 @@ from mfpbench.yahpo.benchmarks import (
     RBV2SuperBenchmark,
     RBV2svmBenchmark,
     RBV2xgboostBenchmark,
-    IAMLglmnetBenchmark,
-    IAMLrangerBenchmark,
-    IAMLrpartBenchmark,
-    IAMLSuperBenchmark,
-    IAMLxgboostBenchmark,
 )
 
 __all__ = [

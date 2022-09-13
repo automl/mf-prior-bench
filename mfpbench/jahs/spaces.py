@@ -6,61 +6,60 @@ import ConfigSpace as CS
 import numpy as np
 from jahs_bench.lib.core.constants import Activations
 
-
 # TODO: better design in reading from yaml directly?
 GOOD_PRIOR = {
-    'Activation': 'Hardswish',
-    'LearningRate': 0.9110690405832061,
-    'N': 5,
-    'Op1': 0,
-    'Op2': 3,
-    'Op3': 2,
-    'Op4': 3,
-    'Op5': 2,
-    'Op6': 2,
-    'Optimizer': 'SGD',
-    'Resolution': 1.0,
-    'TrivialAugment': True,
-    'W': 16,
-    'WeightDecay': 5.172497667031624e-05
+    "Activation": "Hardswish",
+    "LearningRate": 0.9110690405832061,
+    "N": 5,
+    "Op1": 0,
+    "Op2": 3,
+    "Op3": 2,
+    "Op4": 3,
+    "Op5": 2,
+    "Op6": 2,
+    "Optimizer": "SGD",
+    "Resolution": 1.0,
+    "TrivialAugment": True,
+    "W": 16,
+    "WeightDecay": 5.172497667031624e-05,
 }
 BAD_PRIOR = {
-    'Activation': 'Hardswish',
-    'LearningRate': 0.0021820022044816817,
-    'N': 5,
-    'Op1': 1,
-    'Op2': 3,
-    'Op3': 1,
-    'Op4': 2,
-    'Op5': 3,
-    'Op6': 1,
-    'Optimizer': 'SGD',
-    'Resolution': 0.5,
-    'TrivialAugment': False,
-    'W': 16,
-    'WeightDecay': 0.008513658749621622
+    "Activation": "Hardswish",
+    "LearningRate": 0.0021820022044816817,
+    "N": 5,
+    "Op1": 1,
+    "Op2": 3,
+    "Op3": 1,
+    "Op4": 2,
+    "Op5": 3,
+    "Op6": 1,
+    "Optimizer": "SGD",
+    "Resolution": 0.5,
+    "TrivialAugment": False,
+    "W": 16,
+    "WeightDecay": 0.008513658749621622,
 }
 DEFAULT = {
-    'Activation': 'ReLU',
-    'LearningRate': 0.1,
-    'N': 5,
-    'Op1': 0,
-    'Op2': 0,
-    'Op3': 0,
-    'Op4': 0,
-    'Op5': 0,
-    'Op6': 0,
-    'Optimizer': 'SGD',
-    'Resolution': 1.0,
-    'TrivialAugment': False,
-    'W': 16,
-    'WeightDecay': 0.0005
+    "Activation": "ReLU",
+    "LearningRate": 0.1,
+    "N": 5,
+    "Op1": 0,
+    "Op2": 0,
+    "Op3": 0,
+    "Op4": 0,
+    "Op5": 0,
+    "Op6": 0,
+    "Optimizer": "SGD",
+    "Resolution": 1.0,
+    "TrivialAugment": False,
+    "W": 16,
+    "WeightDecay": 0.0005,
 }
 
 
 def jahs_configspace(
     seed: int | np.random.RandomState | None = None,
-    prior: str = None
+    prior: str = None,
 ) -> CS.ConfigurationSpace:
     """The configuration space for all datasets in JAHSBench
 
@@ -163,7 +162,8 @@ def jahs_configspace(
                     " pre-processing data. If False (default), a set of manually chosen"
                     " transforms is applied during pre-processing. If True, these are"
                     " skipped in favor of applying random transforms selected by"
-                    " TrivialAugment."),
+                    " TrivialAugment."
+                ),
             ),
             CS.CategoricalHyperparameter(
                 "Activation",

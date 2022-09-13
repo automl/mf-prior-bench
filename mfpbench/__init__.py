@@ -25,6 +25,11 @@ from mfpbench.synthetic.hartmann import (
     MFHartmannBenchmark,
 )
 from mfpbench.yahpo import (
+    IAMLglmnetBenchmark,
+    IAMLrangerBenchmark,
+    IAMLrpartBenchmark,
+    IAMLSuperBenchmark,
+    IAMLxgboostBenchmark,
     LCBenchBenchmark,
     NB301Benchmark,
     RBV2aknnBenchmark,
@@ -35,11 +40,6 @@ from mfpbench.yahpo import (
     RBV2svmBenchmark,
     RBV2xgboostBenchmark,
     YAHPOBenchmark,
-    IAMLglmnetBenchmark,
-    IAMLrangerBenchmark,
-    IAMLrpartBenchmark,
-    IAMLSuperBenchmark,
-    IAMLxgboostBenchmark,
 )
 
 name = "mf-prior-bench"
