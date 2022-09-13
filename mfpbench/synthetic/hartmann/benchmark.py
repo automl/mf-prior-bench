@@ -118,18 +118,10 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         )
         result = self.mfh(z=at, Xs=Xs)
 
-        # return self.Result(
-        #     config=self.Config(**config),
-        #     fidelity=at,
-        #     **{"value": result},
-        # )
-
-        # λ(z) on Pg 18 from https://arxiv.org/pdf/1703.06240.pdf
-        cost = 0.05 + (1 - 0.05) * (at / self.fidelity_range[1]) ** 2
         return self.Result(
             config=self.Config(**config),
             fidelity=at,
-            **{"value": result, "fid_cost": cost},
+            **{"value": result, "fid_cost": self._fidelity_cost(at)},
         )
 
     def trajectory(
@@ -179,9 +171,17 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         results_fidelities = [(self.mfh(z=f, Xs=Xs), f) for f in fidelities]
 
         return [
-            self.Result(config=self.Config(**config), fidelity=f, **{"value": r})
+            self.Result(
+                config=self.Config(**config),
+                fidelity=f,
+                **{"value": r, "fid_cost": self._fidelity_cost(f)},
+            )
             for r, f in results_fidelities
         ]
+
+    def _fidelity_cost(self, at: int) -> float:
+        # λ(z) on Pg 18 from https://arxiv.org/pdf/1703.06240.pdf
+        return 0.05 + (1 - 0.05) * (at / self.fidelity_range[1]) ** 2
 
     @property
     def space(self) -> ConfigurationSpace:
