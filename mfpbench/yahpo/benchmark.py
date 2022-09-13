@@ -56,6 +56,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         *,
         datadir: str | Path | None = None,
         seed: int | None = None,
+        prior: str | Path | C | None = None,
     ):
         """
         Parameters
@@ -69,6 +70,13 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
         seed : int | None = None
             The seed for the benchmark instance
+
+        prior: str | Path | YahpoConfig | None = None
+            The prior to use for the benchmark.
+            * str - A preset
+            * Path - path to a file
+            * Config - A Config object
+            * None - Use the default if available
         """
         # Validation
         cls = self.__class__

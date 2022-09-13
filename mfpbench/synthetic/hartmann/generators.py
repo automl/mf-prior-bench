@@ -89,13 +89,15 @@ class MFHartmann3(MFHartmannGenerator):
         assert len(Xs) == self.dims
         X_0, X_1, X_2 = Xs
 
-        # Change by Carl - z now comes in normalized
-        norm_z = z
+        log_z = np.log(z)
+        log_lb, log_ub = np.log(self.z_min), np.log(self.z_max)
+        log_z_scaled = (log_z - log_lb) / (log_ub - log_lb)
+
         # Highest fidelity (1) accounts for the regular Hartmann
         X = np.array([X_0, X_1, X_2]).reshape(1, -1)
         alpha = np.array([1.0, 1.2, 3.0, 3.2])
 
-        alpha_prime = alpha - self.bias * np.power(1 - norm_z, 2)
+        alpha_prime = alpha - self.bias * np.power(1 - log_z_scaled, 2)
         A = np.array([[3.0, 10, 30], [0.1, 10, 35], [3.0, 10, 30], [0.1, 10, 35]])
         P = np.array(
             [
@@ -113,8 +115,8 @@ class MFHartmann3(MFHartmannGenerator):
         # H_true = -(np.sum(alpha * np.exp(-inner_sum), axis=-1))
 
         # and add some noise
-        rng = np.random.default_rng(seed=self.seed)
-        noise = rng.normal(size=H.size) * self.noise * (1 - norm_z)
+        rng = np.random.default_rng(seed=self.seed * z)
+        noise = rng.normal(size=H.size) * self.noise * (1 - log_z_scaled)
         return (H + noise)[0]
 
 
@@ -141,11 +143,14 @@ class MFHartmann6(MFHartmannGenerator):
         X_0, X_1, X_2, X_3, X_4, X_5 = Xs
 
         # Change by Carl - z now comes in normalized
-        norm_z = z
+        log_z = np.log(z)
+        log_lb, log_ub = np.log(self.z_min), np.log(self.z_max)
+        log_z_scaled = (log_z - log_lb) / (log_ub - log_lb)
+
         # Highest fidelity (1) accounts for the regular Hartmann
         X = np.array([X_0, X_1, X_2, X_3, X_4, X_5]).reshape(1, -1)
         alpha = np.array([1.0, 1.2, 3.0, 3.2])
-        alpha_prime = alpha - self.bias * np.power(1 - norm_z, 2)
+        alpha_prime = alpha - self.bias * np.power(1 - log_z_scaled, 2)
         A = np.array(
             [
                 [10, 3, 17, 3.5, 1.7, 8],
@@ -171,5 +176,5 @@ class MFHartmann6(MFHartmannGenerator):
 
         # and add some noise
         rng = np.random.default_rng(seed=self.seed * z)
-        noise = rng.normal(size=H.size) * self.noise * (1 - norm_z)
+        noise = rng.normal(size=H.size) * self.noise * (1 - log_z_scaled)
         return (H + noise)[0]

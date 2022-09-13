@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Generic, Iterator, TypeVar, overload
 
+from pathlib import Path
+
 import numpy as np
 from ConfigSpace import Configuration, ConfigurationSpace
 
@@ -31,14 +33,47 @@ class Benchmark(Generic[C, R, F], ABC):
     Config: type[C]
     Result: type[R]
 
+    # The priors available for this benchmark
+    available_priors: dict[str, C] | None = None
+    _default_prior: C | None = None
+
     # Whether this benchmark has conditonals in it or not
     has_conditionals: bool = False
 
-    def __init__(self, seed: int | None = None):
+    def __init__(self, seed: int | None = None, prior: str | Path | C | None = None):
         self.seed = seed
         self.start: F = self.fidelity_range[0]
         self.end: F = self.fidelity_range[1]
         self.step: F = self.fidelity_range[2]
+
+        self._prior_arg = prior
+
+        self.prior: C | None
+        if prior is not None:
+            # It's a str, use as a key into available priors
+            if isinstance(prior, str):
+                if self.available_priors is None:
+                    clsname = {self.__class__.__name__}
+                    raise ValueError(f"{clsname} has no prior called {prior}.")
+
+                retrieved = self.available_priors.get(prior)
+                if retrieved is None:
+                    raise KeyError(f"{prior} not in {self.available_priors}")
+
+                self.prior = retrieved
+
+            elif isinstance(prior, Path):
+                self.prior = self.Config.from_file(prior)
+
+            else:
+                self.prior = prior
+
+        # no prior, use default
+        else:
+            if self.available_priors is not None:
+                assert self._default_prior is not None, "No default prior?"
+
+            self.prior = self._default_prior
 
     def iter_fidelities(
         self,
@@ -177,7 +212,8 @@ class Benchmark(Generic[C, R, F], ABC):
     @property
     @abstractmethod
     def space(self) -> ConfigurationSpace:
-        """
+        """The configuration space for this benchmark, incorporating the prior if given
+
         Returns
         -------
         ConfigurationSpace

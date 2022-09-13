@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from typing import Generic, TypeVar
 
-import numpy as np
 from ConfigSpace import Configuration, ConfigurationSpace, UniformFloatHyperparameter
 
 from mfpbench.benchmark import Benchmark
@@ -25,9 +24,8 @@ from mfpbench.synthetic.hartmann.generators import (
     MFHartmann6,
     MFHartmannGenerator,
 )
+from mfpbench.synthetic.hartmann.priors import HARTMANN3D_PRIORS, HARTMANN6D_PRIORS
 from mfpbench.synthetic.hartmann.result import MFHartmannResult
-from mfpbench.synthetic.hartmann.hartmann_priors import HARTMANN3D, HARTMANN6D
-
 
 G = TypeVar("G", bound=MFHartmannGenerator)
 C = TypeVar("C", bound=MFHartmannConfig)
@@ -36,11 +34,11 @@ C = TypeVar("C", bound=MFHartmannConfig)
 class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
     # fidelity_range = (1, 5, 1)
-    fidelity_range = (3, 100, 1)  # scaling original fidelity space [0, 1] to [1, 10]
+    fidelity_range = (3, 100, 1)
     fidelity_name = "z"
 
-    Result = MFHartmannResult
     Config: type[C]
+    Result = MFHartmannResult
 
     Generator: type[G]
     bias_noise: tuple[float, float] = (0.5, 0.1)
@@ -50,7 +48,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         seed: int | None = None,
         bias: float | None = None,
         noise: float | None = None,
-        prior: str = None
+        prior: str | None = None,
     ):
         """
         Parameters
@@ -62,11 +60,11 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
         noise : float | None
 
+        prior: str = "good" | "bad" | None
         """
-        super().__init__(seed)
+        super().__init__(seed=seed, prior=prior)
         self.bias = bias if bias is not None else self.bias_noise[0]
         self.noise = noise if noise is not None else self.bias_noise[1]
-        self.prior = prior
         self.mfh = self.Generator(
             n_fidelities=self.end,
             fidelity_noise=self.noise,
@@ -111,10 +109,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         Xs = tuple(
             config[s] for s in sorted(config, key=lambda k: int(k.split("_")[-1]))
         )
-        log_z = np.log(at)
-        log_lb, log_ub = np.log([self.fidelity_range[0], self.fidelity_range[1]])
-        log_z_scaled = (log_z - log_lb) / (log_ub - log_lb)
-        result = self.mfh(z=log_z_scaled, Xs=Xs)
+        result = self.mfh(z=at, Xs=Xs)
 
         # return self.Result(
         #     config=self.Config(**config),
@@ -127,10 +122,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         return self.Result(
             config=self.Config(**config),
             fidelity=at,
-            **{
-                "value": result,
-                "fid_cost": cost
-            },
+            **{"value": result, "fid_cost": cost},
         )
 
     def trajectory(
@@ -192,34 +184,33 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         ConfigurationSpace
         """
         # Chanding defaults to prior configurations
-        if self.prior == "good":
-            defaults = HARTMANN6D.GOOD_PRIOR if self.mfh.dims == 6 else HARTMANN3D.GOOD_PRIOR
-        elif self.prior == "bad":
-            defaults = HARTMANN6D.BAD_PRIOR if self.mfh.dims == 6 else HARTMANN3D.BAD_PRIOR
-        else:
-            defaults = HARTMANN6D.DEFAULT if self.mfh.dims == 6 else HARTMANN3D.DEFAULT
-
         if self._configspace is None:
-            cs = ConfigurationSpace(
-                name=f"{self.__class__.__name__}(bias={self.bias}, noise={self.noise})",
-                seed=self.seed,
-            )
+            cs = ConfigurationSpace(name=str(self), seed=self.seed)
             cs.add_hyperparameters(
                 [
-                    UniformFloatHyperparameter(
-                        f"X_{i}", lower=0.0, upper=1.0, default_value=defaults[f"X_{i}"]
-                    ) for i in range(self.mfh.dims)
+                    UniformFloatHyperparameter(f"X_{i}", lower=0.0, upper=1.0)
+                    for i in range(self.mfh.dims)
                 ]
             )
+
+            if self.prior is not None:
+                self.prior.set_as_default_prior(cs)
+
             self._configspace = cs
 
         return self._configspace
+
+    def __repr__(self) -> str:
+        params = f"bias={self.bias}, noise={self.noise}, prior={self._prior_arg}"
+        return f"{self.__class__.__name__}({params})"
 
 
 # -----------
 # MFHartmann3
 # -----------
 class MFHartmann3Benchmark(MFHartmannBenchmark):
+    available_priors = HARTMANN3D_PRIORS
+    _default_prior = HARTMANN3D_PRIORS["default"]
     Generator = MFHartmann3
     Config = MFHartmann3Config
 
@@ -244,6 +235,8 @@ class MFHartmann3BenchmarkGood(MFHartmann3Benchmark):
 # MFHartmann6
 # -----------
 class MFHartmann6Benchmark(MFHartmannBenchmark):
+    available_priors = HARTMANN6D_PRIORS
+    _default_prior = HARTMANN6D_PRIORS["default"]
     Generator = MFHartmann6
     Config = MFHartmann6Config
 

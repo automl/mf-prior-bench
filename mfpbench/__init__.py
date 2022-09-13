@@ -96,7 +96,12 @@ _mapping: dict[str, type[Benchmark]] = {
 }
 
 
-def get(name: str, seed: int | None = None, **kwargs: Any) -> Benchmark:
+def get(
+    name: str,
+    seed: int | None = None,
+    preload: bool = False,
+    **kwargs: Any,
+) -> Benchmark:
     """Get a benchmark
 
     ```python
@@ -123,6 +128,9 @@ def get(name: str, seed: int | None = None, **kwargs: Any) -> Benchmark:
 
     seed: int | None = None
         The seed to use
+
+    preload: bool = False
+        Whether to preload the benchmark data in
 
     **kwargs: Any
         Extra arguments, optional or required for other benchmarks
@@ -151,6 +159,8 @@ def get(name: str, seed: int | None = None, **kwargs: Any) -> Benchmark:
             Amount of noise, decreasing linearly (in st.dev.) with fidelity.
     """
     b = _mapping.get(name, None)
+    bench: Benchmark
+
     if b is None:
         raise ValueError(f"{name} is not a benchmark in {list(_mapping.keys())}")
 
@@ -158,29 +168,35 @@ def get(name: str, seed: int | None = None, **kwargs: Any) -> Benchmark:
         if kwargs.get("task_id") is not None:
             raise ValueError(f"jahs-bench doesn't take a task_id ({kwargs['task_id']})")
 
-        return b(
+        bench = b(
             seed=seed,
+            prior=kwargs.get("prior"),
             datadir=kwargs.get("datadir"),
-            prior=None if "prior" not in kwargs else kwargs["prior"],
         )
 
     # TODO: this might have to change, not sure if all yahpo benchmarks have a task
-    if issubclass(b, YAHPOBenchmark):
-        return b(
+    elif issubclass(b, YAHPOBenchmark):
+        bench = b(
             seed=seed,
+            prior=kwargs.get("prior"),
             datadir=kwargs.get("datadir"),
             task_id=kwargs.get("task_id"),
         )
 
-    if issubclass(b, MFHartmannBenchmark):
-        return b(
+    elif issubclass(b, MFHartmannBenchmark):
+        bench = b(
             seed=seed,
+            prior=kwargs.get("prior"),
             bias=kwargs.get("bias"),
             noise=kwargs.get("noise"),
-            prior=None if "prior" not in kwargs else kwargs["prior"],
         )
+    else:
+        raise NotImplementedError(f"Whoops, please fix me, not recognized: {b}")
 
-    raise RuntimeError("Whoops, please fix me")
+    if preload:
+        bench.load()
+
+    return bench
 
 
 def available(
