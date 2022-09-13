@@ -225,6 +225,8 @@ def available(
 
         if cls.available_priors is not None:
             priors = list(cls.available_priors)
+        else:
+            priors = None
 
         if issubclass(cls, JAHSBenchmark):
             if priors:
