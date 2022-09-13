@@ -1,11 +1,6 @@
 from pytest_cases import fixture
 
-from mfpbench.resultframe import ResultFrame
-from mfpbench.synthetic.hartmann import (
-    MFHartmann3BenchmarkGood,
-    MFHartmann3Config,
-    MFHartmannResult,
-)
+from mfpbench.synthetic.hartmann import MFHartmann3BenchmarkGood
 
 SEED = 1
 
@@ -41,7 +36,8 @@ def test_extend(bench: MFHartmann3BenchmarkGood) -> None:
     results = [bench.query(s) for s in samples]
 
     frame = bench.frame()
-    frame.extend(results)
+    for result in results:
+        frame.add(results)
 
     assert len(frame) == 3
 
@@ -62,7 +58,8 @@ def test_getitem(bench: MFHartmann3BenchmarkGood) -> None:
     result22 = bench.query(config2, at=2)
 
     frame = bench.frame()
-    frame.extend([result11, result12, result21, result22])
+    for result in [result11, result12, result21, result22]:
+        frame.add(result)
 
     assert frame[2] == [result12, result22]
     assert frame[config1] == [result11, result12]
@@ -77,8 +74,9 @@ def test_delitem(bench: MFHartmann3BenchmarkGood) -> None:
     result21 = bench.query(config2, at=1)
     result22 = bench.query(config2, at=2)
 
-    rf = ResultFrame()
-    rf.extend([result11, result12, result21, result22])
+    rf = bench.frame()
+    for result in [result11, result12, result21, result22]:
+        rf.add(result)
 
     assert rf[2] == [result12, result22]
     assert rf[config1] == [result11, result12]

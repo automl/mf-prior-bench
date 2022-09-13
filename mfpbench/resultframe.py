@@ -2,15 +2,12 @@ from __future__ import annotations
 
 from typing import Any, Iterator, List, Mapping, Sequence, TypeVar, Union
 
-from itertools import chain
-
 import numpy as np
 from typing_extensions import Literal
 
 from mfpbench.config import Config
 from mfpbench.result import Result
 from mfpbench.stats import rank_correlation
-from mfpbench.util import intersection
 
 C = TypeVar("C", bound=Config)
 R = TypeVar("R", bound=Result)
@@ -137,13 +134,13 @@ class ResultFrame(Mapping[Union[C, F], List[R]]):
         #   2: [(b: tiny,  2), (a: small, 1), (c: big,  3)],
         #   3: [(a: small, 1), (b: big,   2), (c: HUGE, 3)],
         # }
-        values = {
+        vs = {
             f: sorted((r.error, assigned[r.config]) for r in results)
             for f, results in selected.items()
         }
 
         # Next we just extract out the orderings and stick it in a numpy array
-        values = {f: [num for _, num in error_nums] for f, error_nums in values.items()}
+        values = {f: [num for _, num in error_nums] for f, error_nums in vs.items()}
         x = np.asarray([nums for _, nums in values.items()])
 
         return rank_correlation(x, method=method)
