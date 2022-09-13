@@ -17,6 +17,8 @@ from mfpbench.synthetic.hartmann import (
     MFHartmannConfig,
     MFHartmannGenerator,
     MFHartmannResult,
+    HARTMANN3D_PRIORS,
+    HARTMANN6D_PRIORS,
 )
 
 __all__ = [
@@ -38,4 +40,6 @@ __all__ = [
     "MFHartmann6",
     "MFHartmannGenerator",
     "MFHartmannResult",
+    "HARTMANN3D_PRIORS",
+    "HARTMANN6D_PRIORS",
 ]

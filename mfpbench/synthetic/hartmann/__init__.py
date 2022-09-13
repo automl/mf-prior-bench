@@ -22,6 +22,7 @@ from mfpbench.synthetic.hartmann.generators import (
     MFHartmannGenerator,
 )
 from mfpbench.synthetic.hartmann.result import MFHartmannResult
+from mfpbench.synthetic.hartmann.priors import HARTMANN3D_PRIORS, HARTMANN6D_PRIORS
 
 __all__ = [
     "MFHartmann3Benchmark",
@@ -42,4 +43,6 @@ __all__ = [
     "MFHartmann6",
     "MFHartmannGenerator",
     "MFHartmannResult",
+    "HARTMANN3D_PRIORS",
+    "HARTMANN6D_PRIORS",
 ]
