@@ -13,6 +13,7 @@ from mfpbench.download import DATAROOT
 from mfpbench.jahs.config import JAHSConfig
 from mfpbench.jahs.result import JAHSResult
 from mfpbench.jahs.spaces import jahs_configspace
+from mfpbench.jahs.priors import JAHS_PRIORS
 from mfpbench.util import rename
 
 
@@ -31,6 +32,9 @@ class JAHSBenchmark(Benchmark, ABC):
     fidelity_range = (3, 200, 1)  # TODO: min budget plays a huge role in SH/HB algos
 
     task: jahs_bench.BenchmarkTasks
+
+    available_priors = JAHS_PRIORS
+    _default_prior = JAHS_PRIORS["default"]
 
     # Where the data for jahsbench should be located relative to the path given
     _default_download_dir: Path = DATAROOT / "jahs-bench-data"
