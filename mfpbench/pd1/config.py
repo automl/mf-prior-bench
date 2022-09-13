@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from mfpbench.config import Config
 
 
-@dataclass(frozen=True, eq=False)
+@dataclass(frozen=True, eq=False, unsafe_hash=True)
 class PD1Config(Config):
     """The config for PD1"""
 
