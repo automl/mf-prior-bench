@@ -116,7 +116,7 @@ class PD1Source(Source):
         print("Unpacking gzipped json.gz files")
         files = [f for f in self.path.iterdir() if f.name.endswith("jsonl.gz")]
         for file in files:
-            new_path = file.parent / file.name.replace(".gz", "")
+            new_path = file.parent / file.name.replace(".jsonl.gz", ".json")
 
             print(f"Processing {file} to {new_path}")
             data = self.unpack_jsonl(file)
