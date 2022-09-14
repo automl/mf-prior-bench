@@ -5,7 +5,6 @@ from mfpbench.jahs.benchmark import (
     JAHSFashionMNIST,
 )
 from mfpbench.jahs.config import JAHSConfig
-from mfpbench.jahs.priors import JAHS_PRIORS
 from mfpbench.jahs.result import JAHSResult
 
 __all__ = [
@@ -15,5 +14,4 @@ __all__ = [
     "JAHSBenchmark",
     "JAHSResult",
     "JAHSConfig",
-    "JAHS_PRIORS",
 ]
