@@ -294,7 +294,10 @@ for name, entries in d.items():
 # (1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 74)
 # -----
 ```
-It seems that not all of them have a incremental +1 epoch range
+The `partial` indicator above seems incorrect, namely because we have different epoch ranges per dataset, excluding the obvious outliers.
+
+**This is because there are different models and batch sizes**
+We need to split these into different tables then
 
 ### Hyperparameter ranges
 We want to check the hyperparameter ranges for each dataset. Hopefully, we should be able to create a combinatorial grid from all of these.
@@ -306,3 +309,4 @@ We want to check the hyperparameter ranges for each dataset. Hopefully, we shoul
 Seems we could care just about `entry["hparams"]`
 
 Note: seems there are `lr_hparams` and `opt_hparams`, does this mean it's a conditional space?
+Maybe it's just a unified way to treat the different models but there's no conditional when treating it as `{dataset}_{model}_{batchsize}`
