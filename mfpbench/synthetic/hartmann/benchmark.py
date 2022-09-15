@@ -48,6 +48,8 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
     # How many dimensions there are to the Hartmann function
     dims: int
+    available_priors: dict[str, C]
+    _default_prior: C
 
     def __init__(
         self,

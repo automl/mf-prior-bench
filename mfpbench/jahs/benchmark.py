@@ -38,6 +38,7 @@ class JAHSBenchmark(Benchmark, ABC):
 
     task: jahs_bench.BenchmarkTasks
 
+    available_priors: dict[str, JAHSConfig]
     _default_prior = DEFAULT_PRIOR
 
     # Where the data for jahsbench should be located relative to the path given
