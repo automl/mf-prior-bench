@@ -59,11 +59,11 @@ copyright = f"Copyright {datetime.date.today().strftime('%Y')}, bobby1 and bobby
 version = "0.0.1"
 
 _mapping: dict[str, type[Benchmark]] = {
+    # JAHS
     "jahs_cifar10": JAHSCifar10,
     "jahs_colorectal_histology": JAHSColorectalHistology,
     "jahs_fashion_mnist": JAHSFashionMNIST,
-    "lcbench": LCBenchBenchmark,
-    "nb301": NB301Benchmark,
+    # MFH
     "mfh3": MFHartmann3Benchmark,
     "mfh3_terrible": MFHartmann3BenchmarkTerrible,
     "mfh3_bad": MFHartmann3BenchmarkBad,
@@ -74,6 +74,9 @@ _mapping: dict[str, type[Benchmark]] = {
     "mfh6_bad": MFHartmann6BenchmarkBad,
     "mfh6_moderate": MFHartmann6BenchmarkModerate,
     "mfh6_good": MFHartmann6BenchmarkGood,
+    # YAHPO
+    "lcbench": LCBenchBenchmark,
+    "nb301": NB301Benchmark,
     "rbv2_super": RBV2SuperBenchmark,
     "rbv2_aknn": RBV2aknnBenchmark,
     "rbv2_glmnet": RBV2glmnetBenchmark,
@@ -165,104 +168,12 @@ def get(
     if b is None:
         raise ValueError(f"{name} is not a benchmark in {list(_mapping.keys())}")
 
-    if issubclass(b, JAHSBenchmark):
-        if kwargs.get("task_id") is not None:
-            raise ValueError(f"jahs-bench doesn't take a task_id ({kwargs['task_id']})")
-
-        if isinstance(prior, Config) and not isinstance(prior, JAHSBenchmark.Config):
-            raise ValueError(f"config {prior} must be a {JAHSBenchmark.Config}")
-
-        bench = b(
-            seed=seed,
-            prior=prior,
-            datadir=kwargs.get("datadir"),
-        )
-
-    # TODO: this might have to change, not sure if all yahpo benchmarks have a task
-    elif issubclass(b, YAHPOBenchmark):
-        bench = b(
-            seed=seed,
-            prior=prior,
-            datadir=kwargs.get("datadir"),
-            task_id=kwargs.get("task_id"),
-        )
-
-    elif issubclass(b, MFHartmannBenchmark):
-        bench = b(
-            seed=seed,
-            prior=prior,
-            bias=kwargs.get("bias"),
-            noise=kwargs.get("noise"),
-        )
-    else:
-        raise NotImplementedError(f"Whoops, please fix me, not recognized: {b}")
+    bench = b(seed=seed, prior=prior, **kwargs)
 
     if preload:
         bench.load()
 
     return bench
-
-
-def available(
-    conditionals: bool = False,
-) -> Iterator[tuple[str, type[Benchmark], str | None, dict[str, Any] | None]]:
-    """Iterate over all the possible instantiations of a benchmark
-
-    Parameters
-    ----------
-    conditionals: bool = False
-        Whether to iterate through benchmarks with conditional hyperparameters.
-
-    Returns
-    -------
-    Iterator[tuple[str, type[Benchmark], str | None, dict[str, Any] | None]]
-        (name: str, cls: type[Benchmark], prior: str | None, params: dict | None)
-    """
-    for name, cls in _mapping.items():
-        # Skip conditionals if specified
-        if cls.has_conditionals and conditionals is False:
-            continue
-
-        if cls.available_priors is not None:
-            priors = list(cls.available_priors)
-        else:
-            priors = None
-
-        if issubclass(cls, JAHSBenchmark):
-            if priors:
-                yield from ((name, cls, p, None) for p in priors)
-            else:
-                yield (name, cls, None, None)
-
-        elif issubclass(cls, YAHPOBenchmark):
-            if cls.instances is not None:
-                if priors is not None:
-                    yield from (
-                        (name, cls, p, {"task_id": t})
-                        for t, p in product(cls.instances, priors)
-                    )
-                else:
-                    yield from (
-                        (name, cls, None, {"task_id": t}) for t in cls.instances
-                    )
-            else:
-                if priors is not None:
-                    yield from ((name, cls, p, None) for p in priors)
-                else:
-                    yield (name, cls, None, None)
-
-        elif issubclass(cls, MFHartmannBenchmark):
-            bias, noise = cls.bias_noise
-            params: dict[str, Any] = {"bias": bias, "noise": noise}
-            if priors is not None:
-                itr = ((name, cls, p, params) for p in priors)
-                yield from itr
-            else:
-                yield (name, cls, None, params)
-
-        else:
-            raise NotImplementedError("Whoops, fix me")
-    return
 
 
 __all__ = [
@@ -275,30 +186,5 @@ __all__ = [
     "project_urls",
     "copyright",
     "version",
-    "available",
     "get",
 ]
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--benchmarks", action="store_true")
-    parser.add_argument("--has-conditional-hps", action="store_true")
-    args = parser.parse_args()
-
-    if args.benchmarks is True:
-        for name, cls, prior, extra in available(conditionals=args.has_conditional_hps):
-            c = cls.__name__
-            root = f"get(name={name}, prior={prior}"
-            if extra is None:
-                print(f"{root}) -> {c}")
-
-            elif issubclass(cls, MFHartmannBenchmark) and any(
-                s in name for s in ["terrible", "good", "moderate", "bad"]
-            ):
-                print(f"{root}) -> {c}")
-
-            else:
-                kv_str = ", ".join([f"{k}={v}" for k, v in extra.items()])
-                print(f"{root}, {kv_str}) -> {c}")
