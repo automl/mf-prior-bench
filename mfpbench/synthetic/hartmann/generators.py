@@ -21,6 +21,9 @@ class MFHartmannGenerator(ABC):
     # will have the same noise
     _default_seed: int = 1337
 
+    # The dimensions to the hartmann generator
+    dims: float
+
     def __init__(
         self,
         n_fidelities: int,
@@ -62,14 +65,10 @@ class MFHartmannGenerator(ABC):
         """
         ...
 
-    @property
-    def dims(self) -> int:
-        """The dimension of the input"""
-        return len(self.optimum)
-
 
 class MFHartmann3(MFHartmannGenerator):
     optimum = (0.114614, 0.555649, 0.852547)
+    dims = 3
 
     def __call__(self, z: int, Xs: tuple[float, ...]) -> float:
         """
@@ -123,6 +122,7 @@ class MFHartmann3(MFHartmannGenerator):
 class MFHartmann6(MFHartmannGenerator):
 
     optimum = (0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573)
+    dims = 6
 
     def __call__(self, z: int, Xs: tuple[float, ...]) -> float:
         """
