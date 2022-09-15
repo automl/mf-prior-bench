@@ -92,10 +92,9 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
             seed=self.seed,
         )
 
-        if self.prior is None and self.prior_noise_seed is not None:
+        if self.prior is None and prior_noise_seed is not None:
             raise ValueError(
-                f"`prior_noise_seed ({prior_noise_seed})` specified"
-                " but no `prior` given"
+                f"`prior_noise_seed ({prior_noise_seed})` specified, no `prior` given"
             )
         self.prior_noise_seed = prior_noise_seed
         self.prior_noise_scale = prior_noise_scale
@@ -105,7 +104,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         self._configspace.add_hyperparameters(
             [
                 UniformFloatHyperparameter(f"X_{i}", lower=0.0, upper=1.0)
-                for i in range(self.mfh.dims)
+                for i in range(self.dims)
             ]
         )
 
@@ -122,7 +121,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
                 new_prior = self.Config.from_dict(
                     {
                         k: np.clip(v + noise, a_min=0, a_max=1)
-                        for i, ((k, v), noise) in enumerate(self.prior.dict(), n)
+                        for i, ((k, v), noise) in enumerate(zip(self.prior.dict(), n))
                     }
                 )
                 self.prior = new_prior
