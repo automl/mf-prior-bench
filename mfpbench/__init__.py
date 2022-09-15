@@ -128,7 +128,9 @@ def get(
 
     prior: str | Path | Config | None = None
         The prior to use for the benchmark.
-        * str - A preset
+        * str -
+            If it ends in {.json} or {.yaml, .yml}, it will convert it to a path and use
+            it as if it is a path to a config. Otherwise, it is treated as a preset
         * Path - path to a file
         * Config - A Config object
         * None - Use the default if available
@@ -167,6 +169,10 @@ def get(
 
     if b is None:
         raise ValueError(f"{name} is not a benchmark in {list(_mapping.keys())}")
+
+    if isinstance(prior, str):
+        if any(prior.endswith(suffix) for suffix in [".json", ".yaml", ".yml"]):
+            prior = Path(prior)
 
     bench = b(seed=seed, prior=prior, **kwargs)
 
