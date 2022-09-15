@@ -22,7 +22,7 @@ class MFHartmannGenerator(ABC):
     _default_seed: int = 1337
 
     # The dimensions to the hartmann generator
-    dims: float
+    dims: int
 
     def __init__(
         self,
