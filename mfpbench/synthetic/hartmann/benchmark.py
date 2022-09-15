@@ -55,7 +55,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         bias: float | None = None,
         noise: float | None = None,
         prior: str | Path | C | dict[str, Any] | Configuration | None = None,
-        prior_noise_seed: int | None = None,
+        noisy_prior: bool = False,
         prior_noise_scale: float = 0.125,
     ):
         """
@@ -75,29 +75,27 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
             * if dict, Config, Configuration - A config
             * None - Use the default if available
 
-        prior_noise_seed: int | None = None
-            The seed to add noise. Leave as Non to not add noise to the prior
+        noisy_prior: bool = False
+            Whether to add noise to the prior
 
         prior_noise_scale: float = 0.125
             The scaling factor for noise added to the prior
             `noise = prior_noise_scale * np.random.random(size=...)`
         """
         super().__init__(seed=seed, prior=prior)
+        if self.prior is None and noisy_prior is not None:
+            raise ValueError("`noisy_prior = True` specified but no `prior` given")
+
         self.bias = bias if bias is not None else self.bias_noise[0]
         self.noise = noise if noise is not None else self.bias_noise[1]
+        self.noisy_prior = noisy_prior
+        self.prior_noise_scale = prior_noise_scale
         self.mfh = self.Generator(
             n_fidelities=self.end,
             fidelity_noise=self.noise,
             fidelity_bias=self.bias,
             seed=self.seed,
         )
-
-        if self.prior is None and prior_noise_seed is not None:
-            raise ValueError(
-                f"`prior_noise_seed ({prior_noise_seed})` specified, no `prior` given"
-            )
-        self.prior_noise_seed = prior_noise_seed
-        self.prior_noise_scale = prior_noise_scale
 
         # Create the configspace
         self._configspace = ConfigurationSpace(name=str(self), seed=self.seed)
@@ -112,17 +110,18 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         if self.prior is not None:
 
             # If some noise seed was passed, we add some noise to the prior
-            if self.prior_noise_seed is not None:
+            if self.noisy_prior:
                 # Create noise to add
-                rng = np.random.default_rng(seed=self.prior_noise_seed)
-                n = self.prior_noise_scale * rng.uniform(low=-1, high=1, size=self.dims)
+                rng = np.random.default_rng(seed=self.seed)
+                uniform = rng.uniform(low=-1, high=1, size=self.dims)
+                noises = self.prior_noise_scale * uniform
                 d = self.prior.dict()
 
                 # We iterate through the prior and add noise, clipping incase
                 new_prior = self.Config.from_dict(
                     {
-                        k: np.clip(v + noise, a_min=0, a_max=1)
-                        for i, ((k, v), noise) in enumerate(zip(d.items(), n))
+                        k: np.clip(v + n, a_min=0, a_max=1)
+                        for i, ((k, v), n) in enumerate(zip(d.items(), noises))
                     }
                 )
                 self.prior = new_prior

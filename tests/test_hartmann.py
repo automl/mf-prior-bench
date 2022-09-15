@@ -24,11 +24,12 @@ BENCH_SEED = 1337
         product([MFHartmann6Benchmark], MFHartmann6Benchmark.available_priors),
     ),
 )
+@parametrize("seed", [1, 2, 3, 4, 5])
 def MFH(
-    cls: type[MFHartmannBenchmark], prior: str
+    cls: type[MFHartmannBenchmark], prior: str, seed: int
 ) -> Callable[..., MFHartmannBenchmark]:
     """Returns the class and the basic args"""
-    return partial(cls, prior=prior, seed=BENCH_SEED)
+    return partial(cls, prior=prior, seed=seed)
 
 
 def test_hartmann_priors_with_and_without_noise_added(
@@ -45,7 +46,7 @@ def test_hartmann_priors_with_and_without_noise_added(
     bench_no_noise = MFH()
     clean_prior = bench_no_noise.prior
 
-    bench_with_noise = MFH(prior_noise_seed=1)
+    bench_with_noise = MFH(noisy_prior=True)
     noisy_prior = bench_with_noise.prior
 
     # Just validaty checks for mypy
@@ -69,11 +70,9 @@ def test_hartmann_priors_with_and_without_noise_added(
 
 
 @parametrize("scale", [-5, -1, -0.125, 0.125, 1, 5])
-@parametrize("seed", [1, 2, 3, 4, 5])
 def test_hartmann_priors_noise_in_bounds(
     MFH: Callable[..., MFHartmann6Benchmark],
     scale: float,
-    seed: int,
 ) -> None:
     """
     Expects
@@ -81,7 +80,7 @@ def test_hartmann_priors_noise_in_bounds(
     * Should produce a valid config
     * These values should all be between 0 and 1
     """
-    bench = MFH(prior_noise_seed=seed, prior_noise_scale=scale)
+    bench = MFH(noisy_prior=True, prior_noise_scale=scale)
 
     config = bench.prior
     assert config is not None
@@ -98,7 +97,7 @@ def test_hartmann_priors_noise_different_seeds_different_noise(
     -------
     * Using different seeds should result in different noisy priors
     """
-    bench1 = MFH(prior_noise_seed=1)
-    bench2 = MFH(prior_noise_seed=2)
+    bench1 = MFH(noisy_prior=True, seed=1)
+    bench2 = MFH(noisy_prior=True, seed=2)
 
     assert bench1.prior != bench2.prior
