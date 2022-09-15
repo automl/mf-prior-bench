@@ -49,6 +49,7 @@ class JAHSBenchmark(Benchmark, ABC):
         "test-acc": "test_acc",
         "train-acc": "train_acc",
     }
+    _result_metrics_active = ("valid-acc", "test-acc", "runtime")
 
     def __init__(
         self,
@@ -96,11 +97,8 @@ class JAHSBenchmark(Benchmark, ABC):
     # explicit overwrite
     def load(self) -> None:
         """Pre-load JAHS XGBoost model before querying the first time"""
-        self._bench = jahs_bench.Benchmark(
-            task=self.task,
-            save_dir=self.datadir,
-            download=False,
-        )
+        # Access the property
+        _ = self.bench
 
     @property
     def bench(self) -> jahs_bench.Benchmark:
@@ -110,6 +108,7 @@ class JAHSBenchmark(Benchmark, ABC):
                 task=self.task,
                 save_dir=self.datadir,
                 download=False,
+                metrics=self._result_metrics_active,
             )
 
         return self._bench

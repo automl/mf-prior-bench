@@ -1,5 +1,5 @@
-
 from pathlib import Path
+
 
 def process(datadir: Path) -> None:
     if not datadir.exists():

@@ -52,7 +52,7 @@ CIFAR10_PRIORS = {
         W=16,
         WeightDecay=0.008513658749621622,
     ),
-    "default": DEFAULT_PRIOR
+    "default": DEFAULT_PRIOR,
 }
 
 COLORECTAL_HISTOLOGY_PRIORS = {"default": DEFAULT_PRIOR}

@@ -10,15 +10,15 @@ from mfpbench.result import Result
 @dataclass(frozen=True)  # type: ignore[misc]
 class JAHSResult(Result[JAHSConfig, int]):
     # Info
-    size: float  # MB
-    flops: float
-    latency: float  # unit?
+    # size: float  # remove
+    # flops: float # remove
+    # latency: float  # unit? remove
     runtime: float  # unit?
 
     # Scores
     valid_acc: float
     test_acc: float
-    train_acc: float
+    # train_acc: float # remove
 
     @property
     def score(self) -> float:
