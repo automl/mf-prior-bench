@@ -13,6 +13,7 @@ from typing import Any, Generic, TypeVar
 
 from pathlib import Path
 
+import numpy as np
 from ConfigSpace import Configuration, ConfigurationSpace, UniformFloatHyperparameter
 
 from mfpbench.benchmark import Benchmark
@@ -45,12 +46,17 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
     Generator: type[G]
     bias_noise: tuple[float, float] = (0.5, 0.1)
 
+    # How many dimensions there are to the Hartmann function
+    dims: int
+
     def __init__(
         self,
         seed: int | None = None,
         bias: float | None = None,
         noise: float | None = None,
         prior: str | Path | C | dict[str, Any] | Configuration | None = None,
+        noisy_prior: bool = False,
+        prior_noise_scale: float = 0.125,
     ):
         """
         Parameters
@@ -68,10 +74,22 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
             * if Path - path to a file
             * if dict, Config, Configuration - A config
             * None - Use the default if available
+
+        noisy_prior: bool = False
+            Whether to add noise to the prior
+
+        prior_noise_scale: float = 0.125
+            The scaling factor for noise added to the prior
+            `noise = prior_noise_scale * np.random.random(size=...)`
         """
         super().__init__(seed=seed, prior=prior)
+        if self.prior is None and noisy_prior is not None:
+            raise ValueError("`noisy_prior = True` specified but no `prior` given")
+
         self.bias = bias if bias is not None else self.bias_noise[0]
         self.noise = noise if noise is not None else self.bias_noise[1]
+        self.noisy_prior = noisy_prior
+        self.prior_noise_scale = prior_noise_scale
         self.mfh = self.Generator(
             n_fidelities=self.end,
             fidelity_noise=self.noise,
@@ -84,12 +102,30 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         self._configspace.add_hyperparameters(
             [
                 UniformFloatHyperparameter(f"X_{i}", lower=0.0, upper=1.0)
-                for i in range(self.mfh.dims)
+                for i in range(self.dims)
             ]
         )
 
-        # Chanding defaults to prior configurations
+        # Set the prior on the config space
         if self.prior is not None:
+
+            # If some noise seed was passed, we add some noise to the prior
+            if self.noisy_prior:
+                # Create noise to add
+                rng = np.random.default_rng(seed=self.seed)
+                uniform = rng.uniform(low=-1, high=1, size=self.dims)
+                noises = self.prior_noise_scale * uniform
+                d = self.prior.dict()
+
+                # We iterate through the prior and add noise, clipping incase
+                new_prior = self.Config.from_dict(
+                    {
+                        k: np.clip(v + n, a_min=0, a_max=1)
+                        for i, ((k, v), n) in enumerate(zip(d.items(), noises))
+                    }
+                )
+                self.prior = new_prior
+
             self.prior.set_as_default_prior(self._configspace)
 
     def query(
@@ -212,6 +248,7 @@ class MFHartmann3Benchmark(MFHartmannBenchmark):
     _default_prior = HARTMANN3D_PRIORS["default"]
     Generator = MFHartmann3
     Config = MFHartmann3Config
+    dims = MFHartmann3.dims
 
 
 class MFHartmann3BenchmarkTerrible(MFHartmann3Benchmark):
@@ -238,6 +275,7 @@ class MFHartmann6Benchmark(MFHartmannBenchmark):
     _default_prior = HARTMANN6D_PRIORS["default"]
     Generator = MFHartmann6
     Config = MFHartmann6Config
+    dims = MFHartmann6.dims
 
 
 class MFHartmann6BenchmarkTerrible(MFHartmann6Benchmark):
