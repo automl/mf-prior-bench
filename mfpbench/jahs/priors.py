@@ -55,5 +55,80 @@ CIFAR10_PRIORS = {
     "default": DEFAULT_PRIOR,
 }
 
-COLORECTAL_HISTOLOGY_PRIORS = {"default": DEFAULT_PRIOR}
-FASHION_MNIST_PRIORS = {"default": DEFAULT_PRIOR}
+COLORECTAL_HISTOLOGY_PRIORS = {
+    "good": JAHSConfig(
+        Activation="Hardswish",
+        LearningRate=0.0285809557714237,
+        N=5,
+        Op1=4,
+        Op2=2,
+        Op3=3,
+        Op4=3,
+        Op5=4,
+        Op6=2,
+        Optimizer="SGD",
+        Resolution=1.0,
+        TrivialAugment=False,
+        W=16,
+        WeightDecay=6.664023533512357e-05,
+    ),
+    "bad": JAHSConfig(
+        Activation="Mish",
+        LearningRate=0.1108222707344407,
+        N=5,
+        Op1=1,
+        Op2=0,
+        Op3=1,
+        Op4=2,
+        Op5=3,
+        Op6=1,
+        Optimizer="SGD",
+        Resolution=1.0,
+        TrivialAugment=True,
+        W=16,
+        WeightDecay=3.0238926715708357e-05,
+    ),
+    "default": DEFAULT_PRIOR,
+}
+
+FASHION_MNIST_PRIORS = {
+    "good": JAHSConfig(
+        Activation="Hardswish",
+        LearningRate=0.019293029630317468,
+        N=5,
+        Op1=1,
+        Op2=2,
+        Op3=2,
+        Op4=2,
+        Op5=4,
+        Op6=2,
+        Optimizer="SGD",
+        Resolution=1.0,
+        TrivialAugment=True,
+        W=16,
+        WeightDecay=2.539168357582201e-05,
+    ),
+    "bad": JAHSConfig(
+        Activation="ReLU",
+        LearningRate=0.43400688440052726,
+        N=5,
+        Op1=1,
+        Op2=0,
+        Op3=1,
+        Op4=0,
+        Op5=4,
+        Op6=1,
+        Optimizer="SGD",
+        Resolution=0.5,
+        TrivialAugment=False,
+        W=16,
+        WeightDecay=4.460179002277314e-05,
+    ),
+    "default": DEFAULT_PRIOR,
+}
+
+# for quick copy-pasting of a dict into args for JAHSConfig
+# print(",\n".join([
+#     f"{k}=\"{v}\"" if isinstance(v, str) else f"{k}={v}" for k, v in template.items()
+# ]))
+# and then wrap the string with quotes
