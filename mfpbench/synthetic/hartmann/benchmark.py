@@ -116,12 +116,13 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
                 # Create noise to add
                 rng = np.random.default_rng(seed=self.prior_noise_seed)
                 n = self.prior_noise_scale * rng.uniform(low=-1, high=1, size=self.dims)
+                d = self.prior.dict()
 
                 # We iterate through the prior and add noise, clipping incase
                 new_prior = self.Config.from_dict(
                     {
                         k: np.clip(v + noise, a_min=0, a_max=1)
-                        for i, ((k, v), noise) in enumerate(zip(self.prior.dict(), n))
+                        for i, ((k, v), noise) in enumerate(zip(d.items(), n))
                     }
                 )
                 self.prior = new_prior

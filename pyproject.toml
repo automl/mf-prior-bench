@@ -103,5 +103,6 @@ module = [
     "yahpo_gym.*",
     "pytest.*",
     "yaml.*",
+    "pytest_cases.*",
 ]
 ignore_missing_imports = true
