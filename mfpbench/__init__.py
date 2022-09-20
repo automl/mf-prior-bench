@@ -7,15 +7,19 @@ from pathlib import Path
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.config import Config
-from mfpbench.pd1 import PD1Benchmark, PD1lm1b_transformer_2048, PD1uniref50_transformer_128
 from mfpbench.jahs import (
     JAHSBenchmark,
     JAHSCifar10,
     JAHSColorectalHistology,
     JAHSFashionMNIST,
 )
+from mfpbench.pd1 import (
+    PD1Benchmark,
+    PD1lm1b_transformer_2048,
+    PD1translatewmt_xformer_64,
+    PD1uniref50_transformer_128,
+)
 from mfpbench.synthetic.hartmann import (
-    MFHartmannBenchmark,
     MFHartmann3Benchmark,
     MFHartmann3BenchmarkBad,
     MFHartmann3BenchmarkGood,
@@ -26,9 +30,9 @@ from mfpbench.synthetic.hartmann import (
     MFHartmann6BenchmarkGood,
     MFHartmann6BenchmarkModerate,
     MFHartmann6BenchmarkTerrible,
+    MFHartmannBenchmark,
 )
 from mfpbench.yahpo import (
-    YAHPOBenchmark,
     IAMLglmnetBenchmark,
     IAMLrangerBenchmark,
     IAMLrpartBenchmark,
@@ -43,6 +47,7 @@ from mfpbench.yahpo import (
     RBV2SuperBenchmark,
     RBV2svmBenchmark,
     RBV2xgboostBenchmark,
+    YAHPOBenchmark,
 )
 
 name = "mf-prior-bench"
@@ -92,6 +97,7 @@ _mapping: dict[str, type[Benchmark]] = {
     # PD1
     "lm1b_transformer_2048": PD1lm1b_transformer_2048,
     "uniref50_transformer_128": PD1uniref50_transformer_128,
+    "translatewmt_xformer_64": PD1translatewmt_xformer_64,
 }
 
 
