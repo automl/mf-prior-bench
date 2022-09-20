@@ -40,7 +40,16 @@ def dehb_target_function(
     else:
         budget = int(budget)
 
-    model = XGBRegressor(**config, seed=seed, n_estimators=budget)
+    if y.name == "train_cost":
+        model = XGBRegressor(
+            **config,
+            seed=seed,
+            n_estimators=budget,
+            monotone_constraints={"epoch": 1},
+        )
+    else:
+        model = XGBRegressor(**config, seed=seed, n_estimators=budget)
+
     scores = cross_validate(
         estimator=model,
         X=X,
