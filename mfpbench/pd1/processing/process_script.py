@@ -34,7 +34,7 @@ def uniref50_epoch_convert(x: float | list[float]) -> x | list[float]:
         3     [0, 1, nan]
     """
     if isinstance(x, list):
-        return [i if not pd.isna(e) else e for i, e in enumerate(x)]
+        return [i if not pd.isna(e) else e for i, e in enumerate(x, start=1)]
     else:
         return x
 
