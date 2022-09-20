@@ -12,10 +12,10 @@ from mfpbench.pd1.result import PD1ResultTransformer
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
 class PD1Config_translatewmt_xformer_64(PD1Config):
     def validate(self) -> None:
-        assert 0.010543 <= self.lr_decay_factor <= 9.885653e-01
-        assert 0.000010 <= self.lr_initial <= 9.986256e00
-        assert 0.100811 <= self.lr_power <= 1.999659e00
-        assert 0.000059 <= self.opt_momentum <= 9.989986e-01
+        assert 0.0100221257 <= self.lr_decay_factor <= 0.988565263
+        assert 1.00276e-05 <= self.lr_initial <= 9.8422475735
+        assert 0.1004250993 <= self.lr_power <= 1.9985927056
+        assert 5.86114e-05 <= self.opt_momentum <= 0.9989999746
 
 
 class PD1translatewmt_xformer_64(PD1Benchmark):
@@ -42,27 +42,27 @@ class PD1translatewmt_xformer_64(PD1Benchmark):
             [
                 UniformFloatHyperparameter(
                     "lr_decay_factor",
-                    lower=0.010543,
-                    upper=9.885653e-01,
-                    default_value=4.890111e-01,
+                    lower=0.0100221257,
+                    upper=0.988565263,
+                    default_value=0.48927156865,
                 ),
                 UniformFloatHyperparameter(
                     "lr_initial",
-                    lower=0.000010,
-                    upper=9.986256e00,
-                    default_value=4.993123e00,
+                    lower=1.00276e-05,
+                    upper=9.8422475735,
+                    default_value=4.92111877295,
                 ),
                 UniformFloatHyperparameter(
                     "lr_power",
-                    lower=0.100811,
-                    upper=1.999659e00,
-                    default_value=9.494239e-01,
+                    lower=0.1004250993,
+                    upper=1.9985927056,
+                    default_value=0.94908380315,
                 ),
                 UniformFloatHyperparameter(
                     "opt_momentum",
-                    lower=0.000059,
-                    upper=9.989986e-01,
-                    default_value=4.994700e-01,
+                    lower=5.86114e-05,
+                    upper=0.9989999746,
+                    default_value=0.4994706816,
                 ),
             ]
         )
