@@ -103,7 +103,7 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
     drop_columns = [c.name for c in COLUMNS if not c.keep]
     renames = {c.name: c.rename for c in COLUMNS if c.rename is not None}
     hps = [c.rename for c in COLUMNS if c.hp]
-    metrics = [c.rename if c.rename else c.name for c in COLUMNS if c.metric]
+    # metrics = [c.rename if c.rename else c.name for c in COLUMNS if c.metric]
 
     dfs: list[pd.DataFrame] = []
     for matched, phase in product([True, False], [0, 1]):
@@ -194,12 +194,12 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
             if name in transformer_datasets:
                 hp_cols.remove("activation_fn")
 
-            additional_data: list[pd.Series] = []
+            additional_data: list[pd.Series] = []  # noqa: F841
 
             config_groups = list(dataset.groupby(hps))
 
             # We find the worst training_cost entries for each row and just use those
-            config_with_maximum_train_cost = max(
+            config_with_maximum_train_cost = max(  # noqa: F841
                 [d for _, d in config_groups],
                 lambda d: max(d["train_cost"]),
             )

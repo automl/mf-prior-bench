@@ -176,7 +176,7 @@ class PD1Benchmark(Benchmark[C, R, int]):
 
     @classmethod
     @abstractmethod
-    def _create_space(cls) -> ConfigurationSpace:
+    def _create_space(cls, seed: int | None = None) -> ConfigurationSpace:
         ...
 
     def _results_for(self, config: C, fidelities: list[int]) -> list[R]:

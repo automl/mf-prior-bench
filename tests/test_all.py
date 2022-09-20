@@ -23,6 +23,8 @@ from mfpbench import (
     MFHartmann6BenchmarkTerrible,
     NB301Benchmark,
     PD1lm1b_transformer_2048,
+    PD1translatewmt_xformer_64,
+    PD1uniref50_transformer_128,
     RBV2aknnBenchmark,
     YAHPOBenchmark,
 )
@@ -90,6 +92,8 @@ benchmarks = [
     ),
     #
     BenchmarkTest("lm1b_transformer_2048", PD1lm1b_transformer_2048),
+    BenchmarkTest("translatewmt_xformer_64", PD1translatewmt_xformer_64),
+    BenchmarkTest("uniref50_transformer_128", PD1uniref50_transformer_128),
 ]
 
 

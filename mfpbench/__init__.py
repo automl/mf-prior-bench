@@ -7,19 +7,19 @@ from pathlib import Path
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.config import Config
-from mfpbench.jahs import (
+from mfpbench.jahs import (  # noqa: F401
     JAHSBenchmark,
     JAHSCifar10,
     JAHSColorectalHistology,
     JAHSFashionMNIST,
 )
-from mfpbench.pd1 import (
+from mfpbench.pd1 import (  # noqa: F401
     PD1Benchmark,
     PD1lm1b_transformer_2048,
     PD1translatewmt_xformer_64,
     PD1uniref50_transformer_128,
 )
-from mfpbench.synthetic.hartmann import (
+from mfpbench.synthetic.hartmann import (  # noqa: F401
     MFHartmann3Benchmark,
     MFHartmann3BenchmarkBad,
     MFHartmann3BenchmarkGood,
@@ -32,7 +32,7 @@ from mfpbench.synthetic.hartmann import (
     MFHartmann6BenchmarkTerrible,
     MFHartmannBenchmark,
 )
-from mfpbench.yahpo import (
+from mfpbench.yahpo import (  # noqa: F401
     IAMLglmnetBenchmark,
     IAMLrangerBenchmark,
     IAMLrpartBenchmark,

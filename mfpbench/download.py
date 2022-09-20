@@ -7,7 +7,6 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from mfpbench.pd1.processing.process_script import process_pd1
 
 DATAROOT = Path("data")
 
@@ -90,6 +89,8 @@ class PD1Source(Source):
             shutil.copyfileobj(response, f)
 
         # We offload to a special file for doing all the processing of pd1 into datasets
+        from mfpbench.pd1.processing.process_script import process_pd1
+
         process_pd1(tarball=tarpath)
 
 

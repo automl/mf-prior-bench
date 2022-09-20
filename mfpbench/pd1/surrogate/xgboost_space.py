@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from ConfigSpace import (
     CategoricalHyperparameter,
     ConfigurationSpace,
