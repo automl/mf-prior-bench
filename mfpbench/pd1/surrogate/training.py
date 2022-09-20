@@ -150,7 +150,8 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--cv", type=int, required=True)
     parser.add_argument("--dehb-output", default=".dehb_output", type=str)
-    parser.add_argument("--time", type=float, required=True)
+    parser.add_argument("--time", type=int, required=True)
+    parser.add_argument("--workers", type=int, default=1)
     parser.add_argument(
         "--y",
         choices=["valid_error_rate", "test_error_rate", "train_cost"],
@@ -187,6 +188,7 @@ if __name__ == "__main__":
         output_path=Path(args.dehb_output),
         opt_time=args.time,
         cv=args.cv,
+        n_workers=args.workers,
     )
 
     print(f"Saving model to {surrogate_path}")
