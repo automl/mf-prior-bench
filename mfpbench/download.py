@@ -3,12 +3,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import argparse
-import gzip
-import json
 import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from mfpbench.pd1.processing.process_script import process_pd1
 
 DATAROOT = Path("data")
 
@@ -75,20 +74,10 @@ class JAHSBenchSource(Source):
 class PD1Source(Source):
 
     url: str = "http://storage.googleapis.com/gresearch/pint/pd1.tar.gz"
-    unpacked_folder_name: str = "pd1"
 
     @property
     def name(self) -> str:
         return "pd1-data"
-
-    @staticmethod
-    def unpack_jsonl(path: Path) -> list[dict]:
-        assert path.name.endswith(".jsonl.gz"), path
-
-        with gzip.open(path, mode="rt") as f:
-            data = [json.loads(line) for line in f]
-
-        return data
 
     def download(self) -> None:
         import urllib.request
@@ -100,30 +89,8 @@ class PD1Source(Source):
         with urllib.request.urlopen(self.url) as response, open(tarpath, "wb") as f:
             shutil.copyfileobj(response, f)
 
-        # Unpack it to the datadir
-        print(f"Unpacking {tarpath}")
-        shutil.unpack_archive(tarpath, self.path)
-
-        unpacked_folder = self.path / self.unpacked_folder_name
-
-        print(f"Moving files from {unpacked_folder} to {self.path}")
-        for filepath in unpacked_folder.iterdir():
-            to = self.path / filepath.name
-            print(f"Move {filepath} to {to}")
-            shutil.move(str(filepath), str(to))
-
-        # Unpacking gzipped json files
-        print("Unpacking gzipped json.gz files")
-        files = [f for f in self.path.iterdir() if f.name.endswith("jsonl.gz")]
-        for file in files:
-            new_path = file.parent / file.name.replace(".jsonl.gz", ".json")
-
-            print(f"Processing {file} to {new_path}")
-            data = self.unpack_jsonl(file)
-            with open(new_path, mode="w") as out:
-                json.dump(data, out)
-
-        shutil.rmtree(str(unpacked_folder))
+        # We offload to a special file for doing all the processing of pd1 into datasets
+        process_pd1(tarball=tarpath)
 
 
 sources = {source.name: source for source in [YAHPOSource(), JAHSBenchSource()]}

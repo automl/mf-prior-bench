@@ -152,6 +152,12 @@ result = bench.Result.from_dict(
 )
 ```
 
+### NOTE
+Test command to train
+```bash
+python -m mfpbench.pd1.surrogate.training --dataset="lm1b-transformer-2048" --seed 1 --cv 2 --time 30 --y "valid_error_rate"
+python -m mfpbench.pd1.surrogate.training --dataset="lm1b-transformer-2048" --seed 1 --cv 2 --time 30 --y "train_cost"
+```
 
 ### Contributing
 TODO

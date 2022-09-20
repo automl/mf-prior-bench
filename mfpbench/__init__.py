@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any, Iterator
+from typing import Any
 
 import datetime
-from itertools import product
 from pathlib import Path
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.config import Config
+from mfpbench.pd1 import PD1lm1b_transformer_2048
 from mfpbench.jahs import (
     JAHSBenchmark,
     JAHSCifar10,
@@ -15,6 +15,7 @@ from mfpbench.jahs import (
     JAHSFashionMNIST,
 )
 from mfpbench.synthetic.hartmann import (
+    MFHartmannBenchmark,
     MFHartmann3Benchmark,
     MFHartmann3BenchmarkBad,
     MFHartmann3BenchmarkGood,
@@ -25,9 +26,9 @@ from mfpbench.synthetic.hartmann import (
     MFHartmann6BenchmarkGood,
     MFHartmann6BenchmarkModerate,
     MFHartmann6BenchmarkTerrible,
-    MFHartmannBenchmark,
 )
 from mfpbench.yahpo import (
+    YAHPOBenchmark,
     IAMLglmnetBenchmark,
     IAMLrangerBenchmark,
     IAMLrpartBenchmark,
@@ -42,7 +43,6 @@ from mfpbench.yahpo import (
     RBV2SuperBenchmark,
     RBV2svmBenchmark,
     RBV2xgboostBenchmark,
-    YAHPOBenchmark,
 )
 
 name = "mf-prior-bench"
@@ -89,6 +89,8 @@ _mapping: dict[str, type[Benchmark]] = {
     "iaml_rpart": IAMLrpartBenchmark,
     "iaml_super": IAMLSuperBenchmark,
     "iaml_xgboost": IAMLxgboostBenchmark,
+    # PD1
+    "lm1b_transformer_2048": PD1lm1b_transformer_2048
 }
 
 

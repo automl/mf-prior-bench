@@ -3,50 +3,70 @@ from __future__ import annotations
 import warnings
 from dataclasses import dataclass
 
+import numpy as np
+
 from mfpbench.pd1.config import PD1Config
 from mfpbench.result import Result
 
 
 @dataclass(frozen=True)  # type: ignore[misc]
 class PD1Result(Result[PD1Config, int]):
-
-    result1: float
-    result2: float
-
-    train_cost: float
+    valid_error_rate: float  # (0, 1)
+    train_cost: float  #
 
     @property
     def score(self) -> float:
         """The score of interest"""
-        return self.result1
+        return 1 - self.valid_error_rate
 
     @property
     def error(self) -> float:
         """The error of interest"""
-        return 1 - self.result1
-
-    @property
-    def test_score(self) -> float:
-        """The score on the test set"""
-        return self.result2
-
-    @property
-    def test_error(self) -> float:
-        """The error on the test set"""
-        return 1 - self.result2
+        return self.valid_error_rate
 
     @property
     def val_score(self) -> float:
         """The score on the validation set"""
-        return self.result1
+        return 1 - self.valid_error_rate
 
     @property
     def val_error(self) -> float:
         """The error on the validation set"""
-        return 1 - self.result2
+        return self.valid_error_rate
 
     @property
     def cost(self) -> float:
-        """The time taken in seconds"""
         warnings.warn(f"Unsure of unit for `cost` on {self.__class__}")
         return self.train_cost
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class PD1ResultSimple(PD1Result):
+    """Used for all PD1 benchmarks, except imagenet, lm1b, translate_wmt, uniref50"""
+
+    test_error_rate: float = np.inf
+
+    @property
+    def test_score(self) -> float:
+        """The score on the test set"""
+        return self.test_error_rate
+
+    @property
+    def test_error(self) -> float:
+        """The error on the test set"""
+        return 1 - self.test_error_rate
+
+
+@dataclass(frozen=True)
+class PD1ResultTransformer(PD1Result):
+    """Used for imagenet, lm1b, translate_wmt, uniref50. Contains no test error"""
+
+    @property
+    def test_score(self) -> float:
+        """The score on the test set"""
+        return self.valid_error_rate
+
+    @property
+    def test_error(self) -> float:
+        """The error on the test set"""
+        return self.valid_error_rate

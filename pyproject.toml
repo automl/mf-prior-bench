@@ -16,6 +16,7 @@ pyyaml = "^6"
 numpy = "1.*"
 yahpo-gym = "1.0.1"
 jahs-bench = {git = "https://github.com/automl/jahs_bench_201.git", rev = "880fbcb35a83df7b6c02440a6c13adb921f54657"}
+xgboost = "^1"
 
 [tool.poetry.dev-dependencies]
 pytest = "4.6"
@@ -26,8 +27,6 @@ isort = "^5.10.1"
 black = "^22.8.0"
 pydocstyle = "^6.1.1"
 pre-commit = "^2.20.0"
-
-
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -104,5 +103,7 @@ module = [
     "pytest.*",
     "yaml.*",
     "pytest_cases.*",
+    "dehb.*",
+    "sklearn.*",
 ]
 ignore_missing_imports = true

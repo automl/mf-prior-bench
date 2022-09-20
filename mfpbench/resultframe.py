@@ -44,7 +44,7 @@ class ResultFrame(Mapping[Union[C, F], List[R]]):
         yield from iter(self._ctor)
 
     def __len__(self) -> int:
-        return len(self._ctor)
+        return len(self._result_order)
 
     def add(self, result: R) -> None:
         """Add a result to the frame"""
@@ -87,7 +87,7 @@ class ResultFrame(Mapping[Union[C, F], List[R]]):
         self,
         at: Sequence[F] | None = None,
         *,
-        method: Literal["spearman"] = "spearman",
+        method: Literal["spearman", "kendalltau", "cosine"] = "spearman",
     ) -> np.ndarray:
         """Get the correlation ranksing between stored results
 
@@ -99,7 +99,7 @@ class ResultFrame(Mapping[Union[C, F], List[R]]):
         at: Sequence[F] | None = None
             The fidelities to get correlations between, defaults to all of them
 
-        method: "spearman" = "spearman"
+        method: "spearman", "kendalltau", "cosine" = "spearman"
             The method to calculate correlations with
 
         Returns
@@ -139,8 +139,16 @@ class ResultFrame(Mapping[Union[C, F], List[R]]):
             for f, results in selected.items()
         }
 
-        # Next we just extract out the orderings and stick it in a numpy array
-        values = {f: [num for _, num in error_nums] for f, error_nums in vs.items()}
-        x = np.asarray([nums for _, nums in values.items()])
+        # For cosine, we need the raw values, not the ordinal ordering
+        if method == "cosine":
+            x = np.asarray(
+                list([score for score, rank in rung] for fidelity, rung in vs.items())
+            )
+        elif method in ["spearman", "kendalltau"]:
+            x = np.asarray(
+                list([rank for score, rank in rung] for fidelity, rung in vs.items())
+            )
+        else:
+            raise NotImplementedError()
 
         return rank_correlation(x, method=method)
