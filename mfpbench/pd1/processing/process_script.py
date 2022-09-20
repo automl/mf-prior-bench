@@ -19,7 +19,8 @@ def safe_accumulate(x: Iterator[float | None], fill: float = np.inf) -> Iterator
     itr = iter(f if f is not None else fill for f in x)
     return accumulate(itr)
 
-def uniref50_epoch_convert(x: float | list[float]) -> x | list[float]:
+
+def uniref50_epoch_convert(x: float | list[float]) -> float | list[float]:
     """
     Converts:
         0             NaN
@@ -163,7 +164,6 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
             # Almost all are below 400 but we add a buffer
             dataset = dataset[dataset["train_cost"] < 4_000]
 
-
         # We want to write the full mixed {phase,matched} for surrogate training while
         # only keeping matched phase 1 data for tabular.
         # We also no longer need to keep dataset, model and batchsize for individual
@@ -221,6 +221,7 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
                     raise NotImplementedError(f"Didn't account for {epochs}")
 
         # Select only the tabular part (matched and phase1)
+        """
         tabular_path = datadir / f"{fname}_tabular.csv"
         tabular_mask = dataset["matched"] & (dataset["phase"] == 1)
         df_tabular = dataset[tabular_mask]
@@ -228,6 +229,7 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
 
         print(f"Writing tabular data to {tabular_path}")
         df_tabular.to_csv(tabular_path, index=False)
+        """
 
         # There are some entries which seem to appear twice. This is due to the same
         # config in {phase0,phase1} x {matched, unmatched}
