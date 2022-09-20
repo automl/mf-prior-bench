@@ -7,7 +7,7 @@ from pathlib import Path
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.config import Config
-from mfpbench.pd1 import PD1Benchmark, PD1lm1b_transformer_2048
+from mfpbench.pd1 import PD1Benchmark, PD1lm1b_transformer_2048, PD1uniref50_transformer_128
 from mfpbench.jahs import (
     JAHSBenchmark,
     JAHSCifar10,
@@ -90,7 +90,8 @@ _mapping: dict[str, type[Benchmark]] = {
     "iaml_super": IAMLSuperBenchmark,
     "iaml_xgboost": IAMLxgboostBenchmark,
     # PD1
-    "lm1b_transformer_2048": PD1lm1b_transformer_2048
+    "lm1b_transformer_2048": PD1lm1b_transformer_2048,
+    "uniref50_transformer_128": PD1uniref50_transformer_128,
 }
 
 
