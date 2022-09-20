@@ -19,6 +19,25 @@ def safe_accumulate(x: Iterator[float | None], fill: float = np.inf) -> Iterator
     itr = iter(f if f is not None else fill for f in x)
     return accumulate(itr)
 
+def uniref50_epoch_convert(x: float | list[float]) -> x | list[float]:
+    """
+    Converts:
+        0             NaN
+        1    [0, 0, 0, 1]
+        2           [nan]
+        3     [0, 0, nan]
+
+    to:
+        0             NaN
+        1    [0, 1, 2, 3]
+        2           [nan]
+        3     [0, 1, nan]
+    """
+    if isinstance(x, list):
+        return [i if not pd.isna(e) else e for i, e in enumerate(x)]
+    else:
+        return x
+
 
 @dataclass(frozen=True)
 class Datapack:
@@ -123,6 +142,11 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         else:
             explode_columns = list_columns
 
+        if name == "uniref50":
+            # For some reason the epochs of this datasets are basically [0, 0, 0, 1]
+            # We just turn this into an incremental thing
+            dataset["epoch"] = dataset["epoch"].apply(uniref50_epoch_convert)
+
         dataset["train_cost"] = [
             None if r is None else list(safe_accumulate(r, fill=np.inf))
             for r in dataset["train_cost"]
@@ -131,9 +155,14 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         dataset = dataset.explode(explode_columns, ignore_index=True)
         print(f"Writing individual dataset {fname}")
 
-        # Some train costs go obsenly high for no reason, we drop these rows
-        # TODO: need to check if this makes sense for all datasets othere than lm1b
-        dataset = dataset[dataset["train_cost"] < 10_000]
+        if name == "lm1b":
+            # Some train costs go obsenly high for no reason, we drop these rows
+            dataset = dataset[dataset["train_cost"] < 10_000]
+        elif name == "uniref50":
+            # Some train costs go obsenly high for no reason, we drop these rows
+            # Almost all are below 400 but we add a buffer
+            dataset = dataset[dataset["train_cost"] < 4_000]
+
 
         # We want to write the full mixed {phase,matched} for surrogate training while
         # only keeping matched phase 1 data for tabular.
