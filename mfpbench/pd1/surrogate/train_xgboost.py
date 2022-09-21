@@ -30,6 +30,8 @@ def train_xgboost(
     else:
         model = XGBRegressor(**config, seed=seed, n_estimators=budget)
 
+    model.fit(X, y)
+
     return model
 
 
