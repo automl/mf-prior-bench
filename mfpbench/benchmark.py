@@ -44,6 +44,7 @@ class Benchmark(Generic[C, R, F], ABC):
         self,
         seed: int | None = None,
         prior: str | Path | C | dict[str, Any] | Configuration | None = None,
+        **kwargs,
     ):
         self.seed = seed
         self.start: F = self.fidelity_range[0]

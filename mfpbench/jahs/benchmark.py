@@ -58,6 +58,7 @@ class JAHSBenchmark(Benchmark, ABC):
         datadir: str | Path | None = None,
         seed: int | None = None,
         prior: str | Path | JAHSConfig | dict[str, Any] | Configuration | None = None,
+        **kwargs,
     ):
         """
         Parameters
