@@ -114,7 +114,7 @@ class MFHartmann3(MFHartmannGenerator):
         # H_true = -(np.sum(alpha * np.exp(-inner_sum), axis=-1))
 
         # and add some noise
-        rng = np.random.default_rng(seed=self.seed * z)
+        rng = np.random.default_rng(seed=self.seed * z * hash(Xs))
         noise = rng.normal(size=H.size) * self.noise * (1 - log_z_scaled)
         return (H + noise)[0]
 
@@ -175,6 +175,6 @@ class MFHartmann6(MFHartmannGenerator):
         # H_true = -(np.sum(alpha * np.exp(-inner_sum), axis=-1))
 
         # and add some noise
-        rng = np.random.default_rng(seed=self.seed * z)
+        rng = np.random.default_rng(seed=self.seed * z * hash(Xs))
         noise = rng.normal(size=H.size) * self.noise * (1 - log_z_scaled)
         return (H + noise)[0]
