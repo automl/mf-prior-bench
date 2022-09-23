@@ -51,6 +51,8 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
     available_priors: dict[str, C]
     _default_prior: C
 
+    suffix: str
+
     def __init__(
         self,
         seed: int | None = None,
@@ -129,6 +131,10 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
                 self.prior = new_prior
 
             self.prior.set_as_default_prior(self._configspace)
+
+    @property
+    def basename(self) -> str:
+        return f"mfh{self.dims}_{self.suffix}"
 
     def query(
         self,
@@ -255,18 +261,22 @@ class MFHartmann3Benchmark(MFHartmannBenchmark):
 
 class MFHartmann3BenchmarkTerrible(MFHartmann3Benchmark):
     bias_noise = (4.0, 0.8)
+    suffix = "terrible"
 
 
 class MFHartmann3BenchmarkBad(MFHartmann3Benchmark):
     bias_noise = (2.0, 0.4)
+    suffix = "bad"
 
 
 class MFHartmann3BenchmarkModerate(MFHartmann3Benchmark):
     bias_noise = (1.0, 0.2)
+    suffix = "moderate"
 
 
 class MFHartmann3BenchmarkGood(MFHartmann3Benchmark):
     bias_noise = (0.5, 0.1)
+    suffix = "good"
 
 
 # -----------
@@ -282,15 +292,19 @@ class MFHartmann6Benchmark(MFHartmannBenchmark):
 
 class MFHartmann6BenchmarkTerrible(MFHartmann6Benchmark):
     bias_noise = (4.0, 0.8)
+    suffix = "terrible"
 
 
 class MFHartmann6BenchmarkBad(MFHartmann6Benchmark):
     bias_noise = (2.0, 0.4)
+    suffix = "bad"
 
 
 class MFHartmann6BenchmarkModerate(MFHartmann6Benchmark):
     bias_noise = (1.0, 0.2)
+    suffix = "moderate"
 
 
 class MFHartmann6BenchmarkGood(MFHartmann6Benchmark):
     bias_noise = (0.5, 0.1)
+    suffix = "good"

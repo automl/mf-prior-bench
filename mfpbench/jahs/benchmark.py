@@ -96,6 +96,10 @@ class JAHSBenchmark(Benchmark, ABC):
         if self.prior is not None:
             self.prior.set_as_default_prior(self._configspace)
 
+    @property
+    def basename(self) -> str:
+        return f"jahs_{self.task}"
+
     # explicit overwrite
     def load(self) -> None:
         """Pre-load JAHS XGBoost model before querying the first time"""

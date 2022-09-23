@@ -125,6 +125,10 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         if self.prior is not None:
             self.prior.set_as_default_prior(self._configspace)
 
+    @property
+    def basename(self) -> str:
+        return f"{self.name}-{self.task_id}"
+
     def query(
         self,
         config: C | dict[str, Any] | Configuration,

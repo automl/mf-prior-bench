@@ -67,6 +67,10 @@ class PD1Benchmark(Benchmark[C, R, int]):
 
         self._surrogates: dict[str, XGBRegressor] | None = None
 
+    @property
+    def basename(self) -> str:
+        return self.dataset_name()
+
     def load(self) -> None:
         _ = self.surrogates  # Call up the surrogate into memory
 

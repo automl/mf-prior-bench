@@ -91,6 +91,12 @@ class Benchmark(Generic[C, R, F], ABC):
         if self.prior is not None:
             self.prior.validate()
 
+    @property
+    @abstractmethod
+    def basename(self) -> str:
+        """A basename used for identifying pregenerated prior files"""
+        ...
+
     def iter_fidelities(
         self,
         frm: F | None = None,
