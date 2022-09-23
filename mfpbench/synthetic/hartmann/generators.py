@@ -97,7 +97,7 @@ class MFHartmann3(MFHartmannGenerator):
         X = np.array([X_0, X_1, X_2]).reshape(1, -1)
         alpha = np.array([1.0, 1.2, 3.0, 3.2])
 
-        alpha_prime = alpha - self.bias * np.power(1 - log_z_scaled, 2)
+        alpha_prime = alpha - self.bias * np.power(1 - log_z_scaled, 1)
         A = np.array([[3.0, 10, 30], [0.1, 10, 35], [3.0, 10, 30], [0.1, 10, 35]])
         P = np.array(
             [
@@ -119,7 +119,7 @@ class MFHartmann3(MFHartmannGenerator):
             warnings.simplefilter("ignore")  # Seed below will overflow
             rng = np.random.default_rng(seed=abs(self.seed * z * hash(Xs)))
 
-        noise = rng.normal(size=H.size) * self.noise * (1 - log_z_scaled)
+        noise = np.abs(rng.normal(size=H.size)) * self.noise * (1 - log_z_scaled)
         return (H + noise)[0]
 
 
@@ -154,7 +154,7 @@ class MFHartmann6(MFHartmannGenerator):
         # Highest fidelity (1) accounts for the regular Hartmann
         X = np.array([X_0, X_1, X_2, X_3, X_4, X_5]).reshape(1, -1)
         alpha = np.array([1.0, 1.2, 3.0, 3.2])
-        alpha_prime = alpha - self.bias * np.power(1 - log_z_scaled, 2)
+        alpha_prime = alpha - self.bias * np.power(1 - log_z_scaled, 1)
         A = np.array(
             [
                 [10, 3, 17, 3.5, 1.7, 8],
@@ -183,5 +183,5 @@ class MFHartmann6(MFHartmannGenerator):
             warnings.simplefilter("ignore")  # Seed below will overflow
             rng = np.random.default_rng(seed=abs(self.seed * z * hash(Xs)))
 
-        noise = rng.normal(size=H.size) * self.noise * (1 - log_z_scaled)
+        noise = np.abs(rng.normal(size=H.size)) * self.noise * (1 - log_z_scaled)
         return (H + noise)[0]
