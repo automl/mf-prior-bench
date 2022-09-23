@@ -88,6 +88,9 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             elif task_id not in self.instances:
                 raise ValueError(f"{cls} requires a task in {self.instances}")
 
+        # Needs to be set before the call to super
+        self.task_id = task_id
+
         super().__init__(seed=seed, prior=prior)
         if datadir is None:
             datadir = self._default_download_dir
@@ -119,7 +122,6 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
         self.bench = bench
         self.datadir = datadir
-        self.task_id = task_id
         self._configspace = space
 
         if self.prior is not None:

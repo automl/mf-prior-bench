@@ -12,6 +12,9 @@ from mfpbench.config import Config
 from mfpbench.result import Result
 from mfpbench.resultframe import ResultFrame
 
+HERE = Path(__file__).parent.parent
+PRIOR_DIR = HERE / "priors"
+
 # The kind of Config to the benchmark
 C = TypeVar("C", bound=Config)
 
@@ -33,12 +36,11 @@ class Benchmark(Generic[C, R, F], ABC):
     Config: type[C]
     Result: type[R]
 
-    # The priors available for this benchmark
-    available_priors: dict[str, C] | None = None
-    _default_prior: C | None = None
-
     # Whether this benchmark has conditonals in it or not
     has_conditionals: bool = False
+
+    # Where the repo's preset priors are located
+    _default_prior_dir = PRIOR_DIR
 
     def __init__(
         self,
@@ -57,15 +59,8 @@ class Benchmark(Generic[C, R, F], ABC):
         if prior is not None:
             # It's a str, use as a key into available priors
             if isinstance(prior, str):
-                if self.available_priors is None:
-                    clsname = {self.__class__.__name__}
-                    raise ValueError(f"{clsname} has no prior called {prior}.")
-
-                retrieved = self.available_priors.get(prior)
-                if retrieved is None:
-                    raise KeyError(f"{prior} not in {self.available_priors}")
-
-                self.prior = retrieved
+                path = self._default_prior_dir / f"{self.basename}-{prior}.yaml"
+                self.prior = self.Config.from_file(path)
 
             elif isinstance(prior, Path):
                 self.prior = self.Config.from_file(prior)
@@ -79,17 +74,10 @@ class Benchmark(Generic[C, R, F], ABC):
             else:
                 self.prior = prior
 
-        # no prior, use default
-        else:
-            if self.available_priors is not None:
-                assert self._default_prior is not None, "No default prior?"
-
-            self.prior = self._default_prior
-
-        # Whatever prior we end up with, make sure it's valid
-        # And seed the space of this benchmark
-        if self.prior is not None:
             self.prior.validate()
+
+        else:
+            self.prior = None
 
     @property
     @abstractmethod

@@ -1,0 +1,14 @@
+Activation: ReLU
+LearningRate: 0.14057611857346888
+N: 5
+Op1: 1
+Op2: 4
+Op3: 1
+Op4: 2
+Op5: 0
+Op6: 1
+Optimizer: SGD
+Resolution: 1.0
+TrivialAugment: false
+W: 16
+WeightDecay: 5.047615419441571e-05

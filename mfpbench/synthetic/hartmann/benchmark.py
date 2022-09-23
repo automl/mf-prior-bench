@@ -9,13 +9,11 @@ Moreover, this works with any number of fidelitiy levels
 """
 from __future__ import annotations
 
-from typing import Any, Generic, TypeVar
-
 from pathlib import Path
+from typing import Any, Generic, TypeVar
 
 import numpy as np
 from ConfigSpace import Configuration, ConfigurationSpace, UniformFloatHyperparameter
-
 from mfpbench.benchmark import Benchmark
 from mfpbench.synthetic.hartmann.config import (
     MFHartmann3Config,
@@ -27,7 +25,6 @@ from mfpbench.synthetic.hartmann.generators import (
     MFHartmann6,
     MFHartmannGenerator,
 )
-from mfpbench.synthetic.hartmann.priors import HARTMANN3D_PRIORS, HARTMANN6D_PRIORS
 from mfpbench.synthetic.hartmann.result import MFHartmannResult
 
 G = TypeVar("G", bound=MFHartmannGenerator)
@@ -48,9 +45,6 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
     # How many dimensions there are to the Hartmann function
     dims: int
-    available_priors: dict[str, C]
-    _default_prior: C
-
     suffix: str
 
     def __init__(
@@ -87,7 +81,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
             `noise = prior_noise_scale * np.random.random(size=...)`
         """
         super().__init__(seed=seed, prior=prior)
-        if self.prior is None and noisy_prior is not None:
+        if self.prior is None and noisy_prior:
             raise ValueError("`noisy_prior = True` specified but no `prior` given")
 
         self.bias = bias if bias is not None else self.bias_noise[0]
@@ -134,7 +128,10 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
     @property
     def basename(self) -> str:
-        return f"mfh{self.dims}_{self.suffix}"
+        if self.suffix != "":
+            return f"mfh{self.dims}_{self.suffix}"
+        else:
+            return f"mfh{self.dims}"
 
     def query(
         self,
@@ -252,11 +249,10 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 # MFHartmann3
 # -----------
 class MFHartmann3Benchmark(MFHartmannBenchmark):
-    available_priors = HARTMANN3D_PRIORS
-    _default_prior = HARTMANN3D_PRIORS["default"]
     Generator = MFHartmann3
     Config = MFHartmann3Config
     dims = MFHartmann3.dims
+    suffix = ""
 
 
 class MFHartmann3BenchmarkTerrible(MFHartmann3Benchmark):
@@ -283,11 +279,10 @@ class MFHartmann3BenchmarkGood(MFHartmann3Benchmark):
 # MFHartmann6
 # -----------
 class MFHartmann6Benchmark(MFHartmannBenchmark):
-    available_priors = HARTMANN6D_PRIORS
-    _default_prior = HARTMANN6D_PRIORS["default"]
     Generator = MFHartmann6
     Config = MFHartmann6Config
     dims = MFHartmann6.dims
+    suffix = ""
 
 
 class MFHartmann6BenchmarkTerrible(MFHartmann6Benchmark):

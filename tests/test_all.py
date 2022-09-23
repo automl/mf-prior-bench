@@ -31,6 +31,7 @@ from mfpbench import (
 
 SEED = 1
 CONDITONALS = False  # We currently can't do these
+AVAILABLE_PRIORS = ["good", "medium", "bad"]
 
 # Edit this if you have data elsewhere
 HERE = Path(__file__).parent.resolve()
@@ -76,11 +77,6 @@ benchmarks = [
         kwargs=dict(task_id=LCBenchBenchmark.instances[0]),
     ),
     BenchmarkTest(
-        "nb301",
-        NB301Benchmark,
-        kwargs=dict(task_id=NB301Benchmark.instances[0]),
-    ),
-    BenchmarkTest(
         "rbv2_aknn",
         RBV2aknnBenchmark,
         kwargs=dict(task_id=RBV2aknnBenchmark.instances[0]),
@@ -124,7 +120,8 @@ def test_benchmark_sampling(benchmark: Benchmark, n_samples: int) -> None:
 
     configs = benchmark.sample(n_samples)
     assert len(configs) == n_samples
-    assert all(isinstance(config, benchmark.Config) for config in configs)
+    for config in configs:
+        assert isinstance(config, benchmark.Config)
 
     for config in configs:
         config.validate()
@@ -342,21 +339,17 @@ def test_prior_from_available_priors(item: BenchmarkTest) -> None:
     * Getting a benchmark with an available prior should have its configspace seeded
       with that prior
     """
-    if item.cls.available_priors is None:
-        pytest.skip(f"{item.name} has no available priors")
-        return
-
     params = item.unpack()
 
     # Test begins
     # We seed it with all the priors advertised
-    for prior in item.cls.available_priors:
+    for prior in AVAILABLE_PRIORS:
 
         params["prior"] = prior
         bench = mfpbench.get(**params)
 
         # The default configuration for the benchmark should be the same as the prior
-        prior_config = item.cls.available_priors[prior]
+        prior_config = bench.prior
         default = bench.space.get_default_configuration()
         assert default == prior_config, f"{prior}, {prior_config}, {default}"
 

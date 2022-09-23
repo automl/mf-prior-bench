@@ -1,0 +1,14 @@
+Activation: Mish
+LearningRate: 0.001505669329486172
+N: 5
+Op1: 0
+Op2: 4
+Op3: 4
+Op4: 1
+Op5: 3
+Op6: 4
+Optimizer: SGD
+Resolution: 1.0
+TrivialAugment: true
+W: 16
+WeightDecay: 0.00028705955104584257

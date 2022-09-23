@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from abc import ABC
+import warnings
 
 import numpy as np
 
@@ -114,7 +115,10 @@ class MFHartmann3(MFHartmannGenerator):
         # H_true = -(np.sum(alpha * np.exp(-inner_sum), axis=-1))
 
         # and add some noise
-        rng = np.random.default_rng(seed=self.seed * z * hash(Xs))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # Seed below will overflow
+            rng = np.random.default_rng(seed=abs(self.seed * z * hash(Xs)))
+
         noise = rng.normal(size=H.size) * self.noise * (1 - log_z_scaled)
         return (H + noise)[0]
 
@@ -175,6 +179,9 @@ class MFHartmann6(MFHartmannGenerator):
         # H_true = -(np.sum(alpha * np.exp(-inner_sum), axis=-1))
 
         # and add some noise
-        rng = np.random.default_rng(seed=self.seed * z * hash(Xs))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # Seed below will overflow
+            rng = np.random.default_rng(seed=abs(self.seed * z * hash(Xs)))
+
         noise = rng.normal(size=H.size) * self.noise * (1 - log_z_scaled)
         return (H + noise)[0]

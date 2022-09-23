@@ -32,9 +32,6 @@ class PD1Benchmark(Benchmark[C, R, int]):
 
     fidelity_range: tuple[int, int, int]  # = (1, 200, 1)
 
-    available_priors: dict[str, C] | None
-    _default_prior: C | None
-
     # Where the data for pd1 data should be located relative to the path given
     _default_download_dir: Path = DATAROOT / "pd1-data"
     _default_surrogate_dir: Path = DATAROOT / "pd1-data" / "surrogates"

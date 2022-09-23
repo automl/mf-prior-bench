@@ -32,9 +32,6 @@ class PD1translatewmt_xformer_64(PD1Benchmark):
 
     fidelity_range = (0, 19, 1)
 
-    available_priors = None
-    _default_prior = None
-
     @classmethod
     def _create_space(cls, seed: int | None = None) -> ConfigurationSpace:
         cs = ConfigurationSpace(seed=seed)

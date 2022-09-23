@@ -20,8 +20,8 @@ BENCH_SEED = 1337
 @parametrize(
     "cls, prior",
     chain(
-        product([MFHartmann3Benchmark], MFHartmann3Benchmark.available_priors),
-        product([MFHartmann6Benchmark], MFHartmann6Benchmark.available_priors),
+        product([MFHartmann3Benchmark], ["good", "medium", "bad"]),
+        product([MFHartmann6Benchmark], ["good", "medium", "bad"]),
     ),
 )
 @parametrize("seed", [1, 2, 3, 4, 5])
@@ -52,13 +52,8 @@ def test_hartmann_priors_with_and_without_noise_added(
     # Just validaty checks for mypy
     assert noisy_prior is not None
     assert clean_prior is not None
-    assert bench_no_noise.available_priors is not None
     assert bench_no_noise._prior_arg is not None
     assert isinstance(bench_no_noise._prior_arg, str)
-
-    # Check it's the same as the original one advertised
-    original_prior = bench_no_noise.available_priors[bench_no_noise._prior_arg]
-    assert clean_prior == original_prior
 
     # All values different
     for v1, v2 in zip(clean_prior.dict().values(), noisy_prior.dict().values()):
@@ -86,7 +81,8 @@ def test_hartmann_priors_noise_in_bounds(
     assert config is not None
 
     config.validate()
-    assert all(0 <= x <= 1 for x in config.dict().values())
+    for x in config.dict().values():
+        assert 0 <= x <= 1
 
 
 def test_hartmann_priors_noise_different_seeds_different_noise(
