@@ -46,9 +46,10 @@ def dehb_target_function(
             seed=seed,
             n_estimators=budget,
             monotone_constraints={"epoch": 1},
+            n_jobs=1,
         )
     else:
-        model = XGBRegressor(**config, seed=seed, n_estimators=budget)
+        model = XGBRegressor(**config, seed=seed, n_estimators=budget, n_jobs=1)
 
     scores = cross_validate(
         estimator=model,
