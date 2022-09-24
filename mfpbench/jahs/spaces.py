@@ -84,10 +84,20 @@ def jahs_configspace(
                 default_value=0,
                 meta=dict(help="The operation on the sixth edge of the cell."),
             ),
-            CS.OrdinalHyperparameter(
+            # CS.OrdinalHyperparameter(
+            #     "Resolution",
+            #     sequence=[0.25, 0.5, 1.0],
+            #     default_value=1.0,
+            #     meta=dict(
+            #         help="The sample resolution of the input images w.r.t. one side of"
+            #         " the actual image size, assuming square images, i.e. for a dataset"
+            #         " with 32x32 images, specifying a value of 0.5 corresponds to using"
+            #         " downscaled images of size 16x16 as inputs."
+            #     ),
+            # ),
+            CS.Constant(
                 "Resolution",
-                sequence=[0.25, 0.5, 1.0],
-                default_value=1.0,
+                value=1.0,
                 meta=dict(
                     help="The sample resolution of the input images w.r.t. one side of"
                     " the actual image size, assuming square images, i.e. for a dataset"
