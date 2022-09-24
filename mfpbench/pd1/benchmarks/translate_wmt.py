@@ -30,7 +30,7 @@ class PD1translatewmt_xformer_64(PD1Benchmark):
     batchsize = 64
     metrics = ("valid_error_rate", "train_cost")
 
-    fidelity_range = (0, 19, 1)
+    fidelity_range = (1, 19, 1)  # TODO: Optimizers break if it's not done properly
 
     @classmethod
     def _create_space(cls, seed: int | None = None) -> ConfigurationSpace:
