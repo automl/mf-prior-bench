@@ -20,8 +20,7 @@ def _ensure_yahpo_config_set(path: Path) -> None:
     if _YAHPO_LOADED:
         return
 
-    yahpo_gym.local_config.init_config()
-    yahpo_gym.local_config.set_data_path(str(path))
+    yahpo_gym.local_config.init_config(data_path=str(path))
     return
 
 
