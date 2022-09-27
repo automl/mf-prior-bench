@@ -256,22 +256,22 @@ class MFHartmann3Benchmark(MFHartmannBenchmark):
 
 
 class MFHartmann3BenchmarkTerrible(MFHartmann3Benchmark):
-    bias_noise = (4.0, 0.8)
+    bias_noise = (4.0, 5.0)
     suffix = "terrible"
 
 
 class MFHartmann3BenchmarkBad(MFHartmann3Benchmark):
-    bias_noise = (2.0, 0.4)
+    bias_noise = (3.5, 4.0)
     suffix = "bad"
 
 
 class MFHartmann3BenchmarkModerate(MFHartmann3Benchmark):
-    bias_noise = (1.0, 0.2)
+    bias_noise = (3.0, 3.0)
     suffix = "moderate"
 
 
 class MFHartmann3BenchmarkGood(MFHartmann3Benchmark):
-    bias_noise = (0.5, 0.1)
+    bias_noise = (2.5, 2.0)
     suffix = "good"
 
 
@@ -286,20 +286,20 @@ class MFHartmann6Benchmark(MFHartmannBenchmark):
 
 
 class MFHartmann6BenchmarkTerrible(MFHartmann6Benchmark):
-    bias_noise = (4.0, 0.8)
+    bias_noise = (4.0, 5.0)
     suffix = "terrible"
 
 
 class MFHartmann6BenchmarkBad(MFHartmann6Benchmark):
-    bias_noise = (2.0, 0.4)
+    bias_noise = (3.5, 4.0)
     suffix = "bad"
 
 
 class MFHartmann6BenchmarkModerate(MFHartmann6Benchmark):
-    bias_noise = (1.0, 0.2)
+    bias_noise = (3.0, 3.0)
     suffix = "moderate"
 
 
 class MFHartmann6BenchmarkGood(MFHartmann6Benchmark):
-    bias_noise = (0.5, 0.1)
+    bias_noise = (2.5, 2.0)
     suffix = "good"
