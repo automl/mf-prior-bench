@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Iterator, List, Mapping, Sequence, TypeVar, Union
 
+from itertools import chain
+
 import numpy as np
 from typing_extensions import Literal
 
@@ -115,40 +117,31 @@ class ResultFrame(Mapping[Union[C, F], List[R]]):
         if at is None:
             at = list(self._ftor.keys())
 
-        # We get the intersection of configs that are found at all fidelity values
-        # {a, b, c}
-        common = {r.config for r in self._result_order}
-
-        # Let's assign them all a number
-        # {a: 1, b: 2, c: 3}
-        assigned = {c: i for i, c in enumerate(common)}
-
         # Get the selected_fidelities
+        # { 1: [a, b, c, ...], 2: [b, c, d, ...], ..., 100: [d, c, e, b, ...] }
         selected = {f: self._ftor[f] for f in at}
 
-        # Next we collect only the common configs for each fidelity:
-        # Collecting both their error and their assgined number while sorting them by
-        # their error
-        # {
-        #   1: [(b: small, 2), (a: big,   1), (c: Huge, 3)],
-        #   2: [(b: tiny,  2), (a: small, 1), (c: big,  3)],
-        #   3: [(a: small, 1), (b: big,   2), (c: HUGE, 3)],
-        # }
-        vs = {
-            f: sorted((r.error, assigned[r.config]) for r in results)
+        # We get the intersection of configs that are found at all fidelity values
+        # {b, c}
+        common = set(result.config for result in chain.from_iterable(selected.values()))
+
+        # Next we prune out the selected fidelities results
+        # {1: [b, c], 2: [b, c], ..., 100: [c, b]}
+        # .. ensuring they're in some sorted order
+        # {1: [b, c], 2: [b, c], ..., 100: [b, c]}
+        selected = {
+            f: sorted(
+                [r for r in results if r.config in common],
+                key=lambda r: repr(r.config),
+            )
             for f, results in selected.items()
         }
 
-        # For cosine, we need the raw values, not the ordinal ordering
-        if method == "cosine":
-            x = np.asarray(
-                list([score for score, rank in rung] for fidelity, rung in vs.items())
-            )
-        elif method in ["spearman", "kendalltau"]:
-            x = np.asarray(
-                list([rank for score, rank in rung] for fidelity, rung in vs.items())
-            )
-        else:
-            raise NotImplementedError()
+        # Lastly, we pull out the results
+        results = list(
+            [r.error for r in fidelity_results]
+            for fidelity_results in selected.values()
+        )
 
+        x = np.asarray(results)
         return rank_correlation(x, method=method)

@@ -39,14 +39,12 @@ def kendalltau(X: np.ndarray) -> np.ndarray:
 
 
 def cosine(X: np.ndarray) -> np.ndarray:
-    print(X)
     X_norm = np.zeros(shape=X.shape, like=X)
     for i, row in enumerate(X):
         mi = row.min()
         ma = row.max()
         X_norm[i] = 2 * ((row - mi) / (ma - mi)) - 1
 
-    print(X_norm)
     results = np.eye(N=len(X), dtype=float)
     idxs = range(len(X))
     for i, j in combinations(idxs, 2):
