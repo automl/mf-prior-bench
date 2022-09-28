@@ -156,6 +156,11 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         dataset = dataset.explode(explode_columns, ignore_index=True)
         print(f"Writing individual dataset {fname}")
 
+        if name == "translate_wmt":
+            print("===" * 30)
+            print(len(dataset.groupby(hps)))
+
+        print(f"Size of {fname} before additional cleaning: {len(dataset)}")
         if name == "lm1b":
             # Some train costs go obsenly high for no reason, we drop these rows
             dataset = dataset[dataset["train_cost"] < 10_000]
@@ -163,6 +168,8 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
             # Some train costs go obsenly high for no reason, we drop these rows
             # Almost all are below 400 but we add a buffer
             dataset = dataset[dataset["train_cost"] < 4_000]
+
+        print(f"Size of {fname} after additional cleaning: {len(dataset)}")
 
         # We want to write the full mixed {phase,matched} for surrogate training while
         # only keeping matched phase 1 data for tabular.
@@ -236,9 +243,17 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         # To prevent issues, we simply drop duplicates
         hps = ["lr_decay_factor", "lr_initial", "lr_power", "opt_momentum"]
         if fname in has_activation_fn:
-            hps += ["activation_fn"]
+            hps = list(hps + ["activation_fn"])
+        else:
+            hps = list(hps)
 
+        print(f"Size of {fname} before dropping nans: {len(dataset)}")
+        dataset = dataset.dropna()
+        print(f"Size of {fname} after dropping nans: {len(dataset)}")
+
+        print(f"Size of {fname} before duplicate dropping: {len(dataset)}")
         dataset = dataset.drop_duplicates(hps + ["epoch"], keep="last")
+        print(f"Size of {fname} after duplicate dropping: {len(dataset)}")
 
         # The rest can be used for surrogate training
         surrogate_path = datadir / f"{fname}_surrogate.csv"
