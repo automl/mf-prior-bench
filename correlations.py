@@ -151,6 +151,7 @@ if __name__ == "__main__":
     parser.add_argument("--plot_only", nargs="*", required=False)
     parser.add_argument("--plot_to", type=str, default="test.pdf")
     parser.add_argument("--plot_dpi", type=int, default=200)
+    parser.add_argument("--no-legend", action="store_true", default=False)
 
     args = parser.parse_args()
 
@@ -177,7 +178,7 @@ if __name__ == "__main__":
                 result = json.load(f)
                 results[name] = (np.array(result["mean"]), np.array(result["std"]))
 
-        plot(results, to=args.plot_to, dpi=args.plot_dpi)
+        plot(results, to=args.plot_to, dpi=args.plot_dpi, legend=not args.no_legend)
 
     else:
         kwargs = dict(name=args.benchmark, seed=args.seed)
