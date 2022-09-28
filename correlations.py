@@ -78,6 +78,8 @@ def plot(
     stats: dict[str, tuple[np.ndarray, np.ndarray]],
     *,
     to: Path | None = None,
+    legend: bool = True,
+    dpi: int = 200,
 ) -> None:
     if to is None:
         to = Path("correlations.png")
@@ -95,10 +97,12 @@ def plot(
     ax.set_ylim([-0.5, 1])
     ax.set_ylabel("Spearman correlation")
     ax.set_xlabel("Fidelity %")
-    ax.legend()
+
+    if legend:
+        ax.legend()
 
     print(f"Saving to {to}")
-    plt.savefig(to)
+    plt.savefig(to, dpi=dpi)
 
 
 def monte_carlo(
@@ -146,6 +150,7 @@ if __name__ == "__main__":
     parser.add_argument("--plot", action="store_true", default=False)
     parser.add_argument("--plot_only", nargs="*", required=False)
     parser.add_argument("--plot_to", type=str, default="test.pdf")
+    parser.add_argument("--plot_dpi", type=int, default=200)
 
     args = parser.parse_args()
 
@@ -172,7 +177,7 @@ if __name__ == "__main__":
                 result = json.load(f)
                 results[name] = (np.array(result["mean"]), np.array(result["std"]))
 
-        plot(results, to=args.plot_to)
+        plot(results, to=args.plot_to, dpi=args.plot_dpi)
 
     else:
         kwargs = dict(name=args.benchmark, seed=args.seed)
