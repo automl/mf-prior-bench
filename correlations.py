@@ -133,19 +133,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str)
     parser.add_argument("--benchmark", type=str)
-    parser.add_argument("--task-id", type=str)
+    parser.add_argument("--task_id", type=str)
     parser.add_argument("--datadir", type=str, required=False)
-
-    parser.add_argument("--n-samples", type=int, default=N_SAMPLES)
     parser.add_argument("--seed", type=int, default=SEED)
+
+    parser.add_argument("--n_samples", type=int, default=N_SAMPLES)
     parser.add_argument("--epsilon", type=float, default=EPSILON)
     parser.add_argument("--iterations_max", type=int, default=MAX_ITERATIONS)
 
-    parser.add_argument("--results-dir", type=str, default="correlation_results")
+    parser.add_argument("--results_dir", type=str, default="correlation_results")
 
     parser.add_argument("--plot", action="store_true", default=False)
-    parser.add_argument("--plot-only", nargs="*", required=False)
-    parser.add_argument("--plot-to", type=str, default="test.pdf")
+    parser.add_argument("--plot_only", nargs="*", required=False)
+    parser.add_argument("--plot_to", type=str, default="test.pdf")
 
     args = parser.parse_args()
 
