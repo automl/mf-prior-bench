@@ -92,7 +92,7 @@ def plot(
         ax.fill_between(xs, mean - std, mean + std, alpha=0.2)
 
     ax.set_xlim(auto=True)
-    ax.set_ylim(auto=True)
+    ax.set_ylim([-0.5, 1])
     ax.set_ylabel("Spearman correlation")
     ax.set_xlabel("Fidelity %")
     ax.legend()
