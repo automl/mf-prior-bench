@@ -1,6 +1,6 @@
-M: 25
-distance: cosine
-ef: 268
-ef_construction: 34
-k: 24
+M: 33
+distance: l2
+ef: 54
+ef_construction: 36
+k: 32
 num.impute.selected.cpo: impute.mean

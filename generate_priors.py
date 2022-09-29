@@ -9,7 +9,7 @@ import mfpbench
 from mfpbench import Benchmark, MFHartmannBenchmark, YAHPOBenchmark
 
 SEED = 1
-N_SAMPLES = 25
+N_SAMPLES = 10
 
 
 def benchmarks(

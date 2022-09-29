@@ -1,6 +1,6 @@
-M: 48
+M: 25
 distance: ip
-ef: 19
-ef_construction: 48
-k: 13
+ef: 292
+ef_construction: 711
+k: 25
 num.impute.selected.cpo: impute.mean
