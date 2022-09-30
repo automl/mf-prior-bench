@@ -15,7 +15,7 @@ class JAHSResult(Result[JAHSConfig, int]):
     # latency: float  # unit? remove
     runtime: float  # unit?
 
-    # Scores
+    # Scores (0 - 100)
     valid_acc: float
     test_acc: float
     # train_acc: float # remove
@@ -28,7 +28,7 @@ class JAHSResult(Result[JAHSConfig, int]):
     @property
     def error(self) -> float:
         """The error of interest"""
-        return 1 - self.valid_acc
+        return 100 - self.valid_acc
 
     @property
     def test_score(self) -> float:
@@ -38,7 +38,7 @@ class JAHSResult(Result[JAHSConfig, int]):
     @property
     def test_error(self) -> float:
         """The error on the test set"""
-        return 1 - self.test_acc
+        return 100 - self.test_acc
 
     @property
     def val_score(self) -> float:
@@ -48,7 +48,7 @@ class JAHSResult(Result[JAHSConfig, int]):
     @property
     def val_error(self) -> float:
         """The error on the validation set"""
-        return 1 - self.valid_acc
+        return 100 - self.valid_acc
 
     @property
     def cost(self) -> float:
