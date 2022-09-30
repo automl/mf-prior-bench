@@ -31,6 +31,9 @@ class Result(ABC, Generic[C, F]):
         result: Mapping[str, Any],
         fidelity: F,
     ) -> SelfT:
+        # To help with serialization, we need to convert floats to... ehh floats
+        # This is due to some things returning an np.float -_-
+        result = {k: float(v) if isinstance(v, float) else v for k, v in result.items()}
         return cls(config=config, fidelity=fidelity, **result)
 
     @property
