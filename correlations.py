@@ -80,6 +80,7 @@ def plot(
     to: Path | None = None,
     legend: bool = True,
     dpi: int = 200,
+    large_legend: bool = False,
 ) -> None:
     if to is None:
         to = Path("correlations.png")
@@ -94,12 +95,13 @@ def plot(
         ax.fill_between(xs, mean - std, mean + std, alpha=0.2)
 
     ax.set_xlim(auto=True)
-    ax.set_ylim([-0.5, 1])
-    ax.set_ylabel("Spearman correlation")
-    ax.set_xlabel("Fidelity %")
+    ax.set_ylim([-0.3, 1])
+    ax.set_ylabel("Spearman correlation", fontsize=18)
+    ax.set_xlabel("Fidelity % (log)", fontsize=18)
+    ax.set_xscale("log")
 
     if legend:
-        ax.legend()
+        ax.legend(loc="lower right", fontsize="x-large" if large_legend else "medium")
 
     print(f"Saving to {to}")
     plt.savefig(to, dpi=dpi)
@@ -152,6 +154,7 @@ if __name__ == "__main__":
     parser.add_argument("--plot_to", type=str, default="test.pdf")
     parser.add_argument("--plot_dpi", type=int, default=200)
     parser.add_argument("--no-legend", action="store_true", default=False)
+    parser.add_argument("--large_legend", action="store_true", default=False)
 
     args = parser.parse_args()
 
@@ -178,7 +181,7 @@ if __name__ == "__main__":
                 result = json.load(f)
                 results[name] = (np.array(result["mean"]), np.array(result["std"]))
 
-        plot(results, to=args.plot_to, dpi=args.plot_dpi, legend=not args.no_legend)
+        plot(results, to=args.plot_to, dpi=args.plot_dpi, legend=not args.no_legend, large_legend=args.large_legend,)
 
     else:
         kwargs = dict(name=args.benchmark, seed=args.seed)
