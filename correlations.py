@@ -81,6 +81,7 @@ def plot(
     legend: bool = True,
     dpi: int = 200,
     large_legend: bool = False,
+    outside_right_legend: bool = False,
 ) -> None:
     if to is None:
         to = Path("correlations.png")
@@ -99,12 +100,19 @@ def plot(
     ax.set_ylabel("Spearman correlation", fontsize=18)
     ax.set_xlabel("Fidelity % (log)", fontsize=18)
     ax.set_xscale("log")
+    ax.tick_params(axis="both", which="major", labelsize=15, labelcolor=(0, 0, 0, 0.69))
+    ax.grid(True, which="major", ls="-", alpha=0.6)
 
     if legend:
-        ax.legend(loc="lower right", fontsize="x-large" if large_legend else "medium")
+        if outside_right_legend:
+            ax.legend(j, loc="center right", bbox_to_anchor=(1, 0.5))
+
+        else:
+            ax.legend(loc="lower right", fontsize="x-large" if large_legend else "medium")
 
     print(f"Saving to {to}")
-    plt.savefig(to, dpi=dpi)
+    plt.tight_layout()
+    plt.savefig(to, dpi=dpi, bbox_inches="tight")
 
 
 def monte_carlo(
@@ -155,6 +163,7 @@ if __name__ == "__main__":
     parser.add_argument("--plot_dpi", type=int, default=200)
     parser.add_argument("--no-legend", action="store_true", default=False)
     parser.add_argument("--large_legend", action="store_true", default=False)
+    parser.add_argument("--outside_right_legend", action="store_true", default=False)
 
     args = parser.parse_args()
 
@@ -181,7 +190,7 @@ if __name__ == "__main__":
                 result = json.load(f)
                 results[name] = (np.array(result["mean"]), np.array(result["std"]))
 
-        plot(results, to=args.plot_to, dpi=args.plot_dpi, legend=not args.no_legend, large_legend=args.large_legend,)
+        plot(results, to=args.plot_to, dpi=args.plot_dpi, legend=not args.no_legend, large_legend=args.large_legend,, outside_right_legend=args.outside_right_legend)
 
     else:
         kwargs = dict(name=args.benchmark, seed=args.seed)
