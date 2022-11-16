@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 import argparse
 import shutil
 import subprocess
+import urllib.request
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -71,16 +73,21 @@ class JAHSBenchSource(Source):
 
 @dataclass(frozen=True)
 class PD1Source(Source):
-
     url: str = "http://storage.googleapis.com/gresearch/pint/pd1.tar.gz"
+    surrogate_url: str = (
+        "https://ml.informatik.uni-freiburg.de/research-artifacts/mfp-bench"
+    )
+    surrogate_version: str = "vPaper-PriorBand"
 
     @property
     def name(self) -> str:
         return "pd1-data"
 
     def download(self) -> None:
-        import urllib.request
+        self.download_rawdata()
+        self.download_surrogates()
 
+    def download_rawdata(self) -> None:
         tarpath = self.path / "data.tar.gz"
 
         # Download the file
@@ -92,6 +99,20 @@ class PD1Source(Source):
         from mfpbench.pd1.processing.process_script import process_pd1
 
         process_pd1(tarball=tarpath)
+
+    def download_surrogates(self) -> None:
+        surrogate_dir = self.path / "surrogates"
+        surrogate_dir.mkdir(exist_ok=True, parents=True)
+        zip_path = surrogate_dir / "surrogates.zip"
+
+        # Download the surrogates zip
+        url = f"{self.surrogate_url}/{self.surrogate_version}/surrogates.zip"
+        print(f"Downloading from {url} to {zip_path}")
+        with urllib.request.urlopen(url) as response, open(zip_path, "wb") as f:
+            shutil.copyfileobj(response, f)
+
+        with zipfile.ZipFile(zip_path, "r") as zip:
+            zip.extractall(surrogate_dir)
 
 
 sources = {source.name: source for source in [YAHPOSource(), JAHSBenchSource()]}
