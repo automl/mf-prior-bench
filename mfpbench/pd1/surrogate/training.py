@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Any
-
 import json
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -62,8 +61,6 @@ def dehb_target_function(
 
     primary_eval_metric = scoring[0]
     primary = np.mean(scores[f"test_{primary_eval_metric}"])
-    print(scores)
-    print(primary)
 
     cost = time.time() - start
     for k, v in scores.items():
@@ -127,10 +124,6 @@ def find_xgboost_surrogate(
     # training our final model
     infos = [info for *_, info in hist]
     best = max(infos, key=lambda i: i["score"])
-    print("BEST")
-    print("=" * 30)
-    print(best)
-    print("=" * 30)
 
     # Write out the info
     info_path = output_path / "info.json"
@@ -145,7 +138,6 @@ def find_xgboost_surrogate(
     best_budget = best["budget"]
 
     # Train
-    print(f"Training {best_config} for budget {best_budget}")
     model = XGBRegressor(**best_config, seed=seed, n_estimators=best_budget)
     model.fit(X, y)
     return model
@@ -201,14 +193,10 @@ if __name__ == "__main__":
         n_workers=args.workers,
     )
 
-    print(f"Saving model to {surrogate_path}")
     xgboost_model.save_model(surrogate_path)
 
     # Try load it?
     loaded_model = XGBRegressor()
     loaded_model.load_model(surrogate_path)
 
-    print("Trying to predict")
     y_pred = loaded_model.predict(X)
-
-    print("Success!")

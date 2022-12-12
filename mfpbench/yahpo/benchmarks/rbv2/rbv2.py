@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Mapping, TypeVar
-
 from dataclasses import asdict, dataclass
+from typing import Any, Mapping, TypeVar
 
 from mfpbench.yahpo.benchmark import YAHPOBenchmark
 from mfpbench.yahpo.config import YAHPOConfig
@@ -16,13 +15,13 @@ R = TypeVar("R", bound="RBV2Result")
 class RBV2Config(YAHPOConfig):
     @classmethod
     def from_dict(cls: type[C], d: Mapping[str, Any]) -> C:
-        """Create from a dict or mapping object"""
+        """Create from a dict or mapping object."""
         # We may have keys that are conditional and hence we need to flatten them
         config = {k.replace(".", "__"): v for k, v in d.items()}
         return cls(**config)
 
     def dict(self) -> dict[str, Any]:
-        """Converts the config to a raw dictionary"""
+        """Converts the config to a raw dictionary."""
         d = asdict(self)
         return {k.replace("__", "."): v for k, v in d.items() if v is not None}
 
@@ -46,37 +45,37 @@ class RBV2Result(YAHPOResult[C, float]):
 
     @property
     def score(self) -> float:
-        """The score of interest"""
+        """The score of interest."""
         return self.bac
 
     @property
     def error(self) -> float:
-        """The error of interest"""
+        """The error of interest."""
         return 1 - self.bac
 
     @property
     def test_score(self) -> float:
-        """The score on the test set"""
+        """The score on the test set."""
         return self.score
 
     @property
     def test_error(self) -> float:
-        """The error on the test set"""
+        """The error on the test set."""
         return self.error
 
     @property
     def val_score(self) -> float:
-        """The score on the validation set"""
+        """The score on the validation set."""
         return self.score
 
     @property
     def val_error(self) -> float:
-        """The error on the validation set"""
+        """The error on the validation set."""
         return self.error
 
     @property
     def cost(self) -> float:
-        """The time taken in seconds to train the config"""
+        """The time taken in seconds to train the config."""
         return self.timetrain
 
 

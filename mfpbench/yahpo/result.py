@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import TypeVar
-
 from dataclasses import dataclass
+from typing import TypeVar
 
 from mfpbench.result import Result
 from mfpbench.yahpo.config import YAHPOConfig

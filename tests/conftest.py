@@ -1,8 +1,7 @@
 from typing import Callable
 
-from pytest import fixture
-
 from mfpbench.download import Source, sources
+from pytest import fixture
 
 
 @fixture

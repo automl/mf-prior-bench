@@ -1,19 +1,14 @@
 from __future__ import annotations
 
-from typing import Iterator
-
-import argparse
 from pathlib import Path
+from typing import Iterator
 
 import mfpbench
 from mfpbench import Benchmark, MFHartmannBenchmark, YAHPOBenchmark
 
-SEED = 1
-N_SAMPLES = 10
-
 
 def benchmarks(
-    seed: int = SEED,
+    seed: int,
     only: list[str] | None = None,
     exclude: list[str] | None = None,
 ) -> Iterator[Benchmark]:
@@ -34,23 +29,42 @@ def benchmarks(
             yield mfpbench.get(name=name, seed=seed)
 
 
-if __name__ == "__main__":
+def generate_priors(
+    seed: int,
+    nsamples: int,
+    to: Path,
+    prefix: str | None = None,
+    fidelity: int | float | None = None,
+    only: list[str] | None = None,
+    exclude: list[str] | None = None,
+    clean: bool = False,
+) -> None:
+    """Generate priors for a benchmark."""
+    if to.exists() and clean:
+        for child in filter(lambda path: path.is_file(), to.iterdir()):
+            child.unlink()
+    to.mkdir(exist_ok=True)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=SEED)
-    parser.add_argument("--nsamples", type=int, default=N_SAMPLES)
-    parser.add_argument("--dataset", type=str, choices=list(mfpbench._mapping))
-    parser.add_argument("--prefix", type=str)
-    parser.add_argument("--to", type=str, default="priors")
-    parser.add_argument("--fidelity")
-    parser.add_argument("--only", type=str, nargs="*")
-    parser.add_argument("--exclude", type=str, nargs="*")
-    args = parser.parse_args()
+    for bench in benchmarks(seed=seed, only=only, exclude=exclude):
+        max_fidelity = bench.fidelity_range[1]
 
-    for bench in benchmarks(seed=args.seed, only=args.only):
-        at = args.fidelity if args.fidelity else bench.fidelity_range[1]
+        # If a fidelity was specfied, then we need to make sure we can use it
+        # as an int in a benchmark with an int fidelity, no accidental rounding.
+        if fidelity:
+            if isinstance(max_fidelity, int) and isinstance(fidelity, float):
+                if fidelity.is_integer():
+                    fidelity = int(fidelity)
 
-        configs = bench.sample(n=args.nsamples)
+            if type(fidelity) != type(max_fidelity):
+                raise ValueError(
+                    f"Cannot use fidelity {fidelity} (type={type(fidelity)}) with"
+                    f" benchmark {bench.basename}"
+                )
+            at = fidelity
+        else:
+            at = max_fidelity
+
+        configs = bench.sample(n=nsamples)
         results = [bench.query(config, at=at) for config in configs]
 
         sorted_configs = sorted(results, key=lambda r: r.error)
@@ -61,22 +75,13 @@ if __name__ == "__main__":
 
         assert good.error <= medium.error <= bad.error
 
-        pre = args.prefix
-
-        if args.fidelity is not None:
-            pre = f"at-{args.fidelity}"
-
         name_components = []
-        if args.prefix is not None:
-            name_components.append(args.prefix)
+        if prefix is not None:
+            name_components.append(prefix)
 
-        if args.fidelity is not None:
-            name_components.append(args.prefix)
+        name_components.append(bench.basename)
 
-        name = "-".join(name_components + [bench.basename])
-
-        to = Path(args.to)
-        to.mkdir(exist_ok=True)
+        name = "-".join(name_components)
 
         path_priors = [
             (to / f"{name}-good.yaml", good.config),

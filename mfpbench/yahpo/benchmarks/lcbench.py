@@ -10,11 +10,12 @@ from mfpbench.yahpo.result import YAHPOResult
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
 class LCBenchConfig(YAHPOConfig):
-    """
-    Note
+    """A LCBench Config.
+
+    Note:
     ----
     For ``momentum``, the paper seems to suggest it's (0.1, 0.9) but the configspace
-    says (0.1, 0.99), going with the code version
+    says (0.1, 0.99), going with the code version.
     """
 
     batch_size: int  # [16, 512] int log
@@ -26,7 +27,7 @@ class LCBenchConfig(YAHPOConfig):
     max_dropout: float  # [0.0, 1.0] float
 
     def validate(self) -> None:
-        """Validate this is a correct config"""
+        """Validate this is a correct config."""
         assert 16 <= self.batch_size <= 512
         assert 1e-04 <= self.learning_rate <= 0.1
         assert 0.1 <= self.momentum <= 0.99
@@ -49,37 +50,37 @@ class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
 
     @property
     def score(self) -> float:
-        """The score of interest"""
+        """The score of interest."""
         return self.val_balanced_accuracy
 
     @property
     def error(self) -> float:
-        """The error of interest"""
+        """The error of interest."""
         return 1 - self.val_balanced_accuracy
 
     @property
     def test_score(self) -> float:
-        """The score on the test set"""
+        """The score on the test set."""
         return self.test_balanced_accuracy
 
     @property
     def test_error(self) -> float:
-        """The score on the test set"""
+        """The score on the test set."""
         return 1 - self.test_balanced_accuracy
 
     @property
     def val_score(self) -> float:
-        """The score on the validation set"""
+        """The score on the validation set."""
         return self.val_balanced_accuracy
 
     @property
     def val_error(self) -> float:
-        """The score on the validation set"""
+        """The score on the validation set."""
         return 1 - self.val_balanced_accuracy
 
     @property
     def cost(self) -> float:
-        """Time taken in seconds to train the config"""
+        """Time taken in seconds to train the config."""
         warnings.warn(f"Unsure of unit for `cost` on {self.__class__}")
         return self.time
 

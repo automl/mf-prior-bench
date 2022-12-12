@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Any, Iterator, Mapping, TypeVar
-
 import copy
 import json
+from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any, Iterator, Mapping, TypeVar
 
 import numpy as np
 import yaml
@@ -18,7 +17,7 @@ SelfT = TypeVar("SelfT", bound="Config")
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class Config(ABC, Mapping[str, Any]):
-    """A Config used to query a benchmark
+    """A Config used to query a benchmark.
 
     * Include all hyperparams
     * Includes the fidelity
@@ -30,32 +29,32 @@ class Config(ABC, Mapping[str, Any]):
 
     @classmethod
     def from_dict(cls: type[SelfT], d: Mapping[str, Any]) -> SelfT:
-        """Create from a dict or mapping object"""
+        """Create from a dict or mapping object."""
         return cls(**d)
 
     @classmethod
     def from_configuration(cls: type[SelfT], config: Configuration) -> SelfT:
-        """Create from a ConfigSpace.Configuration"""
+        """Create from a ConfigSpace.Configuration."""
         return cls.from_dict(config)
 
     def dict(self) -> dict[str, Any]:
-        """Converts the config to a raw dictionary"""
+        """Converts the config to a raw dictionary."""
         return asdict(self)
 
     @classmethod
     def mutate(cls: type[SelfT], original: SelfT, **kwargs: Any) -> SelfT:
-        """Copy a config and mutate it if needed"""
+        """Copy a config and mutate it if needed."""
         d = asdict(original)
         d.update(kwargs)
         return cls(**d)
 
     def copy(self: SelfT, **kwargs: Any) -> SelfT:
-        """Copy this config and mutate it if needed"""
+        """Copy this config and mutate it if needed."""
         return self.mutate(self, **kwargs)
 
     @abstractmethod
     def validate(self) -> None:
-        """Validate the config, just useful early on while testing
+        """Validate the config, just useful early on while testing.
 
         Raises
         ------
@@ -64,7 +63,7 @@ class Config(ABC, Mapping[str, Any]):
         ...
 
     def __eq__(self, that: Any) -> bool:
-        """Equality is defined in terms of their dictionary repr"""
+        """Equality is defined in terms of their dictionary repr."""
         this = self.dict()
         if isinstance(that, dict):
             that = copy.deepcopy(that)
@@ -93,7 +92,7 @@ class Config(ABC, Mapping[str, Any]):
         return self.dict().__iter__()
 
     def set_as_default_prior(self, configspace: ConfigurationSpace) -> None:
-        """Applies this configuration as a prior on a configspace
+        """Applies this configuration as a prior on a configspace.
 
         Parameters
         ----------
@@ -117,9 +116,9 @@ class Config(ABC, Mapping[str, Any]):
 
     @classmethod
     def from_file(cls: type[SelfT], path: Path) -> SelfT:
-        """Load a config from a supported file type
+        """Load a config from a supported file type.
 
-        Note
+        Note:
         ----
         Only supports yaml and json for now
         """
@@ -146,20 +145,20 @@ class Config(ABC, Mapping[str, Any]):
 
     @classmethod
     def from_yaml(cls: type[SelfT], path: Path) -> SelfT:
-        """Load a config from a yaml file"""
+        """Load a config from a yaml file."""
         with path.open("r") as f:
             d = yaml.safe_load(f)
             return cls.from_dict(d)
 
     @classmethod
     def from_json(cls: type[SelfT], path: Path) -> SelfT:
-        """Load a config from a json file"""
+        """Load a config from a json file."""
         with path.open("r") as f:
             d = json.load(f)
             return cls.from_dict(d)
 
     def save(self, path: Path, format: str | None = None) -> None:
-        """Save the config
+        """Save the config.
 
         Parameters
         ----------

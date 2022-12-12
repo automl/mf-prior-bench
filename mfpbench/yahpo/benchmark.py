@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, TypeVar
-
 from pathlib import Path
+from typing import Any, TypeVar
 
 import yahpo_gym
 from ConfigSpace import Configuration, ConfigurationSpace
@@ -57,11 +56,12 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         seed: int | None = None,
         prior: str | Path | C | dict[str, Any] | Configuration | None = None,
     ):
-        """
+        """Initialize a Yahpo Benchmark.
+
         Parameters
         ----------
         task_id: str
-            The task id to choose from, see cls.instances
+            The task id to choose from, see cls.instances.
 
         datadir : str | Path | None = None
             The path to where mfpbench stores it data. If left to default (None), will
@@ -141,7 +141,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         *,
         argmax: bool = False,
     ) -> R:
-        """Query the results for a config
+        """Query the results for a config.
 
         Parameters
         ----------
@@ -202,7 +202,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         to: F | None = None,
         step: F | None = None,
     ) -> list[R]:
-        """Get the full trajectory of a configuration
+        """Get the full trajectory of a configuration.
 
         Parameters
         ----------
@@ -260,5 +260,5 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
     @property
     def space(self) -> ConfigurationSpace:
-        """The ConfigurationSpace for a YAHPO benchmark"""
+        """The ConfigurationSpace for a YAHPO benchmark."""
         return self._configspace

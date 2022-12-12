@@ -1,25 +1,24 @@
 from __future__ import annotations
 
-from typing import Any
-
 import datetime
 from pathlib import Path
+from typing import Any
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.config import Config
-from mfpbench.jahs import (  # noqa: F401
+from mfpbench.jahs import (
     JAHSBenchmark,
     JAHSCifar10,
     JAHSColorectalHistology,
     JAHSFashionMNIST,
 )
-from mfpbench.pd1 import (  # noqa: F401
+from mfpbench.pd1 import (
     PD1Benchmark,
     PD1lm1b_transformer_2048,
     PD1translatewmt_xformer_64,
     PD1uniref50_transformer_128,
 )
-from mfpbench.synthetic.hartmann import (  # noqa: F401
+from mfpbench.synthetic.hartmann import (
     MFHartmann3Benchmark,
     MFHartmann3BenchmarkBad,
     MFHartmann3BenchmarkGood,
@@ -32,7 +31,7 @@ from mfpbench.synthetic.hartmann import (  # noqa: F401
     MFHartmann6BenchmarkTerrible,
     MFHartmannBenchmark,
 )
-from mfpbench.yahpo import (  # noqa: F401
+from mfpbench.yahpo import (
     IAMLglmnetBenchmark,
     IAMLrangerBenchmark,
     IAMLrpartBenchmark,
@@ -108,7 +107,7 @@ def get(
     preload: bool = False,
     **kwargs: Any,
 ) -> Benchmark:
-    """Get a benchmark
+    """Get a benchmark.
 
     ```python
     import mfpbench

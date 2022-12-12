@@ -24,12 +24,6 @@ if __name__ == "__main__":
     config: JAHSConfig = benchmark.sample()
 
     # And the search space
-    print(benchmark.space)
-
-    print("\n")
-    print(config)  # It's a dataclass
-    print(config.dict())  # Cause you might want this
-    print("\n")
 
     # Copy a configuration if you need to for any reason, these are two distinct objects
     exact_copy = config.copy()
@@ -46,9 +40,7 @@ if __name__ == "__main__":
     try:
         bad_copy.validate()
     except AssertionError:
-        print("\n")
-        print("Error was raised while validating")
-        print("\n")
+        pass
 
     # Anyways, here's the results for the config
     result: JAHSResult = benchmark.query(config, at=42)
@@ -57,17 +49,8 @@ if __name__ == "__main__":
 
     # All results have the following properties mapped to some metrics that are returned
     # by the benchmark
-    print(result.score)
-    print(result.error)
-    print(result.cost)
-
-    print(result.test_error)
-    print(result.test_score)
-    print(result.val_error)
-    print(result.val_score)
 
     # The full result object
-    print(result)
 
     # And if you need the full trajectory
     results: list[JAHSResult] = benchmark.trajectory(config)
@@ -80,12 +63,6 @@ if __name__ == "__main__":
     # Lets sort by score (each result type lists the score, "test-acc" for JAHS)
     sorted_result = sorted(results, key=lambda r: r.score, reverse=True)
     best = sorted_result[0]
-
-    print("\n")
-    print(f"first score = {first.score:.4f} | fidelity = {first.fidelity}")
-    print(f"last score = {last.score:.4f} | fidelity = {last.fidelity}")
-    print(f"best score = {last.score:.4f} | fidelity = {best.fidelity}")
-    print("\n")
 
     # Now here's 100 configs and we'll get the best configuration
     configs: list[JAHSConfig] = benchmark.sample(100)
@@ -119,5 +96,5 @@ if __name__ == "__main__":
         for epoch, results in results_by_epoch.items()
     }
 
-    for epoch in [1, 25, 50, 100]:
-        print(f"epoch = {epoch}\n{best_per_epoch[epoch]}\n\n")
+    for _epoch in [1, 25, 50, 100]:
+        pass

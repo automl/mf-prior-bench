@@ -7,7 +7,7 @@ from mfpbench.config import Config
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
 class JAHSConfig(Config):
-    """The config for JAHSBench, useful to have regardless of the configspace used
+    """The config for JAHSBench, useful to have regardless of the configspace used.
 
     https://github.com/automl/jahs_bench_201/blob/main/jahs_bench/lib/core/configspace.py
     """
@@ -33,7 +33,7 @@ class JAHSConfig(Config):
     WeightDecay: float
 
     def validate(self) -> None:
-        """Validate this config incase required"""
+        """Validate this config incase required."""
         # Just being explicit to catch bugs easily, we can remove later
         assert self.N in [1, 3, 5]
         assert self.W in [4, 8, 16]

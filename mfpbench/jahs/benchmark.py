@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any
-
 from pathlib import Path
+from typing import Any
 
 import jahs_bench
 from ConfigSpace import Configuration, ConfigurationSpace
@@ -17,7 +16,7 @@ from mfpbench.util import rename
 
 
 class JAHSBenchmark(Benchmark, ABC):
-    """Manages access to jahs-bench
+    """Manages access to jahs-bench.
 
     Use one of the concrete classes below to access a specific version:
     * JAHSCifar10
@@ -51,7 +50,8 @@ class JAHSBenchmark(Benchmark, ABC):
         prior: str | Path | JAHSConfig | dict[str, Any] | Configuration | None = None,
         **kwargs: Any,  # pyright: ignore
     ):
-        """
+        """Initialize the benchmark.
+
         Parameters
         ----------
         datadir : str | Path | None = None
@@ -67,6 +67,9 @@ class JAHSBenchmark(Benchmark, ABC):
             * if Path - path to a file
             * if dict, Config, Configuration - A config
             * None - Use the default if available
+
+        **kwargs : Any
+            Additional arguments ignored for compatibility
         """
         super().__init__(seed=seed, prior=prior)
 
@@ -93,13 +96,13 @@ class JAHSBenchmark(Benchmark, ABC):
 
     # explicit overwrite
     def load(self) -> None:
-        """Pre-load JAHS XGBoost model before querying the first time"""
+        """Pre-load JAHS XGBoost model before querying the first time."""
         # Access the property
         _ = self.bench
 
     @property
     def bench(self) -> jahs_bench.Benchmark:
-        """The underlying benchmark used"""
+        """The underlying benchmark used."""
         if not self._bench:
             self._bench = jahs_bench.Benchmark(
                 task=self.task,
@@ -112,7 +115,7 @@ class JAHSBenchmark(Benchmark, ABC):
 
     @property
     def space(self) -> ConfigurationSpace:
-        """The ConfigurationSpace for this benchmark"""
+        """The ConfigurationSpace for this benchmark."""
         return self._configspace
 
     def query(
@@ -122,7 +125,7 @@ class JAHSBenchmark(Benchmark, ABC):
         *,
         argmax: bool = False,
     ) -> JAHSResult:
-        """Query the results for a config
+        """Query the results for a config.
 
         Parameters
         ----------
@@ -171,7 +174,7 @@ class JAHSBenchmark(Benchmark, ABC):
         to: int | None = None,
         step: int | None = None,
     ) -> list[JAHSResult]:
-        """Query the trajectory of a config as it ranges over a fidelity
+        """Query the trajectory of a config as it ranges over a fidelity.
 
         Parameters
         ----------

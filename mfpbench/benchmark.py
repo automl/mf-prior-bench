@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Iterator, TypeVar, overload
-
 from pathlib import Path
+from typing import Any, Generic, Iterator, TypeVar, overload
 
 import numpy as np
 from ConfigSpace import Configuration, ConfigurationSpace
@@ -26,7 +25,7 @@ F = TypeVar("F", int, float)
 
 
 class Benchmark(Generic[C, R, F], ABC):
-    """Base class for a Benchmark"""
+    """Base class for a Benchmark."""
 
     # The fidelity range and name of this benchmark
     fidelity_range: tuple[F, F, F]
@@ -86,7 +85,7 @@ class Benchmark(Generic[C, R, F], ABC):
     @property
     @abstractmethod
     def basename(self) -> str:
-        """A basename used for identifying pregenerated prior files"""
+        """A basename used for identifying pregenerated prior files."""
         ...
 
     def iter_fidelities(
@@ -95,7 +94,7 @@ class Benchmark(Generic[C, R, F], ABC):
         to: F | None = None,
         step: F | None = None,
     ) -> Iterator[F]:
-        """Iterate through the advertised fidelity space of the benchmark
+        """Iterate through the advertised fidelity space of the benchmark.
 
         Parameters
         ----------
@@ -134,7 +133,7 @@ class Benchmark(Generic[C, R, F], ABC):
         yield from fidelities
 
     def load(self) -> None:
-        """Explicitly load the benchmark before querying, optional"""
+        """Explicitly load the benchmark before querying, optional."""
         pass
 
     @abstractmethod
@@ -145,7 +144,7 @@ class Benchmark(Generic[C, R, F], ABC):
         *,
         argmax: bool = False,
     ) -> R:
-        """Submit a query and get a result
+        """Submit a query and get a result.
 
         Parameters
         ----------
@@ -175,7 +174,7 @@ class Benchmark(Generic[C, R, F], ABC):
         to: F | None = None,
         step: F | None = None,
     ) -> list[R]:
-        """Get the full trajectory of a configuration
+        """Get the full trajectory of a configuration.
 
         Parameters
         ----------
@@ -209,7 +208,7 @@ class Benchmark(Generic[C, R, F], ABC):
         ...
 
     def sample(self, n: int | None = None) -> C | list[C]:
-        """Sample a random possible config
+        """Sample a random possible config.
 
         Parameters
         ----------
@@ -236,7 +235,7 @@ class Benchmark(Generic[C, R, F], ABC):
     @property
     @abstractmethod
     def space(self) -> ConfigurationSpace:
-        """The configuration space for this benchmark, incorporating the prior if given
+        """The configuration space for this benchmark, incorporating the prior if given.
 
         Returns
         -------
@@ -245,5 +244,5 @@ class Benchmark(Generic[C, R, F], ABC):
         ...
 
     def frame(self) -> ResultFrame[C, F, R]:
-        """Get an empty frame to record with"""
+        """Get an empty frame to record with."""
         return ResultFrame[C, F, R]()

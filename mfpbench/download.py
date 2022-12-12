@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-
-import argparse
 import shutil
 import subprocess
 import urllib.request
 import zipfile
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -48,8 +46,6 @@ class YAHPOSource(Source):
         return "yahpo-gym-data"
 
     def download(self) -> None:
-        print(f"Downloading to {self.path}")
-        print(f"$ {self.cmd}")
         subprocess.run(self.cmd.split())
 
 
@@ -66,8 +62,6 @@ class JAHSBenchSource(Source):
         return f"python -m jahs_bench.download --save_dir {self.path}"
 
     def download(self) -> None:
-        print(f"Downloading to {self.path}")
-        print(f"$ {self.cmd}")
         subprocess.run(self.cmd.split())
 
 
@@ -91,7 +85,6 @@ class PD1Source(Source):
         tarpath = self.path / "data.tar.gz"
 
         # Download the file
-        print(f"Downloading from {self.url} to {tarpath}")
         with urllib.request.urlopen(self.url) as response, open(tarpath, "wb") as f:
             shutil.copyfileobj(response, f)
 
@@ -107,7 +100,6 @@ class PD1Source(Source):
 
         # Download the surrogates zip
         url = f"{self.surrogate_url}/{self.surrogate_version}/surrogates.zip"
-        print(f"Downloading from {url} to {zip_path}")
         with urllib.request.urlopen(url) as response, open(zip_path, "wb") as f:
             shutil.copyfileobj(response, f)
 
@@ -117,15 +109,9 @@ class PD1Source(Source):
 
 sources = {source.name: source for source in [YAHPOSource(), JAHSBenchSource()]}
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--force", action="store_true")
-    parser.add_argument("--data-dir", type=str)
-    args = parser.parse_args()
 
-    force = args.force
-
-    root = Path(args.data_dir) if args.data_dir is not None else DATAROOT
+def download(datadir: Path | None = None, *, force: bool = False) -> None:
+    root = datadir if datadir is not None else DATAROOT
     root.mkdir(exist_ok=True)
 
     download_sources = [
@@ -142,7 +128,7 @@ if __name__ == "__main__":
             source.path.mkdir(exist_ok=True)
             source.download()
         else:
-            print(f"Source already downloaded: {source}")
+            pass
 
         if not source.path.exists():
             raise RuntimeError(f"Something went wrong downloading {source}")

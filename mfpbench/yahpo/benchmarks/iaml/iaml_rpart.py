@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import no_type_check
-
 from dataclasses import dataclass
+from typing import no_type_check
 
 from mfpbench.yahpo.benchmarks.iaml.iaml import IAMLBenchmark, IAMLConfig, IAMLResult
 

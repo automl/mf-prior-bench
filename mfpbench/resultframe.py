@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Iterator, List, Mapping, Sequence, TypeVar, Union
-
 from itertools import chain
+from typing import Any, Iterator, List, Mapping, Sequence, TypeVar, Union
 
 import numpy as np
 from typing_extensions import Literal
@@ -49,7 +48,7 @@ class ResultFrame(Mapping[Union[C, F], List[R]]):
         return len(self._result_order)
 
     def add(self, result: R) -> None:
-        """Add a result to the frame"""
+        """Add a result to the frame."""
         f = result.fidelity
         c = result.config
 
@@ -91,7 +90,7 @@ class ResultFrame(Mapping[Union[C, F], List[R]]):
         *,
         method: Literal["spearman", "kendalltau", "cosine"] = "spearman",
     ) -> np.ndarray:
-        """Get the correlation ranksing between stored results
+        """Get the correlation ranksing between stored results.
 
         To calculate the correlations, we select all configs that are present in each
         selected fidelity.
@@ -123,7 +122,7 @@ class ResultFrame(Mapping[Union[C, F], List[R]]):
 
         # We get the intersection of configs that are found at all fidelity values
         # {b, c}
-        common = set(result.config for result in chain.from_iterable(selected.values()))
+        common = {result.config for result in chain.from_iterable(selected.values())}
 
         # Next we prune out the selected fidelities results
         # {1: [b, c], 2: [b, c], ..., 100: [c, b]}
@@ -138,10 +137,10 @@ class ResultFrame(Mapping[Union[C, F], List[R]]):
         }
 
         # Lastly, we pull out the results
-        results = list(
+        results = [
             [r.error for r in fidelity_results]
             for fidelity_results in selected.values()
-        )
+        ]
 
         x = np.asarray(results)
         return rank_correlation(x, method=method)

@@ -1,17 +1,17 @@
-"""
+"""The hartmann benchmarks.
+
 The presets of terrible, bad, moderate and good are empirically obtained hyperparameters
 for the hartmann function
     ! have not tested ranking correlation yet
 The function flattens with increasing fidelity bias.
 Along with increasing noise, that obviously makes one config harder to distinguish from
 another.
-Moreover, this works with any number of fidelitiy levels
+Moreover, this works with any number of fidelitiy levels.
 """
 from __future__ import annotations
 
-from typing import Any, Generic, TypeVar
-
 from pathlib import Path
+from typing import Any, Generic, TypeVar
 
 import numpy as np
 from ConfigSpace import Configuration, ConfigurationSpace, UniformFloatHyperparameter
@@ -58,15 +58,18 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         noisy_prior: bool = False,
         prior_noise_scale: float = 0.125,
     ):
-        """
+        """Initialize the benchmark.
+
         Parameters
         ----------
         seed : int | None = None
-            The seed to use
+            The seed to use.
 
-        bias : float | None
+        bias : float | None = None
+            How much bias to introduce
 
-        noise : float | None
+        noise : float | None = None
+            How much noise to introduce
 
         prior: str | Path | MFHartmannConfig | dict | Configuration | None = None
             The prior to use for the benchmark.
@@ -121,7 +124,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
                 new_prior = self.Config.from_dict(
                     {
                         k: np.clip(v + n, a_min=0, a_max=1)
-                        for i, ((k, v), n) in enumerate(zip(d.items(), noises))
+                        for (k, v), n in zip(d.items(), noises)
                     }
                 )
                 self.prior = new_prior
@@ -142,7 +145,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         *,
         argmax: bool = False,
     ) -> MFHartmannResult[C]:
-        """Submit a query and get a result
+        """Submit a query and get a result.
 
         Parameters
         ----------
@@ -194,7 +197,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         to: int | None = None,
         step: int | None = None,
     ) -> list[MFHartmannResult[C]]:
-        """Get the full trajectory of a configuration
+        """Get the full trajectory of a configuration.
 
         Parameters
         ----------
@@ -246,11 +249,6 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
 
     @property
     def space(self) -> ConfigurationSpace:
-        """
-        Returns
-        -------
-        ConfigurationSpace
-        """
         return self._configspace
 
     def __repr__(self) -> str:

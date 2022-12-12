@@ -1,9 +1,8 @@
-"""This module extends Hartmann functions to incorporate fidelities"""
+"""This module extends Hartmann functions to incorporate fidelities."""
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-
 import warnings
+from abc import ABC, abstractmethod
 
 import numpy as np
 
@@ -33,17 +32,21 @@ class MFHartmannGenerator(ABC):
         fidelity_noise: float,
         seed: int | None = None,
     ):
-        """
+        """Initialize the generator.
+
         Parameters
         ----------
         n_fidelities: int
-            The fidelity at which the function is evalated
+            The fidelity at which the function is evalated.
 
         fidelity_bias: float
             Amount of bias, realized as a flattening of the objective.
 
         fidelity_noise: float
             Amount of noise, decreasing linearly (in st.dev.) with fidelity.
+
+        seed: int | None = None
+            The seed to use for the noise.
         """
         self.z_min, self.z_max = (1, n_fidelities)
         self.seed = seed if seed else self._default_seed
@@ -53,11 +56,12 @@ class MFHartmannGenerator(ABC):
 
     @abstractmethod
     def __call__(self, z: int, Xs: tuple[float, ...]) -> float:
-        """
+        """Evaluate the function at the given fidelity and points.
+
         Parameters
         ----------
         z : int
-            The fidelity at which to query
+            The fidelity at which to query.
 
         Xs : tuple[float, ...]
             The Xs as input to the function, in the correct order
@@ -74,13 +78,14 @@ class MFHartmann3(MFHartmannGenerator):
     dims = 3
 
     def __call__(self, z: int, Xs: tuple[float, ...]) -> float:
-        """
+        """Evaluate the function at the given fidelity and points.
+
         Parameters
         ----------
         z: int
-            The fidelity
+            The fidelity.
 
-        X_0, X_1, X_2: float
+        Xs: tuple[float, ...]
             Parameters of the function.
 
         Returns
@@ -131,13 +136,14 @@ class MFHartmann6(MFHartmannGenerator):
     dims = 6
 
     def __call__(self, z: int, Xs: tuple[float, ...]) -> float:
-        """
+        """Evaluate the function at the given fidelity and points.
+
         Parameters
         ----------
         z: int
-            The fidelity it's evaluated at
+            The fidelity it's evaluated at.
 
-        X_0, ..., X_5: float
+        Xs: tuple[float, ...]
             Parameters of the function
 
         Returns

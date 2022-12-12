@@ -16,7 +16,7 @@ HERE = os.path.dirname(os.path.realpath(__file__))
 
 
 def read_file(filepath: str) -> str:
-    with open(filepath, "r", encoding="utf-8") as fh:
+    with open(filepath, encoding="utf-8") as fh:
         return fh.read()
 
 
@@ -55,7 +55,7 @@ setuptools.setup(
         "numpy",
         # We need to hardlock the benchmarks to provide consistency
         "yahpo-gym==1.0.1",
-        "jahs_bench @ git+https://github.com/automl/jahs_bench_201.git@c1e92dd92a0c4906575c4e3e4ee9e7420efca5f1#egg=jahs_bench"
+        "jahs_bench @ git+https://github.com/automl/jahs_bench_201.git@c1e92dd92a0c4906575c4e3e4ee9e7420efca5f1#egg=jahs_bench",  # noqa
     ],
     extras_require=extras_require,
     test_suite="pytest",

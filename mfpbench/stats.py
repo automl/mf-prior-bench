@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Sequence
-
 from itertools import combinations
 
 import numpy as np
@@ -60,20 +58,24 @@ def cosine(X: np.ndarray) -> np.ndarray:
 
 
 def rank_correlation(
-    x: Sequence[float] | np.ndarray,
+    x: np.ndarray,
     *,
     method: Literal["spearman", "kendalltau", "cosine"] = "cosine",
 ) -> np.ndarray:
-    """Calculate rank correlation between observer rankings
+    """Calculate rank correlation between observer rankings.
 
-    If both x and y are specified, will return the correlation between the two rankings,
+    Will return the correlation between the two rankings,
     otherwise it will return a correlation matrix where each row represents a random
     variable.
 
     Parameters
     ----------
-    x: Sequence[float] | np.ndarray
+    x: np.ndarray
+        The rankings to calculate correlations for where each row
+        represents a random variable.
+
     method: Literal["spearman", "kendalltau", "cosine"] = "cosine"
+        The method to use
 
     Returns
     -------

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Iterator
-
 import gzip
 import json
 import shutil
 from dataclasses import dataclass
 from itertools import accumulate, product
 from pathlib import Path
+from typing import Iterator
 
 import numpy as np
 import pandas as pd
@@ -21,12 +20,13 @@ def safe_accumulate(x: Iterator[float | None], fill: float = np.inf) -> Iterator
 
 
 def uniref50_epoch_convert(x: float | list[float]) -> float | list[float]:
-    """
+    """Converts the epochs of uniref50 to some usable form.
+
     Converts:
         0             NaN
         1    [0, 0, 0, 1]
         2           [nan]
-        3     [0, 0, nan]
+        3     [0, 0, nan].
 
     to:
         0             NaN
@@ -83,17 +83,14 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         rawdir.mkdir(exist_ok=True)
 
         # Unpack it to the rawdir
-        print(f"Unpacking {tarball}")
         shutil.unpack_archive(tarball, rawdir)
 
         unpacked_folder_name = "pd1"  # This is what the tarball will unpack into
         unpacked_folder = rawdir / unpacked_folder_name
 
         # Move everything from the uncpack folder to the "raw" folder
-        print(f"Moving files from {unpacked_folder} to {rawdir}")
         for filepath in unpacked_folder.iterdir():
             to = rawdir / filepath.name
-            print(f"Move {filepath} to {to}")
             shutil.move(str(filepath), str(to))
 
         # Remove the archive folder, its all been moved to "raw"
@@ -109,7 +106,6 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
     for matched, phase in product([True, False], [0, 1]):
         # Unpack the jsonl.gz archive if needed
         datapack = Datapack(matched=matched, phase=phase, dir=rawdir)
-        print(f"Unpacking {datapack.archive_path}")
         df = datapack.unpack()
 
         # Tag them from the dataset they came from
@@ -122,7 +118,6 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         dfs.append(df)
 
     # We now merge them all into one super table for convenience
-    print("Creating master table for all datasets, phases and matches")
     full_df = pd.concat(dfs, ignore_index=True)
 
     # Since some columns values are essentially lists, we need to explode them out
@@ -133,9 +128,9 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
     transformer_datasets = ["uniref50", "translate_wmt", "imagenet", "lm1b"]
     dataset_columns = ["dataset", "model", "batch_size"]
 
-    for (name, model, batchsize), dataset in full_df.groupby(dataset_columns):
+    groups = full_df.groupby(dataset_columns)
+    for (name, model, batchsize), dataset in groups:  # type: ignore
         fname = f"{name}-{model}-{batchsize}"
-        print(f"Exploding dataset {fname}")
 
         if name in transformer_datasets:
             explode_columns = [c for c in list_columns if c != "test_error_rate"]
@@ -146,30 +141,29 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         if name == "uniref50":
             # For some reason the epochs of this datasets are basically [0, 0, 0, 1]
             # We just turn this into an incremental thing
-            dataset["epoch"] = dataset["epoch"].apply(uniref50_epoch_convert)
+            epochs = dataset["epochs"]
+            assert epochs is not None
+            dataset["epoch"] = dataset["epoch"].apply(  # type: ignore
+                uniref50_epoch_convert
+            )
 
         dataset["train_cost"] = [
             None if r is None else list(safe_accumulate(r, fill=np.inf))
-            for r in dataset["train_cost"]
+            for r in dataset["train_cost"]  # type: ignore
         ]
 
         dataset = dataset.explode(explode_columns, ignore_index=True)
-        print(f"Writing individual dataset {fname}")
 
         if name == "translate_wmt":
-            print("===" * 30)
-            print(len(dataset.groupby(hps)))
+            pass
 
-        print(f"Size of {fname} before additional cleaning: {len(dataset)}")
         if name == "lm1b":
             # Some train costs go obsenly high for no reason, we drop these rows
-            dataset = dataset[dataset["train_cost"] < 10_000]
+            dataset = dataset[dataset["train_cost"] < 10_000]  # type: ignore
         elif name == "uniref50":
             # Some train costs go obsenly high for no reason, we drop these rows
             # Almost all are below 400 but we add a buffer
-            dataset = dataset[dataset["train_cost"] < 4_000]
-
-        print(f"Size of {fname} after additional cleaning: {len(dataset)}")
+            dataset = dataset[dataset["train_cost"] < 4_000]  # type: ignore
 
         # We want to write the full mixed {phase,matched} for surrogate training while
         # only keeping matched phase 1 data for tabular.
@@ -186,46 +180,10 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         if fname not in has_activation_fn:
             drop_columns += ["activation_fn"]
 
-        dataset = dataset.drop(columns=drop_columns)
+        dataset = dataset.drop(columns=drop_columns)  # type: ignore
 
         if handle_nans == "fill":
             raise NotImplementedError("TODO")
-            # We now want it that for every epoch that is missing, we fill in partial
-            # learning curves with
-            #   train_cost -> worst in dataset
-            #   metric -> worst possible score
-            valid_epochs = dataset["epoch"].unique()
-            valid_epochs = valid_epochs[~np.isnan(valid_epochs)]  # Remove nan
-
-            hp_cols = list(hps)
-            if name in transformer_datasets:
-                hp_cols.remove("activation_fn")
-
-            additional_data: list[pd.Series] = []  # noqa: F841
-
-            config_groups = list(dataset.groupby(hps))
-
-            # We find the worst training_cost entries for each row and just use those
-            config_with_maximum_train_cost = max(  # noqa: F841
-                [d for _, d in config_groups],
-                lambda d: max(d["train_cost"]),
-            )
-
-            for hp_tuple, config_df in config_groups:
-
-                epochs = config_df["epoch"]
-                # Case 1: Has all valid_epochs, nothing to do
-                if all(epochs == valid_epochs):
-                    continue
-                # Case 2: Has only a partial learning curve
-                elif not any(epochs.isna()):
-                    ...
-                # Case 3: Has only a nan
-                elif all(epochs.isna()):
-                    ...
-                    # train_fill = config_with_maximum_train_cost["train_cost"]
-                else:
-                    raise NotImplementedError(f"Didn't account for {epochs}")
 
         # Select only the tabular part (matched and phase1)
         """
@@ -247,17 +205,12 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         else:
             hps = list(hps)
 
-        print(f"Size of {fname} before dropping nans: {len(dataset)}")
-        dataset = dataset.dropna()
-        print(f"Size of {fname} after dropping nans: {len(dataset)}")
+        dataset = dataset.dropna()  # type: ignore
 
-        print(f"Size of {fname} before duplicate dropping: {len(dataset)}")
-        dataset = dataset.drop_duplicates(hps + ["epoch"], keep="last")
-        print(f"Size of {fname} after duplicate dropping: {len(dataset)}")
+        dataset = dataset.drop_duplicates(hps + ["epoch"], keep="last")  # type: ignore
 
         # The rest can be used for surrogate training
         surrogate_path = datadir / f"{fname}_surrogate.csv"
-        print(f"Writing surrogate training data to {surrogate_path}")
         df_surrogate = dataset.drop(columns=["matched", "phase"])
         df_surrogate.to_csv(surrogate_path, index=False)
 

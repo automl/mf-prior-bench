@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-from typing import Any
-
 from dataclasses import dataclass
 from pathlib import Path
-
-import numpy as np
-import pytest
-from pytest_cases import fixture, parametrize
+from typing import Any
 
 import mfpbench
+import numpy as np
+import pytest
 from mfpbench import (
     Benchmark,
     IAMLglmnetBenchmark,
@@ -27,6 +24,7 @@ from mfpbench import (
     RBV2aknnBenchmark,
     YAHPOBenchmark,
 )
+from pytest_cases import fixture, parametrize
 
 SEED = 1
 CONDITONALS = False  # We currently can't do these
@@ -73,17 +71,17 @@ benchmarks = [
     BenchmarkTest(
         "lcbench",
         LCBenchBenchmark,
-        kwargs=dict(task_id=LCBenchBenchmark.instances[0]),  # type: ignore
+        kwargs={"task_id": LCBenchBenchmark.instances[0]},  # type: ignore
     ),
     BenchmarkTest(
         "rbv2_aknn",
         RBV2aknnBenchmark,
-        kwargs=dict(task_id=RBV2aknnBenchmark.instances[0]),  # type: ignore
+        kwargs={"task_id": RBV2aknnBenchmark.instances[0]},  # type: ignore
     ),
     BenchmarkTest(
         "iaml_glmnet",
         IAMLglmnetBenchmark,
-        kwargs=dict(task_id=IAMLglmnetBenchmark.instances[0]),  # type: ignore
+        kwargs={"task_id": IAMLglmnetBenchmark.instances[0]},  # type: ignore
     ),
     #
     BenchmarkTest("lm1b_transformer_2048", PD1lm1b_transformer_2048),
@@ -96,7 +94,7 @@ benchmarks = [
 @fixture(scope="module")
 @parametrize(item=benchmarks)
 def benchmark(item: BenchmarkTest) -> Benchmark:
-    """The JAHSBench series of benchmarks"""
+    """The JAHSBench series of benchmarks."""
     benchmark = mfpbench.get(**item.unpack())
     # We force benchmarks to load if they must
     benchmark.load()
@@ -111,7 +109,7 @@ def test_benchmark_sampling(benchmark: Benchmark, n_samples: int) -> None:
     -------
     * Can sample 1 or many configs
     * They are all of type benchmark.Config
-    * All sampled configs are valid
+    * All sampled configs are valid.
     """
     config = benchmark.sample()
     assert isinstance(config, benchmark.Config)
@@ -132,7 +130,7 @@ def test_query_api_validity(benchmark: Benchmark) -> None:
     -------
     * Can query a sampled config
     * Can query from a Configuration from config space
-    * Can query with the dict version of either of the above
+    * Can query with the dict version of either of the above.
     """
     sample = benchmark.sample()
     result = benchmark.query(sample)
@@ -157,7 +155,7 @@ def test_result_api_validity(benchmark: Benchmark) -> None:
     -------
     * Can get all relevant metrics
     * Can query from a Configuration from config space
-    * Can query with the dict version of either of the above
+    * Can query with the dict version of either of the above.
     """
     sample = benchmark.sample()
     result = benchmark.query(sample)
@@ -177,7 +175,7 @@ def test_query_through_entire_fidelity_range(benchmark: Benchmark) -> None:
     Expects
     -------
     * Should be able to query the benchmark over the entire fidelity range
-    * All results should have their fidelity between the start and step
+    * All results should have their fidelity between the start and step.
     """
     config = benchmark.sample()
 
@@ -192,7 +190,7 @@ def test_repeated_query(benchmark: Benchmark) -> None:
     """
     Expects
     -------
-    * Repeating the same query multiple times will give the same results
+    * Repeating the same query multiple times will give the same results.
     """
     configs = benchmark.sample(10)
     for f in benchmark.iter_fidelities():
@@ -208,7 +206,7 @@ def test_repeated_trajectory(benchmark: Benchmark) -> None:
     """
     Expects
     -------
-    * Repeating the same trajectory multiple times will give the same results
+    * Repeating the same trajectory multiple times will give the same results.
     """
     configs = benchmark.sample(10)
 
@@ -229,7 +227,7 @@ def test_query_default_is_max_fidelity(benchmark: Benchmark) -> None:
     """
     Expects
     -------
-    * A query with no args is the same as using the max fidelity directly
+    * A query with no args is the same as using the max fidelity directly.
     """
     config = benchmark.sample()
     r1 = benchmark.query(config, at=benchmark.end)
@@ -242,7 +240,7 @@ def test_query_same_as_trajectory(benchmark: Benchmark) -> None:
     """
     Expects
     -------
-    * Querying every point individually should be the same as using trajectory
+    * Querying every point individually should be the same as using trajectory.
     """
     config = benchmark.sample()
     if isinstance(benchmark, YAHPOBenchmark):
@@ -262,7 +260,7 @@ def test_trajectory_is_over_full_range_by_default(benchmark: Benchmark) -> None:
     """
     Expects
     -------
-    * The trajectory should by default go from the start fidelity to the max
+    * The trajectory should by default go from the start fidelity to the max.
     """
     config = benchmark.sample()
     results = benchmark.trajectory(config)
@@ -274,7 +272,7 @@ def test_trajectory_is_over_full_range_by_default(benchmark: Benchmark) -> None:
 def test_configs_hashable_and_unique(benchmark: Benchmark) -> None:
     configs = benchmark.sample(10)
 
-    s = {c for c in configs}
+    s = set(configs)
     assert len(s) == len(configs)
 
 
@@ -282,7 +280,7 @@ def test_results_hashable_and_unique(benchmark: Benchmark) -> None:
     configs = benchmark.sample(10)
     results = [benchmark.query(c) for c in configs]
 
-    s = {r for r in results}
+    s = set(results)
     assert len(s) == len(results)
 
 
@@ -331,7 +329,7 @@ def test_prior_from_available_priors(item: BenchmarkTest) -> None:
     Expects
     -------
     * Getting a benchmark with an available prior should have its configspace seeded
-      with that prior
+      with that prior.
     """
     params = item.unpack()
 
@@ -354,7 +352,7 @@ def test_prior_from_yaml_file(item: BenchmarkTest, tmp_path: Path) -> None:
     Expects
     -------
     * Using a prior from a yaml file will have the configspace for the benchmark seeded
-    with that config
+    with that config.
     """
     params = item.unpack()
     bench = mfpbench.get(**params)
@@ -380,7 +378,7 @@ def test_prior_from_json_file(item: BenchmarkTest, tmp_path: Path) -> None:
     Expects
     -------
     * Using a prior from a json file will have the configspace for the benchmark seeded
-    with that config
+    with that config.
     """
     params = item.unpack()
     bench = mfpbench.get(**params)
@@ -406,7 +404,7 @@ def test_prior_from_config(item: BenchmarkTest) -> None:
     Expects
     -------
     * Using a prior from a config will have the configspace for the benchmark seeded
-    with that config
+    with that config.
     """
     params = item.unpack()
     bench = mfpbench.get(**params)
@@ -429,7 +427,7 @@ def test_prior_from_configuration(item: BenchmarkTest) -> None:
     Expects
     -------
     * Using a prior from a config will have the configspace for the benchmark seeded
-    with that config
+    with that config.
     """
     params = item.unpack()
 
@@ -454,7 +452,7 @@ def test_prior_from_dict(item: BenchmarkTest) -> None:
     Expects
     -------
     * Using a prior from a config will have the configspace for the benchmark seeded
-    with that config
+    with that config.
     """
     params = item.unpack()
     bench = mfpbench.get(**params)

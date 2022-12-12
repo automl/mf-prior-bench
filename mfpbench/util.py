@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import Callable, Iterable, Iterator, Mapping, TypeVar
-
 from copy import copy
 from functools import reduce
 from itertools import chain, tee
+from typing import Callable, Iterable, Iterator, Mapping, TypeVar
 
 import numpy as np
 from ConfigSpace import ConfigurationSpace
@@ -32,7 +31,7 @@ def findwhere(itr: Iterable[T], func: Callable[[T], bool], *, default: int = -1)
 
 
 def remove_hyperparameter(name: str, space: ConfigurationSpace) -> ConfigurationSpace:
-    """A new configuration space with the hyperparameter removed
+    """A new configuration space with the hyperparameter removed.
 
     Essentially copies hp over and fails if there is conditionals or forbiddens
     """
@@ -73,7 +72,7 @@ def remove_hyperparameter(name: str, space: ConfigurationSpace) -> Configuration
 
 
 def pairs(itr: Iterable[T]) -> Iterator[tuple[T, T]]:
-    """An iterator over pairs of items in the iterator
+    """An iterator over pairs of items in the iterator.
 
     ..code:: python
 
@@ -107,7 +106,7 @@ def pairs(itr: Iterable[T]) -> Iterator[tuple[T, T]]:
 
 
 def intersection(*items: Iterable[T]) -> set[T]:
-    """Does an intersection over all collection of items
+    """Does an intersection over all collection of items.
 
     ..code:: python
         ans = intersection(["a", "b", "c"], "ab", ("b", "c"))
@@ -134,7 +133,7 @@ V = TypeVar("V")
 
 
 def invert(d: Mapping[K, V]) -> Mapping[V, K]:
-    """Invert the key value pairs of a dictionary"""
+    """Invert the key value pairs of a dictionary."""
     return {v: k for k, v in d.items()}
 
 
@@ -143,5 +142,5 @@ K2 = TypeVar("K2")
 
 
 def rename(d: Mapping[K1, V], keys: Mapping[K1, K2]) -> dict[K1 | K2, V]:
-    """Rename keys of a dictionary based on a set of keys to update"""
+    """Rename keys of a dictionary based on a set of keys to update."""
     return {keys.get(k1, k1): v for k1, v in d.items()}

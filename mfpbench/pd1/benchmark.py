@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Any, TypeVar
-
 from pathlib import Path
+from typing import Any, TypeVar
 
 import pandas as pd
 from ConfigSpace import Configuration, ConfigurationSpace
@@ -104,7 +103,7 @@ class PD1Benchmark(Benchmark[C, R, int]):
         *,
         argmax: bool = False,
     ) -> R:
-        """Query the results for a config
+        """Query the results for a config.
 
         Parameters
         ----------
@@ -147,7 +146,7 @@ class PD1Benchmark(Benchmark[C, R, int]):
         to: int | None = None,
         step: int | None = None,
     ) -> list[R]:
-        """Query the trajectory of a config as it ranges over a fidelity
+        """Query the trajectory of a config as it ranges over a fidelity.
 
         Parameters
         ----------

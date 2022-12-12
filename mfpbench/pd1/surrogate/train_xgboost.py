@@ -97,7 +97,4 @@ if __name__ == "__main__":
     loaded_model = XGBRegressor()
     loaded_model.load_model(args.to)
 
-    print("Trying to predict with loaded model")
     y_pred = loaded_model.predict(X)
-
-    print("Success!")

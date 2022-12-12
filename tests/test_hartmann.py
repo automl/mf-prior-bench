@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-from typing import Callable
-
 from functools import partial
 from itertools import chain, product
-
-from pytest_cases import fixture, parametrize
+from typing import Callable
 
 from mfpbench.synthetic.hartmann import (
     MFHartmann3Benchmark,
     MFHartmann6Benchmark,
     MFHartmannBenchmark,
 )
+from pytest_cases import fixture, parametrize
 
 BENCH_SEED = 1337
 
@@ -28,7 +26,7 @@ BENCH_SEED = 1337
 def MFH(
     cls: type[MFHartmannBenchmark], prior: str, seed: int
 ) -> Callable[..., MFHartmannBenchmark]:
-    """Returns the class and the basic args"""
+    """Returns the class and the basic args."""
     return partial(cls, prior=prior, seed=seed)
 
 
@@ -41,7 +39,7 @@ def test_hartmann_priors_with_and_without_noise_added(
     * Both the benchmarks should have a prior
     * The benchmark with no noise added should remain as the selected prior
     * Each config value should be changed by noise
-    * The prior of the config space should be updated accordingly
+    * The prior of the config space should be updated accordingly.
     """
     bench_no_noise = MFH()
     clean_prior = bench_no_noise.prior
@@ -73,7 +71,7 @@ def test_hartmann_priors_noise_in_bounds(
     Expects
     -------
     * Should produce a valid config
-    * These values should all be between 0 and 1
+    * These values should all be between 0 and 1.
     """
     bench = MFH(noisy_prior=True, prior_noise_scale=scale)
 
@@ -91,7 +89,7 @@ def test_hartmann_priors_noise_different_seeds_different_noise(
     """
     Expects
     -------
-    * Using different seeds should result in different noisy priors
+    * Using different seeds should result in different noisy priors.
     """
     bench1 = MFH(noisy_prior=True, seed=1)
     bench2 = MFH(noisy_prior=True, seed=2)

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Type
-
 from dataclasses import dataclass
 
 
@@ -9,7 +7,7 @@ from dataclasses import dataclass
 class Column:
     name: str
     keep: bool = False
-    type: Type[str] | Type[float] | Type[list] | Type | None = None
+    type: type[str] | type[float] | type[list] | type | None = None
     rename: str | None = None
     hp: bool = False
     metric: bool = False

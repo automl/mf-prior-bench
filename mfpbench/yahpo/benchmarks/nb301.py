@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Mapping, TypeVar, no_type_check
-
 import warnings
 from dataclasses import asdict, dataclass
 from itertools import product
+from typing import Any, Mapping, TypeVar, no_type_check
 
 from typing_extensions import Literal
 
@@ -86,9 +85,9 @@ class NB301Config(YAHPOConfig):
 
     @no_type_check
     def validate(self) -> None:
-        """Validate this is a correct config
+        """Validate this is a correct config.
 
-        Note
+        Note:
         ----
         We don't check conditionals validity
         """
@@ -124,13 +123,13 @@ class NB301Config(YAHPOConfig):
 
     @classmethod
     def from_dict(cls: type[Self], d: Mapping[str, Any]) -> Self:
-        """Create from a dict or mapping object"""
+        """Create from a dict or mapping object."""
         # We just flatten things because it's way too big of a name
         config = {k.replace(_hp_name_extension, ""): v for k, v in d.items()}
         return cls(**config)
 
     def dict(self) -> dict[str, Any]:
-        """Converts the config to a raw dictionary"""
+        """Converts the config to a raw dictionary."""
         return {
             _hp_name_extension + k: v for k, v in asdict(self).items() if v is not None
         }
@@ -143,37 +142,37 @@ class NB301Result(YAHPOResult[NB301Config, int]):
 
     @property
     def score(self) -> float:
-        """The score of interest"""
+        """The score of interest."""
         return self.val_accuracy
 
     @property
     def error(self) -> float:
-        """The error of interest"""
+        """The error of interest."""
         return 1 - self.val_accuracy
 
     @property
     def test_score(self) -> float:
-        """The score on the test set"""
+        """The score on the test set."""
         return self.val_accuracy
 
     @property
     def test_error(self) -> float:
-        """The score on the test set"""
+        """The score on the test set."""
         return 1 - self.val_accuracy
 
     @property
     def val_score(self) -> float:
-        """The score on the validation set"""
+        """The score on the validation set."""
         return self.val_accuracy
 
     @property
     def val_error(self) -> float:
-        """The score on the validation set"""
+        """The score on the validation set."""
         return 1 - self.val_accuracy
 
     @property
     def cost(self) -> float:
-        """Time taken in seconds to train the config"""
+        """Time taken in seconds to train the config."""
         warnings.warn(f"Unsure of unit for `cost` on {self.__class__}")
         return self.runtime
 

@@ -16,15 +16,16 @@ yahpo-gym = "1.0.1"
 jahs-bench = { git = "https://github.com/automl/jahs_bench_201.git", rev = "880fbcb35a83df7b6c02440a6c13adb921f54657" }
 xgboost = "^1"
 
-[tool.poetry.dev-dependencies]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.0.177"
 pytest = "4.6"
 pytest-cov = "^3"
 pytest-cases = "^3"
 automl-sphinx-theme = "^0.1.12"
-isort = "^5.10.1"
 black = "^22.8.0"
-pydocstyle = "^6.1.1"
 pre-commit = "^2.20.0"
+mypy = "^0.991"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -55,42 +56,101 @@ exclude_lines = [
 [tool.black]
 target-version = ['py37']
 
-[tool.isort]
-py_version = "37"
-profile = "black" # Play nicely with black
-src_paths = ["mfpbench", "tests"]
-known_types = ["typing", "abc"] # We put these in their own section "types"
-known_test = ["tests"]
-known_first_party = ["mfpbench"]
-sections = [
-  "FUTURE",
-  "TYPES",
-  "STDLIB",
-  "THIRDPARTY",
-  "FIRSTPARTY",
-  "TEST",
-  "LOCALFOLDER",
-] # section ordering
-multi_line_output = 3 # https://pycqa.github.io/isort/docs/configuration/multi_line_output_modes.html
+[tool.ruff]
+target-version = "py37"
+line-length = 88
+src = ["mfpbench", "tests"]
 
-[tool.pydocstyle]
-convention = "numpy"
-add-ignore = [ # http://www.pydocstyle.org/en/stable/error_codes.html
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+select = [
+  "E",
+  "F",
+  "Q",
+  "W",
+  "I",
+  "D",
+  "UP",
+  "N",
+  "S",
+  "C",
+  "B",
+  "A",
+  "T",
+  "YTT",
+  "RUF",
+  "RUF100",
+]
+ignore = [
+  # Documentation - Google style
+  "D204",
+  "D213",
+  "D215",
+  "D400",
+  "D404",
+  "D406",
+  "D407",
+  "D408",
+  "D409",
+  "D413",
+
+  #
   "D100", # Missing docstring in public module
   "D101", # Missing docstring in public class
-  "D104", # Missing docstring in public package
-  "D105", # Missing docstring in magic method
+  "D102", # Missing docstring in public method
+  "D103", # Missing docstring in public function
+  "D105", # Missing docstring in magic mthod
+  "D107", # Missing docstring in __init__
   "D203", # 1 blank line required before class docstring
-  "D205", # 1 blank line required between summary and description
-  "D210", # No whitespaces allowed surrounding docstring text
-  "D212", # Multi-line docstring summary should start at the first line
-  "D213", # Multi-line docstring summary should start at the second line
-  "D400", # First line should end with a period
-  "D401", # First line should be in imperative mood
-  "D404", # First word of docstring should not be this
-  "D413", # Missing blank line after last section
-  "D415", # First line should end with a period, question mark, or exclamation point
+  #
+  "N801", # Class name should use CapWords
+  "N802", # Function name should be lowercase
+  "N803", # Argument name should be lowercase
+  "N806", # Variable X in function should be lowercase
+  "N815", # Variable in class scope should not be mixedCase
+  #
+  "E731", # Do not assign a lambda expression, use a def
+  "A001", # Shadowing a builtin
+  "A002", # Shadowing a builtin
+  "A003", # Shadowing a builtin
+  "S101", # Use of assert detected.
+  "C901", # function is too complex
 ]
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".hg",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "venv",
+]
+per-file-ignores = { "tests/*.py" = [
+  "S101",
+  "D103",
+  "ANN001",
+  "ANN201",
+  "D100",
+] }
+
+[tool.ruff.isort]
+known-first-party = ["mfpbench"]
+
 
 [[tool.mypy.overrides]]
 module = [

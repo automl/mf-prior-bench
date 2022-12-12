@@ -5,6 +5,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from typing_extensions import Literal
 
 import mfpbench
 from mfpbench import Benchmark
@@ -14,7 +15,7 @@ N_SAMPLES = 25
 EPSILON = 1e-3
 MAX_ITERATIONS = 5_000
 
-STYLES = {}
+STYLES: dict = {}
 
 
 class RunningStats:
@@ -61,7 +62,7 @@ def correlation_curve(
     b: Benchmark,
     *,
     n_samples: int = 25,
-    method: str = "spearman",
+    method: Literal["spearman", "kendalltau", "cosine"] = "spearman",
 ) -> np.ndarray:
     configs = b.sample(n_samples)
     frame = b.frame()
@@ -87,13 +88,14 @@ def plot(
         to = Path("correlations.png")
 
     fig, ax = plt.subplots()
+    assert isinstance(ax, plt.Axes)
 
     handles = []
     for name, (mean, std) in stats.items():
         xs = np.linspace(0, 1, len(mean))
         style = STYLES.get(name, {})
         h = ax.plot(xs, mean, label=name, **style)
-        ax.fill_between(xs, mean - std, mean + std, alpha=0.2)
+        ax.fill_between(xs, mean - std, mean + std, alpha=0.2)  # type: ignore
         handles.append(h)
 
     ax.set_xlim(auto=True)
@@ -107,12 +109,17 @@ def plot(
     if legend:
         fsize = "x-large" if large_legend else "medium"
         if outside_right_legend:
-            fig.legend(loc="center right", fontsize=fsize, bbox_to_anchor=(1.55, 0.5), frameon=True, ncol=1)
+            fig.legend(
+                loc="center right",
+                fontsize=fsize,
+                bbox_to_anchor=(1.55, 0.5),
+                frameon=True,
+                ncol=1,
+            )
 
         else:
             ax.legend(loc="lower right", fontsize=fsize)
 
-    print(f"Saving to {to}")
     plt.tight_layout(pad=0, h_pad=0.5)
     plt.savefig(to, dpi=dpi, bbox_inches="tight")
 
@@ -127,7 +134,7 @@ def monte_carlo(
     converged = False
     itrs = 0
     while not converged and itrs < iterations_max:
-        curve = correlation_curve(b, n_samples=n_samples)
+        curve = correlation_curve(benchmark, n_samples=n_samples)
         stats.push(curve)
 
         if stats.n > 2:
@@ -137,7 +144,6 @@ def monte_carlo(
 
         else:
             diff = np.inf
-        print(itrs, diff)
         itrs += 1
 
     return stats
@@ -192,10 +198,17 @@ if __name__ == "__main__":
                 result = json.load(f)
                 results[name] = (np.array(result["mean"]), np.array(result["std"]))
 
-        plot(results, to=args.plot_to, dpi=args.plot_dpi, legend=not args.no_legend, large_legend=args.large_legend, outside_right_legend=args.outside_right_legend)
+        plot(
+            results,
+            to=args.plot_to,
+            dpi=args.plot_dpi,
+            legend=not args.no_legend,
+            large_legend=args.large_legend,
+            outside_right_legend=args.outside_right_legend,
+        )
 
     else:
-        kwargs = dict(name=args.benchmark, seed=args.seed)
+        kwargs = {"name": args.benchmark, "seed": args.seed}
 
         if args.task_id:
             kwargs["task_id"] = args.task_id
@@ -213,7 +226,10 @@ if __name__ == "__main__":
             epsilon=args.epsilon,
         )
 
-        results = {"mean": stats.mean().tolist(), "std": stats.std().tolist()}
+        results = {
+            "mean": stats.mean().tolist(),  # type: ignore
+            "std": stats.std().tolist(),
+        }
 
         result_path = results_dir / f"{args.name}.json"
         with result_path.open("w") as f:

@@ -15,7 +15,7 @@ class MFHartmann3Config(MFHartmannConfig):
     X_2: float
 
     def validate(self) -> None:
-        """Validate this config"""
+        """Validate this config."""
         assert 0.0 <= self.X_0 <= 1.0
         assert 0.0 <= self.X_1 <= 1.0
         assert 0.0 <= self.X_2 <= 1.0
@@ -31,7 +31,7 @@ class MFHartmann6Config(MFHartmannConfig):
     X_5: float
 
     def validate(self) -> None:
-        """Validate this config"""
+        """Validate this config."""
         assert 0.0 <= self.X_0 <= 1.0
         assert 0.0 <= self.X_1 <= 1.0
         assert 0.0 <= self.X_2 <= 1.0

@@ -16,22 +16,22 @@ class PD1Result(Result[PD1Config, int]):
 
     @property
     def score(self) -> float:
-        """The score of interest"""
+        """The score of interest."""
         return 1 - self.valid_error_rate
 
     @property
     def error(self) -> float:
-        """The error of interest"""
+        """The error of interest."""
         return self.valid_error_rate
 
     @property
     def val_score(self) -> float:
-        """The score on the validation set"""
+        """The score on the validation set."""
         return 1 - self.valid_error_rate
 
     @property
     def val_error(self) -> float:
-        """The error on the validation set"""
+        """The error on the validation set."""
         return self.valid_error_rate
 
     @property
@@ -42,31 +42,31 @@ class PD1Result(Result[PD1Config, int]):
 
 @dataclass(frozen=True)  # type: ignore[misc]
 class PD1ResultSimple(PD1Result):
-    """Used for all PD1 benchmarks, except imagenet, lm1b, translate_wmt, uniref50"""
+    """Used for all PD1 benchmarks, except imagenet, lm1b, translate_wmt, uniref50."""
 
     test_error_rate: float = np.inf
 
     @property
     def test_score(self) -> float:
-        """The score on the test set"""
+        """The score on the test set."""
         return self.test_error_rate
 
     @property
     def test_error(self) -> float:
-        """The error on the test set"""
+        """The error on the test set."""
         return 1 - self.test_error_rate
 
 
 @dataclass(frozen=True)
 class PD1ResultTransformer(PD1Result):
-    """Used for imagenet, lm1b, translate_wmt, uniref50. Contains no test error"""
+    """Used for imagenet, lm1b, translate_wmt, uniref50. Contains no test error."""
 
     @property
     def test_score(self) -> float:
-        """The score on the test set"""
+        """The score on the test set."""
         return self.valid_error_rate
 
     @property
     def test_error(self) -> float:
-        """The error on the test set"""
+        """The error on the test set."""
         return self.valid_error_rate
