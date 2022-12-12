@@ -6,16 +6,14 @@ version = "0.1.0"
 description = ""
 authors = ["eddiebergman <eddiebergmanhs@gmail.com>"]
 license = "MIT"
-packages = [
-    { include = "mfpbench" }
-]
+packages = [{ include = "mfpbench" }]
 
 [tool.poetry.dependencies]
 python = ">=3.7.1,<=3.10"
 pyyaml = "^6"
 numpy = "1.*"
 yahpo-gym = "1.0.1"
-jahs-bench = {git = "https://github.com/automl/jahs_bench_201.git", rev = "880fbcb35a83df7b6c02440a6c13adb921f54657"}
+jahs-bench = { git = "https://github.com/automl/jahs_bench_201.git", rev = "880fbcb35a83df7b6c02440a6c13adb921f54657" }
 xgboost = "^1"
 
 [tool.poetry.dev-dependencies]
@@ -33,7 +31,7 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]             # path to the test directory
+testpaths = ["tests"] # path to the test directory
 minversion = "3.7"
 # addopts = "--cov=mfpbench" # Should be package name
 
@@ -41,17 +39,17 @@ minversion = "3.7"
 branch = true
 context = "mfpbench" # Should be package name
 omit = [
-    "mfpbench/__init__.py", # Has variables only needed for setup.py
+  "mfpbench/__init__.py", # Has variables only needed for setup.py
 ]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
 exclude_lines = [
-    "pragma: no cover",
-    '\.\.\.',
-    "raise NotImplementedError",
-    "if TYPE_CHECKING",
+  "pragma: no cover",
+  '\.\.\.',
+  "raise NotImplementedError",
+  "if TYPE_CHECKING",
 ] # These are lines to exclude from coverage
 
 [tool.black]
@@ -65,46 +63,47 @@ known_types = ["typing", "abc"] # We put these in their own section "types"
 known_test = ["tests"]
 known_first_party = ["mfpbench"]
 sections = [
-    "FUTURE",
-    "TYPES",
-    "STDLIB",
-    "THIRDPARTY",
-    "FIRSTPARTY",
-    "TEST",
-    "LOCALFOLDER",
+  "FUTURE",
+  "TYPES",
+  "STDLIB",
+  "THIRDPARTY",
+  "FIRSTPARTY",
+  "TEST",
+  "LOCALFOLDER",
 ] # section ordering
 multi_line_output = 3 # https://pycqa.github.io/isort/docs/configuration/multi_line_output_modes.html
 
 [tool.pydocstyle]
 convention = "numpy"
 add-ignore = [ # http://www.pydocstyle.org/en/stable/error_codes.html
-    "D100", # Missing docstring in public module
-    "D101", # Missing docstring in public class
-    "D104", # Missing docstring in public package
-    "D105", # Missing docstring in magic method
-    "D203", # 1 blank line required before class docstring
-    "D205", # 1 blank line required between summary and description
-    "D210", # No whitespaces allowed surrounding docstring text
-    "D212", # Multi-line docstring summary should start at the first line
-    "D213", # Multi-line docstring summary should start at the second line
-    "D400", # First line should end with a period
-    "D401", # First line should be in imperative mood
-    "D404", # First word of docstring should not be this
-    "D413", # Missing blank line after last section
-    "D415", # First line should end with a period, question mark, or exclamation point
+  "D100", # Missing docstring in public module
+  "D101", # Missing docstring in public class
+  "D104", # Missing docstring in public package
+  "D105", # Missing docstring in magic method
+  "D203", # 1 blank line required before class docstring
+  "D205", # 1 blank line required between summary and description
+  "D210", # No whitespaces allowed surrounding docstring text
+  "D212", # Multi-line docstring summary should start at the first line
+  "D213", # Multi-line docstring summary should start at the second line
+  "D400", # First line should end with a period
+  "D401", # First line should be in imperative mood
+  "D404", # First word of docstring should not be this
+  "D413", # Missing blank line after last section
+  "D415", # First line should end with a period, question mark, or exclamation point
 ]
 
 [[tool.mypy.overrides]]
 module = [
-    "ConfigSpace.*",
-    "pandas.*",
-    "jahs_bench.*",
-    "yahpo_gym.*",
-    "pytest.*",
-    "yaml.*",
-    "pytest_cases.*",
-    "dehb.*",
-    "sklearn.*",
-    "scipy.*",
+  "ConfigSpace.*",
+  "pandas.*",
+  "jahs_bench.*",
+  "yahpo_gym.*",
+  "pytest.*",
+  "yaml.*",
+  "pytest_cases.*",
+  "dehb.*",
+  "sklearn.*",
+  "scipy.*",
+  "matplotlib.*",
 ]
 ignore_missing_imports = true
