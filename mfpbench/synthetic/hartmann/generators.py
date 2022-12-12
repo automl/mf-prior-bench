@@ -1,7 +1,8 @@
 """This module extends Hartmann functions to incorporate fidelities"""
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
+
 import warnings
 
 import numpy as np
@@ -50,6 +51,7 @@ class MFHartmannGenerator(ABC):
         self.noise = fidelity_noise
         self.random_state = np.random.default_rng(seed)
 
+    @abstractmethod
     def __call__(self, z: int, Xs: tuple[float, ...]) -> float:
         """
         Parameters

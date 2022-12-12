@@ -121,7 +121,7 @@ class PD1Benchmark(Benchmark[C, R, int]):
         assert self.start <= at <= self.end
 
         if isinstance(config, Configuration):
-            config = self.Config.from_dict({**config})
+            config = self.Config.from_dict({**config})  # type: ignore
 
         if isinstance(config, dict):
             config = self.Config.from_dict(config)
@@ -160,7 +160,7 @@ class PD1Benchmark(Benchmark[C, R, int]):
             The results over that trajectory
         """
         if isinstance(config, Configuration):
-            config = self.Config.from_dict({**config})
+            config = self.Config.from_dict({**config})  # type: ignore
 
         if isinstance(config, dict):
             config = self.Config.from_dict(config)
@@ -196,8 +196,8 @@ class PD1Benchmark(Benchmark[C, R, int]):
         return [
             self.Result.from_dict(
                 config=config,  # Our original config
-                fidelity=r[self.fidelity_name],  # Grab the rows fidelity
-                result=r[metrics],  # Grab the metrics
+                fidelity=r[self.fidelity_name],  # fidelity  # type: ignore
+                result=r[metrics],  # Grab the metrics  # type: ignore
             )
             for _, r in xs.iterrows()
         ]

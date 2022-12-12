@@ -9,11 +9,13 @@ Moreover, this works with any number of fidelitiy levels
 """
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Generic, TypeVar
+
+from pathlib import Path
 
 import numpy as np
 from ConfigSpace import Configuration, ConfigurationSpace, UniformFloatHyperparameter
+
 from mfpbench.benchmark import Benchmark
 from mfpbench.synthetic.hartmann.config import (
     MFHartmann3Config,

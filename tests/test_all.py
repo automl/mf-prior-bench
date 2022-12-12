@@ -21,7 +21,6 @@ from mfpbench import (
     MFHartmann6BenchmarkBad,
     MFHartmann6BenchmarkGood,
     MFHartmann6BenchmarkTerrible,
-    NB301Benchmark,
     PD1lm1b_transformer_2048,
     PD1translatewmt_xformer_64,
     PD1uniref50_transformer_128,

@@ -63,7 +63,7 @@ def space(seed: int | None) -> ConfigurationSpace:
                 lower=1,
                 upper=300,
                 default_value=100,
-            )
+            ),
         ]
     )
     return cs
