@@ -123,6 +123,9 @@ class Config(ABC, Mapping[str, Any]):
         ----
         Only supports yaml and json for now
         """
+        if not path.exists():
+            raise FileNotFoundError(f"File {path} does not exist")
+
         if path.suffix == "json":
             return cls.from_json(path)
         if path.suffix in ["yaml", "yml"]:

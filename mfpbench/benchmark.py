@@ -59,8 +59,12 @@ class Benchmark(Generic[C, R, F], ABC):
         if prior is not None:
             # It's a str, use as a key into available priors
             if isinstance(prior, str):
-                path = self._default_prior_dir / f"{self.basename}-{prior}.yaml"
-                self.prior = self.Config.from_file(path)
+                assumed_path = self._default_prior_dir / f"{self.basename}-{prior}.yaml"
+                if assumed_path.exists():
+                    self.prior = self.Config.from_file(assumed_path)
+                else:
+                    # Else we consider the prior to be a str reprsenting a Path
+                    self.prior = self.Config.from_file(Path(prior))
 
             elif isinstance(prior, Path):
                 self.prior = self.Config.from_file(prior)
