@@ -202,4 +202,8 @@ __all__ = [
     "copyright",
     "version",
     "get",
+    "JAHSBenchmark",
+    "YAHPOBenchmark",
+    "PD1Benchmark",
+    "MFHartmannBenchmark",
 ]

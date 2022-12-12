@@ -73,17 +73,17 @@ benchmarks = [
     BenchmarkTest(
         "lcbench",
         LCBenchBenchmark,
-        kwargs=dict(task_id=LCBenchBenchmark.instances[0]),
+        kwargs=dict(task_id=LCBenchBenchmark.instances[0]),  # type: ignore
     ),
     BenchmarkTest(
         "rbv2_aknn",
         RBV2aknnBenchmark,
-        kwargs=dict(task_id=RBV2aknnBenchmark.instances[0]),
+        kwargs=dict(task_id=RBV2aknnBenchmark.instances[0]),  # type: ignore
     ),
     BenchmarkTest(
         "iaml_glmnet",
         IAMLglmnetBenchmark,
-        kwargs=dict(task_id=IAMLglmnetBenchmark.instances[0]),
+        kwargs=dict(task_id=IAMLglmnetBenchmark.instances[0]),  # type: ignore
     ),
     #
     BenchmarkTest("lm1b_transformer_2048", PD1lm1b_transformer_2048),
@@ -304,11 +304,6 @@ def test_result_with_same_content_hashes_correctly(benchmark: Benchmark) -> None
         config=config,
         fidelity=result.fidelity,
         **result.dict(),
-    )
-    (
-        "longggggggggggggggggggggg",
-        "oooooooooooooooooooooooooooooooooooooooooothererre",
-        *(1, 2, 3, 4),
     )
 
     assert hash(result) == hash(new_result)
