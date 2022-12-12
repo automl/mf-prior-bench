@@ -139,6 +139,8 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         self,
         config: C | dict | Configuration,
         at: int | None = None,
+        *,
+        argmax: bool = False,
     ) -> MFHartmannResult[C]:
         """Submit a query and get a result
 
@@ -150,6 +152,10 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         at: int | None = None
             The fidelity at which to query, defaults to None which means *maximum*
 
+        argmax: bool = False
+            Whether to return the argmax up to the point `at`. Will be slower as it
+            has to get the entire trajectory. Uses the corresponding Result's score.
+
         Returns
         -------
         MFHartmannResult
@@ -157,6 +163,9 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         """
         at = at if at is not None else self.end
         assert self.start <= at <= self.end
+
+        if argmax:
+            return max(self.trajectory(config, to=at), key=lambda r: r.score)
 
         if isinstance(config, (Configuration, dict)):
             config = self.Config.from_dict(config)
@@ -217,8 +226,10 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         # We strip out the numerical part and sort by that
         Xs = tuple(query[s] for s in sorted(query, key=lambda k: int(k.split("_")[-1])))
 
-        fidelities = list(self.iter_fidelities())
-        results_fidelities = [(self.mfh(z=f, Xs=Xs), f) for f in fidelities]
+        results_fidelities = [
+            (self.mfh(z=f, Xs=Xs), f)
+            for f in self.iter_fidelities(frm=frm, to=to, step=step)
+        ]
 
         return [
             self.Result.from_dict(

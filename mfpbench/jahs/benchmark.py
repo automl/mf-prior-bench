@@ -49,7 +49,7 @@ class JAHSBenchmark(Benchmark, ABC):
         datadir: str | Path | None = None,
         seed: int | None = None,
         prior: str | Path | JAHSConfig | dict[str, Any] | Configuration | None = None,
-        **kwargs,
+        **kwargs: Any,  # pyright: ignore
     ):
         """
         Parameters
@@ -119,6 +119,8 @@ class JAHSBenchmark(Benchmark, ABC):
         self,
         config: JAHSConfig | dict[str, Any] | Configuration,
         at: int | None = None,
+        *,
+        argmax: bool = False,
     ) -> JAHSResult:
         """Query the results for a config
 
@@ -130,6 +132,10 @@ class JAHSBenchmark(Benchmark, ABC):
         at : int | None = None
             The epoch at which to query at, defaults to max (200) if left as None
 
+        argmax: bool = False
+            Whether to return the argmax up to the point `at`. Will be slower as it
+            has to get the entire trajectory. Uses the corresponding Result's `score`
+
         Returns
         -------
         JAHSResult
@@ -138,10 +144,13 @@ class JAHSBenchmark(Benchmark, ABC):
         at = at if at is not None else self.end
         assert self.start <= at <= self.end
 
+        if argmax:
+            return max(self.trajectory(config, to=at), key=lambda r: r.score)
+
         if isinstance(config, (Configuration, dict)):
             config = self.Config.from_dict(config)
 
-        assert isinstance(config, self.Config)
+        assert isinstance(config, JAHSConfig)
 
         query = config.dict()
 
@@ -188,7 +197,7 @@ class JAHSBenchmark(Benchmark, ABC):
         if isinstance(config, (Configuration, dict)):
             config = self.Config.from_dict(config)
 
-        assert isinstance(config, self.Config)
+        assert isinstance(config, JAHSConfig)
 
         query = config.dict()
 

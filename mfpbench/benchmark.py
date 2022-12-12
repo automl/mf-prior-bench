@@ -46,7 +46,7 @@ class Benchmark(Generic[C, R, F], ABC):
         self,
         seed: int | None = None,
         prior: str | Path | C | dict[str, Any] | Configuration | None = None,
-        **kwargs,
+        **kwargs: Any,  # pyright: ignore
     ):
         self.seed = seed
         self.start: F = self.fidelity_range[0]
@@ -134,7 +134,13 @@ class Benchmark(Generic[C, R, F], ABC):
         pass
 
     @abstractmethod
-    def query(self, config: C | dict | Configuration, at: F | None = None) -> R:
+    def query(
+        self,
+        config: C | dict | Configuration,
+        at: F | None = None,
+        *,
+        argmax: bool = False,
+    ) -> R:
         """Submit a query and get a result
 
         Parameters
@@ -144,6 +150,10 @@ class Benchmark(Generic[C, R, F], ABC):
 
         at: F | None = None
             The fidelity at which to query, defaults to None which means *maximum*
+
+        argmax: bool = False
+            Whether to return the argmax up to the point `at`. Will be slower as it
+            has to get the entire trajectory. Uses the corresponding Result's score.
 
         Returns
         -------

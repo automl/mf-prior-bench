@@ -101,6 +101,8 @@ class PD1Benchmark(Benchmark[C, R, int]):
         self,
         config: C | dict[str, Any] | Configuration,
         at: int | None = None,
+        *,
+        argmax: bool = False,
     ) -> R:
         """Query the results for a config
 
@@ -112,6 +114,10 @@ class PD1Benchmark(Benchmark[C, R, int]):
         at : int | None = None
             The epoch at which to query at, defaults to max (200) if left as None
 
+        argmax: bool = False
+            Whether to return the argmax up to the point `at`. Will be slower as it
+            has to get the entire trajectory. Uses the corresponding Result's score.
+
         Returns
         -------
         R
@@ -119,6 +125,9 @@ class PD1Benchmark(Benchmark[C, R, int]):
         """
         at = at if at is not None else self.end
         assert self.start <= at <= self.end
+
+        if argmax:
+            return max(self.trajectory(config, to=at), key=lambda r: r.score)
 
         if isinstance(config, Configuration):
             config = self.Config.from_dict({**config})  # type: ignore

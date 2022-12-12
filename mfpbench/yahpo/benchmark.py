@@ -51,7 +51,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
     def __init__(
         self,
-        task_id: str | None = None,
+        task_id: str,
         *,
         datadir: str | Path | None = None,
         seed: int | None = None,
@@ -108,7 +108,11 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         bench = yahpo_gym.BenchmarkSet(self.name, instance=task_id)
 
         # These can have one or two fidelities
-        space = bench.get_opt_space(drop_fidelity_params=True, seed=seed)
+        # NOTE: seed is allowed to be int | None
+        space = bench.get_opt_space(
+            drop_fidelity_params=True,
+            seed=seed,  # type: ignore
+        )
 
         if self._task_id_name is not None:
             space = remove_hyperparameter(self._task_id_name, space)
@@ -134,6 +138,8 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         self,
         config: C | dict[str, Any] | Configuration,
         at: F | None = None,
+        *,
+        argmax: bool = False,
     ) -> R:
         """Query the results for a config
 
@@ -145,6 +151,10 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         at : F | None = None
             The fidelity at which to query, defaults to None which means *maximum*
 
+        argmax: bool = False
+            Whether to return the argmax up to the point `at`. Will be slower as it
+            has to get the entire trajectory. Uses the corresponding Result's score.
+
         Returns
         -------
         R
@@ -152,6 +162,9 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         """
         at = at if at is not None else self.end
         assert self.start <= at <= self.end
+
+        if argmax:
+            return max(self.trajectory(config, to=at), key=lambda r: r.score)
 
         if isinstance(config, (Configuration, dict)):
             config = self.Config.from_dict(config)
@@ -168,7 +181,11 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
         query[self.fidelity_name] = at
 
-        results: list[dict] = self.bench.objective_function(query, seed=self.seed)
+        # NOTE: seed is allowed to be int | None
+        results: list[dict] = self.bench.objective_function(
+            query,
+            seed=self.seed,  # type: ignore
+        )
         result = results[0]
 
         return self.Result.from_dict(
@@ -225,7 +242,11 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             for f in self.iter_fidelities(frm=frm, to=to, step=step)
         ]
 
-        results = self.bench.objective_function(queries, seed=self.seed)
+        # NOTE: seed is allowed to be int | None
+        results: list[dict] = self.bench.objective_function(
+            queries,
+            seed=self.seed,  # type: ignore
+        )
 
         return [
             self.Result.from_dict(

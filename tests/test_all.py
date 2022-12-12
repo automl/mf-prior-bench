@@ -474,3 +474,27 @@ def test_prior_from_dict(item: BenchmarkTest) -> None:
     # The default configuration for the benchmark should be the same as the prior
     default = bench.space.get_default_configuration()
     assert default == random_config, f"{random_config}, {default}"
+
+
+@parametrize(item=benchmarks)
+def test_argmax_query(item: BenchmarkTest) -> None:
+    """
+    Expects
+    -------
+    * The argmax query return the best objective value found from the trajectory
+      up to a given fidelity.
+    """
+    params = item.unpack()
+    bench = mfpbench.get(**params)
+
+    # Get a random configuration
+    random_config = bench.sample()
+
+    # Get the argmax
+    argmax_config = bench.query(random_config, argmax=True)
+
+    # Get the trajectory
+    trajectory = bench.trajectory(random_config)
+    best_in_trajectory = max(trajectory, key=lambda x: x.score)
+
+    assert argmax_config == best_in_trajectory

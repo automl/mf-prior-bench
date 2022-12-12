@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Mapping, TypeVar
+from typing import Any, Iterator, Mapping, TypeVar
 
 import copy
 import json
@@ -17,7 +17,7 @@ SelfT = TypeVar("SelfT", bound="Config")
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
-class Config(ABC):
+class Config(ABC, Mapping[str, Any]):
     """A Config used to query a benchmark
 
     * Include all hyperparams
@@ -82,6 +82,15 @@ class Config(ABC):
             k: np.round(v, 10) if isinstance(v, float) else v for k, v in that.items()
         }
         return this == that
+
+    def __getitem__(self, key: str) -> Any:
+        return self.dict()[key]
+
+    def __len__(self) -> int:
+        return len(self.dict())
+
+    def __iter__(self) -> Iterator[str]:
+        return self.dict().__iter__()
 
     def set_as_default_prior(self, configspace: ConfigurationSpace) -> None:
         """Applies this configuration as a prior on a configspace
