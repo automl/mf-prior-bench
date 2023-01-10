@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterator
+from typing import Iterable, Iterator
 
 import mfpbench
 from mfpbench import Benchmark, MFHartmannBenchmark, YAHPOBenchmark
+from mfpbench.util import pairs
 
 
 def benchmarks(
@@ -34,6 +35,7 @@ def generate_priors(
     seed: int,
     nsamples: int,
     to: Path,
+    quantiles: Iterable[tuple[str, float]],
     prefix: str | None = None,
     fidelity: int | float | None = None,
     only: list[str] | None = None,
@@ -68,13 +70,24 @@ def generate_priors(
         configs = bench.sample(n=nsamples)
         results = [bench.query(config, at=at) for config in configs]
 
-        sorted_configs = sorted(results, key=lambda r: r.error)
+        # Sort the results, putting the best at the back to match up with
+        # the upper quantiles being better
+        sorted_results = sorted(results, key=lambda r: r.error, reverse=True)
 
-        good = sorted_configs[0]
-        medium = sorted_configs[len(sorted_configs) // 2]
-        bad = sorted_configs[-1]
+        # Sort quantiles by the value, so we can assert later that the actual
+        # results are what we expect
+        quantiles = sorted(quantiles, key=lambda q: q[1])
 
-        assert good.error <= medium.error <= bad.error
+        quantile_results = [
+            (name, sorted_results[int(nsamples * quantile)])
+            for name, quantile in quantiles
+        ]
+
+        # Make sure the ordered quartile results make sense, i.e.
+        # the result at quartile .1 should be worse than the one at .9
+        if len(quantiles) > 1:
+            for (_, better), (_, worse) in pairs(quantile_results):
+                assert better.error >= worse.error
 
         name_components = []
         if prefix is not None:
@@ -85,9 +98,8 @@ def generate_priors(
         name = "-".join(name_components)
 
         path_priors = [
-            (to / f"{name}-good.yaml", good.config),
-            (to / f"{name}-bad.yaml", bad.config),
-            (to / f"{name}-medium.yaml", medium.config),
+            (to / f"{name}-{prior_name}.yaml", result.config)
+            for prior_name, result in quantile_results
         ]
         for path, prior in path_priors:
             prior.save(path)
@@ -98,5 +110,7 @@ def generate_priors(
                 {f"X_{i}": x for i, x in enumerate(bench.Generator.optimum)}
             )
 
+            # Reserved keyword
+            assert not any("perfect" == q[0] for q in quantiles)
             path = to / f"{name}-perfect.yaml"
             optimum.save(path)

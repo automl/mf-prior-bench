@@ -56,6 +56,7 @@ class GeneratePriorsHandler(CommandHandler):
             only=args.only,
             exclude=args.exclude,
             clean=args.clean,
+            quantiles=args.quantiles,
         )
 
     @classmethod
@@ -94,6 +95,18 @@ class GeneratePriorsHandler(CommandHandler):
             type=float,
             required=False,
             help="The fidelity to evaluated at, defaults to max fidelity",
+        )
+        parser.add_argument(
+            "--quantiles",
+            type=self.prior_quantile,
+            nargs="+",
+            help="The quantiles to use for the priors with their name (name:quantile)",
+            default=[
+                ("really_good", 0.95),
+                ("good", 0.75),
+                ("bad", 0.25),
+                ("really_bad", 0.1),
+            ],
         )
         parser.add_argument(
             "--only",
