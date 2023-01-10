@@ -11,6 +11,7 @@ def benchmarks(
     seed: int,
     only: list[str] | None = None,
     exclude: list[str] | None = None,
+    conditional_spaces: bool = False,
 ) -> Iterator[Benchmark]:
     for name, cls in mfpbench._mapping.items():
         if only and not any(o in name for o in only):
@@ -19,7 +20,7 @@ def benchmarks(
         if exclude and any(e in name for e in exclude):
             continue
 
-        if cls.has_conditionals:
+        if cls.has_conditionals and not conditional_spaces:
             continue
 
         if issubclass(cls, YAHPOBenchmark) and cls.instances is not None:
