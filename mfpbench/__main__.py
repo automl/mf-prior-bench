@@ -79,7 +79,7 @@ class GeneratePriorsHandler(CommandHandler):
         parser = argparse.ArgumentParser(
             description="Generate priors for the benchmarks"
         )
-        parser.add_argument("--seed", type=int, default=1, help="The seed to use")
+        parser.add_argument("--seed", type=int, default=103_377, help="The seed to use")
         parser.add_argument(
             "--nsamples",
             type=int,
