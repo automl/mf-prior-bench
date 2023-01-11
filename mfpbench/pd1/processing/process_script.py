@@ -141,7 +141,7 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         if name == "uniref50":
             # For some reason the epochs of this datasets are basically [0, 0, 0, 1]
             # We just turn this into an incremental thing
-            epochs = dataset["epochs"]
+            epochs = dataset["epoch"]
             assert epochs is not None
             dataset["epoch"] = dataset["epoch"].apply(  # type: ignore
                 uniref50_epoch_convert
