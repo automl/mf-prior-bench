@@ -81,9 +81,11 @@ class GeneratePriorsHandler(CommandHandler):
         )
         parser.add_argument("--seed", type=int, default=1, help="The seed to use")
         parser.add_argument(
-            "--nsamples", type=int, default=10, help="The number of samples to generate"
+            "--nsamples",
+            type=int,
+            default=100,
+            help="The number of samples to generate",
         )
-        parser.add_argument("--good")
         parser.add_argument(
             "--prefix", type=str, help="The prefix to use for the generated prior file"
         )
