@@ -1,0 +1,14 @@
+Activation: Hardswish
+LearningRate: 0.6985172607708879
+N: 5
+Op1: 3
+Op2: 4
+Op3: 3
+Op4: 4
+Op5: 3
+Op6: 4
+Optimizer: SGD
+Resolution: 1.0
+TrivialAugment: false
+W: 16
+WeightDecay: 0.0014018984982045641
