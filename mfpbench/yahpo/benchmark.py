@@ -114,13 +114,23 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             seed=seed,  # type: ignore
         )
 
+
         if self._task_id_name is not None:
+            if self.has_conditionals:
+                raise NotImplementedError(
+                    f"{self.name} has conditionals, can't remove task_id from space"
+                )
+
             space = remove_hyperparameter(self._task_id_name, space)
 
         if self._forced_hps is not None:
             names = space.get_hyperparameter_names()
             for key in self._forced_hps:
                 if key in names:
+                    if self.has_conditionals:
+                        raise NotImplementedError(
+                            f"{self.name} has conditionals, can't remove task_id from space"
+                        )
                     space = remove_hyperparameter(key, space)
 
         self.bench = bench
