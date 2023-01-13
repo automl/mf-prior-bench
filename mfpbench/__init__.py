@@ -68,12 +68,10 @@ _mapping: dict[str, type[Benchmark]] = {
     "jahs_colorectal_histology": JAHSColorectalHistology,
     "jahs_fashion_mnist": JAHSFashionMNIST,
     # MFH
-    "mfh3": MFHartmann3Benchmark,
     "mfh3_terrible": MFHartmann3BenchmarkTerrible,
     "mfh3_bad": MFHartmann3BenchmarkBad,
     "mfh3_moderate": MFHartmann3BenchmarkModerate,
     "mfh3_good": MFHartmann3BenchmarkGood,
-    "mfh6": MFHartmann6Benchmark,
     "mfh6_terrible": MFHartmann6BenchmarkTerrible,
     "mfh6_bad": MFHartmann6BenchmarkBad,
     "mfh6_moderate": MFHartmann6BenchmarkModerate,

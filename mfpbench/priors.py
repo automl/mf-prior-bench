@@ -12,23 +12,36 @@ def benchmarks(
     seed: int,
     only: list[str] | None = None,
     exclude: list[str] | None = None,
-    conditional_spaces: bool = False,
+    conditional_spaces: bool = False,  # Note supported due to `remove_hyperparamter`
 ) -> Iterator[Benchmark]:
+
+    # A mapping from the indexable name to the argument name and cls
+    benches: dict[str, tuple[str, type[Benchmark]]] = {}
+
     for name, cls in mfpbench._mapping.items():
-        if only and not any(o in name for o in only):
+        if issubclass(cls, YAHPOBenchmark) and cls.instances is not None:
+            benches.update(
+                {f"{name}-{task_id}": (name, cls, task_id) for task_id in cls.instances}
+            )
+        else:
+            benches[name] = (name, cls, None)
+
+    for index_name, (benchmark_name, cls, task_id) in benches.items():
+        if only is not None and not any(index_name.startswith(o) for o in only):
             continue
 
-        if exclude and any(e in name for e in exclude):
+        if exclude is not None and any(index_name.startswith(e) for e in exclude):
             continue
 
         if cls.has_conditionals and not conditional_spaces:
             continue
 
-        if issubclass(cls, YAHPOBenchmark) and cls.instances is not None:
-            for task_id in cls.instances:
-                yield mfpbench.get(name=name, task_id=task_id, seed=seed)
+        if task_id is not None:
+            benchmark = mfpbench.get(name=benchmark_name, task_id=task_id, seed=seed)
         else:
-            yield mfpbench.get(name=name, seed=seed)
+            benchmark = mfpbench.get(name=benchmark_name, seed=seed)
+
+        yield benchmark
 
 
 def generate_priors(
@@ -40,20 +53,25 @@ def generate_priors(
     fidelity: int | float | None = None,
     only: list[str] | None = None,
     exclude: list[str] | None = None,
+    hartmann_perfect: bool = True,
     clean: bool = False,
 ) -> None:
     """Generate priors for a benchmark."""
     if to.exists() and clean:
         for child in filter(lambda path: path.is_file(), to.iterdir()):
             child.unlink()
+
     to.mkdir(exist_ok=True)
 
     for bench in benchmarks(seed=seed, only=only, exclude=exclude):
+        print("===", flush=True)
+        print(bench, flush=True)
+        print("---", flush=True)
         max_fidelity = bench.fidelity_range[1]
 
         # If a fidelity was specfied, then we need to make sure we can use it
         # as an int in a benchmark with an int fidelity, no accidental rounding.
-        if fidelity:
+        if fidelity is not None:
             if isinstance(max_fidelity, int) and isinstance(fidelity, float):
                 if fidelity.is_integer():
                     fidelity = int(fidelity)
@@ -86,8 +104,8 @@ def generate_priors(
         # Make sure the ordered quartile results make sense, i.e.
         # the result at quartile .1 should be worse than the one at .9
         if len(quantiles) > 1:
-            for (_, better), (_, worse) in pairs(quantile_results):
-                assert better.error >= worse.error
+            for (_, worse), (_, better) in pairs(quantile_results):
+                assert worse.error >= better.error
 
         name_components = []
         if prefix is not None:
@@ -105,12 +123,11 @@ def generate_priors(
             prior.save(path)
 
         # For Hartmann, we need to do some extra work
-        if isinstance(bench, MFHartmannBenchmark):
+        if hartmann_perfect and isinstance(bench, MFHartmannBenchmark):
             optimum = bench.Config.from_dict(
                 {f"X_{i}": x for i, x in enumerate(bench.Generator.optimum)}
             )
-
             # Reserved keyword
-            assert not any("perfect" == q[0] for q in quantiles)
+            assert not any(qname == "perfect" for qname, _ in quantiles)
             path = to / f"{name}-perfect.yaml"
             optimum.save(path)

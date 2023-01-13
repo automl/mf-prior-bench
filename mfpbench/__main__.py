@@ -57,6 +57,7 @@ class GeneratePriorsHandler(CommandHandler):
             exclude=args.exclude,
             clean=args.clean,
             quantiles=args.quantiles,
+            hartmann_perfect=not args.no_hartmann_perfect,
         )
 
     @classmethod
@@ -103,31 +104,29 @@ class GeneratePriorsHandler(CommandHandler):
             type=self.prior_quantile,
             nargs="+",
             help="The quantiles to use for the priors with their name (name:quantile)",
-            default=[
-                ("really_good", 0.95),
-                ("good", 0.75),
-                ("bad", 0.25),
-                ("really_bad", 0.1),
-            ],
+            default=[("good", 0.9), ("bad", 0.1)],
         )
         parser.add_argument(
             "--only",
             type=str,
             nargs="*",
-            choices=list(mfpbench._mapping),
             help="Only generate priors for these benchmarks",
         )
         parser.add_argument(
             "--exclude",
             type=str,
             nargs="*",
-            choices=list(mfpbench._mapping),
             help="Exclude benchmarks",
         )
         parser.add_argument(
             "--clean",
             action="store_true",
             help="Clean out any files in the directory first",
+        )
+        parser.add_argument(
+            "--no-hartmann-perfect",
+            action="store_true",
+            help="Whether to generate the hartmann perfect prior"
         )
         return parser
 
