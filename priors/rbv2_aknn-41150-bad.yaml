@@ -1,6 +1,6 @@
-M: 34
+M: 44
 distance: ip
-ef: 117
-ef_construction: 32
-k: 20
+ef: 64
+ef_construction: 408
+k: 44
 num.impute.selected.cpo: impute.median

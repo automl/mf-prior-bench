@@ -1,5 +1,5 @@
-cp: 0.012144998150315937
-maxdepth: 27
-minbucket: 54
-minsplit: 88
-num.impute.selected.cpo: impute.mean
+cp: 0.014362052012880377
+maxdepth: 28
+minbucket: 59
+minsplit: 97
+num.impute.selected.cpo: impute.hist

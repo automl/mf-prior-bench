@@ -1,6 +1,6 @@
-M: 48
+M: 39
 distance: l2
-ef: 49
-ef_construction: 66
-k: 40
-num.impute.selected.cpo: impute.mean
+ef: 73
+ef_construction: 33
+k: 41
+num.impute.selected.cpo: impute.median

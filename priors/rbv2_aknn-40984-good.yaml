@@ -1,6 +1,6 @@
-M: 24
+M: 50
 distance: l2
-ef: 238
-ef_construction: 96
-k: 17
+ef: 11
+ef_construction: 119
+k: 14
 num.impute.selected.cpo: impute.hist

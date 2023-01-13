@@ -1,3 +1,3 @@
-alpha: 0.48793181811094055
-num.impute.selected.cpo: impute.median
-s: 0.005819861692641727
+alpha: 0.6085625682783968
+num.impute.selected.cpo: impute.hist
+s: 0.006186734945779985
