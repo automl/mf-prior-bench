@@ -105,7 +105,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             )
         _ensure_yahpo_config_set(datadir)
 
-        bench = yahpo_gym.BenchmarkSet(self.name, instance=task_id)
+        bench = yahpo_gym.BenchmarkSet(self.name, instance=task_id, multithread=False)
 
         # These can have one or two fidelities
         # NOTE: seed is allowed to be int | None
