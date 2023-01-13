@@ -1,7 +1,7 @@
-batch_size: 75
-learning_rate: 0.03609128432244896
-max_dropout: 0.214908509728565
-max_units: 76
-momentum: 0.3568977154027215
-num_layers: 2
-weight_decay: 0.04153935626968983
+batch_size: 282
+learning_rate: 0.040934506009582226
+max_dropout: 0.17111591176527674
+max_units: 84
+momentum: 0.45431288278678905
+num_layers: 5
+weight_decay: 0.012345517594915941

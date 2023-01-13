@@ -1,4 +1,4 @@
-cp: 0.00014904259149588772
-maxdepth: 24
-minbucket: 39
-minsplit: 22
+cp: 0.001280261865530417
+maxdepth: 17
+minbucket: 18
+minsplit: 57

@@ -3,8 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, Iterator
 
+import numpy as np
+
 import mfpbench
 from mfpbench import Benchmark, MFHartmannBenchmark, YAHPOBenchmark
+from mfpbench.result import Result
 from mfpbench.util import pairs
 
 
@@ -64,9 +67,7 @@ def generate_priors(
     to.mkdir(exist_ok=True)
 
     for bench in benchmarks(seed=seed, only=only, exclude=exclude):
-        print("===", flush=True)
-        print(bench, flush=True)
-        print("---", flush=True)
+
         max_fidelity = bench.fidelity_range[1]
 
         # If a fidelity was specfied, then we need to make sure we can use it
@@ -87,25 +88,26 @@ def generate_priors(
 
         configs = bench.sample(n=nsamples)
         results = [bench.query(config, at=at) for config in configs]
+        results = sorted(results, key=lambda result: result.error)
 
-        # Sort the results, putting the best at the back to match up with
-        # the upper quantiles being better
-        sorted_results = sorted(results, key=lambda r: r.error, reverse=True)
+        errors = np.asarray([result.error for result in results])
+
+        def get_result(q: float) -> Result:
+            quantile_value = np.quantile(errors, q)
+            indices_below_quantile = np.argwhere(errors <= quantile_value).flatten()
+            selected = indices_below_quantile[-1]
+            return results[selected]
+
+        quantile_results = [(name, q, get_result(q)) for name, q in quantiles]
 
         # Sort quantiles by the value, so we can assert later that the actual
         # results are what we expect
-        quantiles = sorted(quantiles, key=lambda q: q[1])
-
-        quantile_results = [
-            (name, sorted_results[int(nsamples * quantile)])
-            for name, quantile in quantiles
-        ]
-
         # Make sure the ordered quartile results make sense, i.e.
         # the result at quartile .1 should be worse than the one at .9
+        quantile_results = sorted(quantile_results, key=lambda q: q[1])
         if len(quantiles) > 1:
-            for (_, worse), (_, better) in pairs(quantile_results):
-                assert worse.error >= better.error
+            for (_, _, better), (_, _, worse) in pairs(quantile_results):
+                assert better.error <= worse.error
 
         name_components = []
         if prefix is not None:
@@ -117,7 +119,7 @@ def generate_priors(
 
         path_priors = [
             (to / f"{name}-{prior_name}.yaml", result.config)
-            for prior_name, result in quantile_results
+            for prior_name, _, result in quantile_results
         ]
         for path, prior in path_priors:
             prior.save(path)
@@ -128,6 +130,6 @@ def generate_priors(
                 {f"X_{i}": x for i, x in enumerate(bench.Generator.optimum)}
             )
             # Reserved keyword
-            assert not any(qname == "perfect" for qname, _ in quantiles)
+            assert not any(qname == "perfect" for qname, _, _ in quantile_results)
             path = to / f"{name}-perfect.yaml"
             optimum.save(path)

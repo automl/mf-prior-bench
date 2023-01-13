@@ -1,6 +1,6 @@
-M: 50
-distance: l2
-ef: 12
-ef_construction: 27
-k: 45
-num.impute.selected.cpo: impute.mean
+M: 27
+distance: ip
+ef: 291
+ef_construction: 147
+k: 41
+num.impute.selected.cpo: impute.hist

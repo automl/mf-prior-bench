@@ -104,7 +104,7 @@ class GeneratePriorsHandler(CommandHandler):
             type=self.prior_quantile,
             nargs="+",
             help="The quantiles to use for the priors with their name (name:quantile)",
-            default=[("good", 0.9), ("bad", 0.1)],
+            default=[("good", 0.1), ("bad", 0.9)],
         )
         parser.add_argument(
             "--only",
