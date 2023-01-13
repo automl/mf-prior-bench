@@ -1,0 +1,6 @@
+M: 26
+distance: l2
+ef: 20
+ef_construction: 193
+k: 27
+num.impute.selected.cpo: impute.mean

@@ -1,0 +1,6 @@
+M: 40
+distance: cosine
+ef: 325
+ef_construction: 47
+k: 21
+num.impute.selected.cpo: impute.median
