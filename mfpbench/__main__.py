@@ -143,7 +143,7 @@ class GeneratePriorsHandler(CommandHandler):
                 "The (name:noise) of priors to generate from"
                 " the Hartmann benchmark's optimum"
             ),
-            default=[("good", 0.250)],
+            default=[("perfect-noisy0.25", 0.250)],
         )
         parser.add_argument(
             "--hartmann-perfect",
