@@ -57,7 +57,8 @@ class GeneratePriorsHandler(CommandHandler):
             exclude=args.exclude,
             clean=args.clean,
             quantiles=args.quantiles,
-            hartmann_perfect=not args.no_hartmann_perfect,
+            hartmann_perfect=args.hartmann_perfect,
+            hartmann_optimum_with_noise=args.hartmann_perfect_with_noise
         )
 
     @classmethod
@@ -74,6 +75,17 @@ class GeneratePriorsHandler(CommandHandler):
             raise ValueError(f"Quantile must be in [0, 1] in ({name}:{_quantile})")
 
         return name, _quantile
+
+    @classmethod
+    def hartmann_priors_noisy(cls, s: str) -> tuple[str, float]:
+        name, noise = s.split(":")
+        try:
+            _noise = float(noise)
+            return name, _noise
+        except ValueError as e:
+            raise TypeError(
+                f"Can't convert {noise} to float in ({name}:{noise})"
+            ) from e
 
     @property
     def parser(self) -> argparse.ArgumentParser:
@@ -124,9 +136,20 @@ class GeneratePriorsHandler(CommandHandler):
             help="Clean out any files in the directory first",
         )
         parser.add_argument(
-            "--no-hartmann-perfect",
+            "--hartmann-perfect-with-noise",
+            nargs="+",
+            type=self.hartmann_priors_noisy,
+            help=(
+                "The (name:noise) of priors to generate from"
+                " the Hartmann benchmark's optimum"
+            ),
+            default=[("good", 0.250)],
+        )
+        parser.add_argument(
+            "--hartmann-perfect",
             action="store_true",
-            help="Whether to generate the hartmann perfect prior"
+            help="Generate optimum of Hartmann benchmarks",
+            default=True,
         )
         return parser
 

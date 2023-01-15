@@ -99,7 +99,6 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
             fidelity_bias=self.bias,
             seed=self.seed,
         )
-
         # Create the configspace
         self._configspace = ConfigurationSpace(name=str(self), seed=self.seed)
         self._configspace.add_hyperparameters(
@@ -123,7 +122,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
                 # We iterate through the prior and add noise, clipping incase
                 new_prior = self.Config.from_dict(
                     {
-                        k: np.clip(v + n, a_min=0, a_max=1)
+                        k: float(np.clip(v + n, a_min=0, a_max=1))
                         for (k, v), n in zip(d.items(), noises)
                     }
                 )

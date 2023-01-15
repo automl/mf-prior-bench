@@ -127,7 +127,8 @@ class MFHartmann3(MFHartmannGenerator):
             rng = np.random.default_rng(seed=abs(self.seed * z * hash(Xs)))
 
         noise = np.abs(rng.normal(size=H.size)) * self.noise * (1 - log_z_scaled)
-        return (H + noise)[0]
+
+        return float((H + noise)[0])
 
 
 class MFHartmann6(MFHartmannGenerator):
@@ -192,4 +193,4 @@ class MFHartmann6(MFHartmannGenerator):
             rng = np.random.default_rng(seed=abs(self.seed * z * hash(Xs)))
 
         noise = np.abs(rng.normal(size=H.size)) * self.noise * (1 - log_z_scaled)
-        return (H + noise)[0]
+        return float((H + noise)[0])
