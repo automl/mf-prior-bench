@@ -30,7 +30,7 @@ class PD1cifar100_wideresnet_2048(PD1Benchmark):
     batchsize = 2048
     metrics = ("valid_error_rate", "train_cost")
 
-    fidelity_range = (25, 199, 1)
+    fidelity_range = (45, 199, 1)
 
     @classmethod
     def _create_space(cls, seed: int | None = None) -> ConfigurationSpace:
