@@ -171,7 +171,8 @@ if __name__ == "__main__":
         surrogate_dir.mkdir(exist_ok=True)
 
     datapath = pd1dir / f"{args.dataset}_surrogate.csv"
-    df = pd.read_csv(datapath)
+    df = pd.read_csv(datapath)  # type: ignore
+    assert isinstance(df, pd.DataFrame)
 
     if args.y not in df.columns:
         raise ValueError(f"Can't train for {args.y} for dataset {args.dataset}")
@@ -180,8 +181,12 @@ if __name__ == "__main__":
     valid_metrics = [m for m in metrics if m in df.columns]
 
     df = df.dropna()
+    assert isinstance(df, pd.DataFrame)
+
     X = df.drop(columns=valid_metrics)
     y = df[args.y]
+    assert isinstance(X, pd.DataFrame)
+    assert isinstance(y, pd.Series)
 
     xgboost_model = find_xgboost_surrogate(
         X=X,

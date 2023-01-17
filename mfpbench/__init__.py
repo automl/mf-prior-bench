@@ -14,6 +14,8 @@ from mfpbench.jahs import (
 )
 from mfpbench.pd1 import (
     PD1Benchmark,
+    PD1cifar100_wideresnet_2048,
+    PD1imagenet_resnet_512,
     PD1lm1b_transformer_2048,
     PD1translatewmt_xformer_64,
     PD1uniref50_transformer_128,
@@ -95,6 +97,8 @@ _mapping: dict[str, type[Benchmark]] = {
     "lm1b_transformer_2048": PD1lm1b_transformer_2048,
     "uniref50_transformer_128": PD1uniref50_transformer_128,
     "translatewmt_xformer_64": PD1translatewmt_xformer_64,
+    "cifar100_wideresnet_2048": PD1cifar100_wideresnet_2048,
+    "imagenet_resnet_512": PD1imagenet_resnet_512,
 }
 
 
@@ -203,4 +207,6 @@ __all__ = [
     "YAHPOBenchmark",
     "PD1Benchmark",
     "MFHartmannBenchmark",
+    "MFHartmann3Benchmark",
+    "MFHartmann6Benchmark",
 ]

@@ -77,21 +77,22 @@ class PD1Source(Source):
     def name(self) -> str:
         return "pd1-data"
 
+    @property
+    def tarpath(self) -> Path:
+        return self.path / "data.tar.gz"
+
     def download(self) -> None:
         self.download_rawdata()
         self.download_surrogates()
 
     def download_rawdata(self) -> None:
-        tarpath = self.path / "data.tar.gz"
 
         # Download the file
-        with urllib.request.urlopen(self.url) as response, open(tarpath, "wb") as f:
-            shutil.copyfileobj(response, f)
-
-        # We offload to a special file for doing all the processing of pd1 into datasets
-        from mfpbench.pd1.processing.process_script import process_pd1
-
-        process_pd1(tarball=tarpath)
+        if not self.tarpath.exists():
+            with urllib.request.urlopen(self.url) as response, open(
+                self.tarpath, "wb"
+            ) as f:
+                shutil.copyfileobj(response, f)
 
     def download_surrogates(self) -> None:
         surrogate_dir = self.path / "surrogates"
@@ -100,17 +101,26 @@ class PD1Source(Source):
 
         # Download the surrogates zip
         url = f"{self.surrogate_url}/{self.surrogate_version}/surrogates.zip"
-        with urllib.request.urlopen(url) as response, open(zip_path, "wb") as f:
-            shutil.copyfileobj(response, f)
+        if not zip_path.exists():
+            with urllib.request.urlopen(url) as response, open(zip_path, "wb") as f:
+                shutil.copyfileobj(response, f)
 
         with zipfile.ZipFile(zip_path, "r") as zip:
             zip.extractall(surrogate_dir)
 
 
-sources = {source.name: source for source in [YAHPOSource(), JAHSBenchSource()]}
+sources = {
+    source.name: source for source in [YAHPOSource(), JAHSBenchSource(), PD1Source()]
+}
 
 
-def download(datadir: Path | None = None, *, force: bool = False) -> None:
+def download(
+    datadir: Path | None = None,
+    *,
+    force: bool = False,
+    only: list[str] | None = None,
+    pd1_dev: bool = False,
+) -> None:
     root = datadir if datadir is not None else DATAROOT
     root.mkdir(exist_ok=True)
 
@@ -119,6 +129,10 @@ def download(datadir: Path | None = None, *, force: bool = False) -> None:
         JAHSBenchSource(root=root),
         PD1Source(root=root),
     ]
+    if only:
+        download_sources = [
+            source for source in download_sources if source.name in only
+        ]
 
     for source in download_sources:
         if source.exists() and force:
@@ -129,6 +143,13 @@ def download(datadir: Path | None = None, *, force: bool = False) -> None:
             source.download()
         else:
             pass
+
+        if pd1_dev and isinstance(source, PD1Source):
+            # We offload to a special file for doing all the processing
+            # of pd1 into datasets
+            from mfpbench.pd1.processing.process_script import process_pd1
+
+            process_pd1(tarball=source.tarpath)
 
         if not source.path.exists():
             raise RuntimeError(f"Something went wrong downloading {source}")

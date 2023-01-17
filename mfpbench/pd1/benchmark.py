@@ -75,6 +75,11 @@ class PD1Benchmark(Benchmark[C, R, int]):
         if self._surrogates is None:
             self._surrogates = {}
             for metric, path in self.surrogate_paths.items():
+                if not path.exists():
+                    raise FileNotFoundError(
+                        f"Can't find surrogate at {path}, have you run\n"
+                        f"`python -m mfpbench download`?"
+                    )
                 model = XGBRegressor()
                 model.load_model(path)
                 self._surrogates[metric] = model

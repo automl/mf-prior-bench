@@ -183,7 +183,7 @@ DATASET_NAMES = [
     "imagenet-resnet-512",
     "cifar10-wide_resnet-2048",
     "fashion_mnist-simple_cnn-2048",
-    "mnist-simple_cnn-256",
+    "mnist-simple_cnn-256 ",
     "uniref50-transformer-128",
     "cifar10-wide_resnet-256",
     "fashion_mnist-simple_cnn-256",

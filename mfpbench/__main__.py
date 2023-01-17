@@ -31,7 +31,9 @@ class CommandHandler(ABC):
 class DownloadHandler(CommandHandler):
     def __call__(self, args: argparse.Namespace) -> None:
         """Download the data."""
-        mfpbench.download.download(datadir=args.data_dir, force=args.force)
+        mfpbench.download.download(
+            datadir=args.data_dir, force=args.force, pd1_dev=args.pd1_dev
+        )
 
     @property
     def parser(self) -> argparse.ArgumentParser:
@@ -42,6 +44,16 @@ class DownloadHandler(CommandHandler):
             help="Force download and remove existing data",
         )
         parser.add_argument("--data-dir", type=str, help="Where to save the data")
+        parser.add_argument(
+            "--only",
+            type=str,
+            nargs="*",
+            choices=list(mfpbench.download.sources.keys()),
+            help="Only download these",
+        )
+        parser.add_argument(
+            "--pd1-dev", action="store_true", help="Download the pd1 dev data"
+        )
         return parser
 
 
@@ -58,7 +70,7 @@ class GeneratePriorsHandler(CommandHandler):
             clean=args.clean,
             quantiles=args.quantiles,
             hartmann_perfect=args.hartmann_perfect,
-            hartmann_optimum_with_noise=args.hartmann_perfect_with_noise
+            hartmann_optimum_with_noise=args.hartmann_perfect_with_noise,
         )
 
     @classmethod

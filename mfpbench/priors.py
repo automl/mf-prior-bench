@@ -19,7 +19,7 @@ def benchmarks(
 ) -> Iterator[Benchmark]:
 
     # A mapping from the indexable name to the argument name and cls
-    benches: dict[str, tuple[str, type[Benchmark]]] = {}
+    benches: dict[str, tuple[str, type[Benchmark], str | None]] = {}
 
     for name, cls in mfpbench._mapping.items():
         if issubclass(cls, YAHPOBenchmark) and cls.instances is not None:
@@ -93,20 +93,22 @@ def generate_priors(
 
         errors = np.asarray([result.error for result in results])
 
-        def get_result(q: float) -> Result:
-            quantile_value = np.quantile(errors, q)
-            indices_below_quantile = np.argwhere(errors <= quantile_value).flatten()
+        def get_result(q: float, _errors: np.ndarray, _results: list[Result]) -> Result:
+            quantile_value = np.quantile(_errors, q)
+            indices_below_quantile = np.argwhere(_errors <= quantile_value).flatten()
             selected = indices_below_quantile[-1]
-            return results[selected]
+            return _results[selected]
 
-        quantile_results = [(name, q, get_result(q)) for name, q in quantiles]
+        quantile_results = [
+            (name, q, get_result(q, errors, results)) for name, q in quantiles
+        ]
 
         # Sort quantiles by the value, so we can assert later that the actual
         # results are what we expect
         # Make sure the ordered quartile results make sense, i.e.
         # the result at quartile .1 should be worse than the one at .9
         quantile_results = sorted(quantile_results, key=lambda q: q[1])
-        if len(quantiles) > 1:
+        if len(quantile_results) > 1:
             for (_, _, better), (_, _, worse) in pairs(quantile_results):
                 assert better.error <= worse.error
 

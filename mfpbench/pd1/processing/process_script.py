@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import logging
 import shutil
 from dataclasses import dataclass
 from itertools import accumulate, product
@@ -13,8 +14,17 @@ import pandas as pd
 
 from mfpbench.pd1.processing.columns import COLUMNS
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def safe_accumulate(x: Iterator[float | None], fill: float = np.inf) -> Iterator[float]:
+
+def safe_accumulate(
+    x: Iterator[float | None] | float, fill: float = np.nan
+) -> Iterator[float]:
+    """Accumulate, but fill in missing values with a default value."""
+    if isinstance(x, float):
+        return iter([fill if np.isnan(x) else x])
+
     itr = iter(f if f is not None else fill for f in x)
     return accumulate(itr)
 
@@ -62,10 +72,45 @@ class Datapack:
         if not frm.exists():
             raise FileNotFoundError(f"No archive found at {frm}")
 
-        with gzip.open(frm, mode="rt") as f:
-            data = [json.loads(line) for line in f]
+        if not self.unpacked_path.exists():
+            logger.info(f"Unpacking from {frm}")
+            with gzip.open(frm, mode="rt") as f:
+                data = [json.loads(line) for line in f]
+            unpacked = pd.DataFrame(data)
 
-        return pd.DataFrame(data)
+            logger.info(f"Saving to {self.unpacked_path}")
+            unpacked.to_csv(
+                self.unpacked_path,
+                index=False,
+            )
+        else:
+            logger.info(f"Unpacking from {frm}")
+            unpacked = pd.read_csv(self.unpacked_path)
+            assert isinstance(unpacked, pd.DataFrame)
+            columns = {col.name: col for col in COLUMNS}
+
+            # Convert a string representing a list to a
+            # real list of the contained objects using json.loads
+            list_columns = [
+                col
+                for col in unpacked.columns
+                if col in columns and columns[col].type is list
+            ]
+            for c in list_columns:
+                unpacked[c] = [
+                    json.loads(val.replace("None", "null"))
+                    if isinstance(val, str)
+                    else val
+                    for _, val in unpacked[c].items()  # type: ignore
+                ]
+
+            assert isinstance(unpacked, pd.DataFrame)
+
+        return unpacked
+
+    @property
+    def unpacked_path(self) -> Path:
+        return self.dir / f"{self.rawname}_unpacked.csv"
 
 
 def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
@@ -83,18 +128,20 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         rawdir.mkdir(exist_ok=True)
 
         # Unpack it to the rawdir
-        shutil.unpack_archive(tarball, rawdir)
+        readme_path = rawdir / "README.txt"
+        if not readme_path.exists():
+            shutil.unpack_archive(tarball, rawdir)
 
-        unpacked_folder_name = "pd1"  # This is what the tarball will unpack into
-        unpacked_folder = rawdir / unpacked_folder_name
+            unpacked_folder_name = "pd1"  # This is what the tarball will unpack into
+            unpacked_folder = rawdir / unpacked_folder_name
 
-        # Move everything from the uncpack folder to the "raw" folder
-        for filepath in unpacked_folder.iterdir():
-            to = rawdir / filepath.name
-            shutil.move(str(filepath), str(to))
+            # Move everything from the uncpack folder to the "raw" folder
+            for filepath in unpacked_folder.iterdir():
+                to = rawdir / filepath.name
+                shutil.move(str(filepath), str(to))
 
-        # Remove the archive folder, its all been moved to "raw"
-        shutil.rmtree(str(unpacked_folder))
+            # Remove the archive folder, its all been moved to "raw"
+            shutil.rmtree(str(unpacked_folder))
 
     # For processing the df
     drop_columns = [c.name for c in COLUMNS if not c.keep]
@@ -131,6 +178,7 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
     groups = full_df.groupby(dataset_columns)
     for (name, model, batchsize), dataset in groups:  # type: ignore
         fname = f"{name}-{model}-{batchsize}"
+        logger.info(fname)
 
         if name in transformer_datasets:
             explode_columns = [c for c in list_columns if c != "test_error_rate"]
@@ -147,23 +195,78 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
                 uniref50_epoch_convert
             )
 
+        # Make sure train_cost rows are all of equal length
         dataset["train_cost"] = [
-            None if r is None else list(safe_accumulate(r, fill=np.inf))
+            np.nan if r in (None, np.nan) else list(safe_accumulate(r, fill=np.nan))
             for r in dataset["train_cost"]  # type: ignore
         ]
 
+        # Explode out the lists in the entires of the datamframe to be a single long
+        # dataframe with each element of that list on its own row
         dataset = dataset.explode(explode_columns, ignore_index=True)
+        logger.info(f"{len(dataset)} rows")
+        assert isinstance(dataset, pd.DataFrame)
 
-        if name == "translate_wmt":
-            pass
+        # Remove any rows that have a nan in the exploded columns
+        nan_rows = dataset["train_cost"].isna()
+        logger.info(f" - len(nan_rows) {sum(nan_rows)}")
 
-        if name == "lm1b":
+        logger.debug(f"Removing rows with nan in {explode_columns}")
+        dataset = dataset[~nan_rows]  # type: ignore
+        assert isinstance(dataset, pd.DataFrame)
+
+        logger.info(f"{len(dataset)} rows (after nan removal)")
+
+        if fname == "lm1b-transformer-2048":
             # Some train costs go obsenly high for no reason, we drop these rows
             dataset = dataset[dataset["train_cost"] < 10_000]  # type: ignore
-        elif name == "uniref50":
+
+        elif fname == "uniref50-transformer-128":
             # Some train costs go obsenly high for no reason, we drop these rows
             # Almost all are below 400 but we add a buffer
             dataset = dataset[dataset["train_cost"] < 4_000]  # type: ignore
+
+        elif fname == "imagenet-resnet-512":
+            # We drop all configs that exceed the 0.95 quantile in their max train_cost
+            # as we consider this to be a diverging config. The surrogate will smooth
+            # out these configs as it is not aware of divergence
+            # NOTE: q95 was experimentally determined so as to not remove too many
+            # configs but remove configs which would create massive gaps in "train_cost"
+            # which would cause optimization of the surrogate to focus too much on
+            # minimizing it's loss for outliers
+            hp_names = ["lr_decay_factor", "lr_initial", "lr_power", "opt_momentum"]
+            maxes = [
+                v["train_cost"].max()  # type: ignore
+                for _, v in dataset.groupby(hp_names)
+            ]
+            q95 = np.quantile(maxes, 0.95)
+            configs_who_dont_exceed_q95 = (
+                v
+                for _, v in dataset.groupby(hp_names)
+                if v["train_cost"].max() < q95  # type: ignore
+            )
+            dataset = pd.concat(configs_who_dont_exceed_q95, axis=0)
+
+        elif fname == "cifar100-wide_resnet-2048":
+            # We drop all configs that exceed the 0.95 quantile in their max train_cost
+            # as we consider this to be a diverging config. The surrogate will smooth
+            # out these configs as it is not aware of divergence
+            # NOTE: q93 was experimentally determined so as to not remove too many
+            # configs but remove configs which would create massive gaps in
+            # "train_cost" which would cause optimization of the surrogate to
+            # focus too much on minimizing it's loss for outliers
+            hp_names = ["lr_decay_factor", "lr_initial", "lr_power", "opt_momentum"]
+            maxes = [
+                v["train_cost"].max()  # type: ignore
+                for _, v in dataset.groupby(hp_names)
+            ]
+            q93 = np.quantile(maxes, 0.93)
+            configs_who_dont_exceed_q93 = (
+                v
+                for _, v in dataset.groupby(hp_names)
+                if v["train_cost"].max() < q93  # type: ignore
+            )
+            dataset = pd.concat(configs_who_dont_exceed_q93, axis=0)
 
         # We want to write the full mixed {phase,matched} for surrogate training while
         # only keeping matched phase 1 data for tabular.
@@ -205,8 +308,6 @@ def process_pd1(tarball: Path, handle_nans: bool = False) -> None:
         else:
             hps = list(hps)
 
-        dataset = dataset.dropna()  # type: ignore
-
         dataset = dataset.drop_duplicates(hps + ["epoch"], keep="last")  # type: ignore
 
         # The rest can be used for surrogate training
@@ -222,17 +323,13 @@ if __name__ == "__main__":
     DATADIR = HERE.parent.parent.parent / "data" / "pd1-data"
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-dir")
+    parser.add_argument(
+        "--data-dir", type=Path, default=DATADIR, help="Where the data directory is"
+    )
     args = parser.parse_args()
 
-    datadir = args.data_dir if args.data_dir else DATADIR
-    tarball = datadir / "data.tar.gz"
-    process_pd1(tarball)
-
     # Print class names
-    """
-    print("Dataset names")
-    for f in DATADIR.iterdir():
+    for f in args.datadir.iterdir():
         if (
             f.suffix == ".csv"
             and "_matched" in str(f)
@@ -243,5 +340,6 @@ if __name__ == "__main__":
             batchsize, *_ = rest.split("_")
             dataset = dataset.replace("_", " ").title().replace(" ", "")
             model = model.replace("_", " ").title().replace(" ", "")
-            print(f"PD1Tabular_{dataset}_{model}_{batchsize}")
-    """
+
+    tarball = args.data_dir / "data.tar.gz"
+    process_pd1(tarball)
