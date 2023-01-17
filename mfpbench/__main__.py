@@ -43,7 +43,12 @@ class DownloadHandler(CommandHandler):
             action="store_true",
             help="Force download and remove existing data",
         )
-        parser.add_argument("--data-dir", type=str, help="Where to save the data")
+        parser.add_argument(
+            "--data-dir",
+            default=mfpbench.download.DATAROOT,
+            type=Path,
+            help="Where to save the data",
+        )
         parser.add_argument(
             "--only",
             type=str,
