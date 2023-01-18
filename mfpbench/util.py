@@ -7,6 +7,15 @@ from typing import Callable, Iterable, Iterator, Mapping, TypeVar
 
 import numpy as np
 from ConfigSpace import ConfigurationSpace
+from ConfigSpace.hyperparameters import (
+    CategoricalHyperparameter,
+    Constant,
+    NormalFloatHyperparameter,
+    NormalIntegerHyperparameter,
+    OrdinalHyperparameter,
+    UniformFloatHyperparameter,
+    UniformIntegerHyperparameter,
+)
 
 T = TypeVar("T")
 
@@ -144,3 +153,91 @@ K2 = TypeVar("K2")
 def rename(d: Mapping[K1, V], keys: Mapping[K1, K2]) -> dict[K1 | K2, V]:
     """Rename keys of a dictionary based on a set of keys to update."""
     return {keys.get(k1, k1): v for k1, v in d.items()}
+
+
+ValueT = TypeVar("ValueT", float, int, str)
+
+
+def perturb(
+    value: ValueT,
+    hp: (
+        Constant
+        | UniformIntegerHyperparameter
+        | UniformFloatHyperparameter
+        | NormalIntegerHyperparameter
+        | NormalFloatHyperparameter
+        | CategoricalHyperparameter
+        | OrdinalHyperparameter
+    ),
+    std: float,
+    seed: int | np.random.RandomState | None = None,
+) -> ValueT:
+    assert 0 <= std <= 1, "Noise must be between 0 and 1"
+    rng: np.random.RandomState
+    if seed is None:
+        rng = np.random.RandomState()
+    elif isinstance(seed, int):
+        rng = np.random.RandomState(seed)
+    else:
+        rng = seed
+
+    if isinstance(hp, Constant):
+        return value
+
+    if isinstance(hp, (UniformIntegerHyperparameter, UniformFloatHyperparameter)):
+        transformed_value = hp._inverse_transform(np.asarray([value]))[0]
+        neighbors = hp.get_neighbors(
+            transformed_value, rs=rng, number=1, transform=True, std=std
+        )
+        return neighbors[0]
+
+    if isinstance(hp, (NormalIntegerHyperparameter, NormalFloatHyperparameter)):
+        # TODO: https://github.com/automl/ConfigSpace/issues/287
+        # Doesn't act as intended
+        assert hp.upper is not None and hp.lower is not None
+        assert isinstance(value, (int, float))
+
+        # _lower, _higher are logged if it is a log var
+        space_length = std * (hp._upper - hp._lower)
+        rescaled_std = std * space_length
+        sample = np.clip(rng.normal(value, rescaled_std), hp._lower, hp._upper)
+
+        if hp.log:
+            sample = np.clip(np.exp(sample), hp.lower, hp.upper)
+
+        if isinstance(value, int):
+            return int(np.rint(sample))
+        elif isinstance(value, float):
+            return float(sample)
+        else:
+            raise RuntimeError("Please report to github, shouldn't get here")
+
+        # if isinstance(hp, (BetaIntegerHyperparameter, BetaFloatHyperparameter)):
+        # TODO
+        # raise NotImplementedError(
+        # "BetaIntegerHyperparameter, BetaFloatHyperparameter not implemented"
+        # )
+
+    if isinstance(hp, CategoricalHyperparameter):
+        # We basically with (1 - std) choose the same value, otherwise uniformly select
+        # at random
+        if rng.uniform() < 1 - std:
+            return value
+
+        choices = set(hp.choices) - {value}
+        return rng.choice(list(choices))
+
+    if isinstance(hp, OrdinalHyperparameter):
+        # We build a normal centered at the value
+        if rng.uniform() < 1 - std:
+            return value
+
+        # [0, 1,  2, 3]
+        #       ^  mean
+        index_value = hp.sequence.index(value)
+        index_std = std * len(hp.sequence)
+        normal_value = rng.normal(index_value, index_std)
+        index = int(np.rint(np.clip(normal_value, 0, len(hp.sequence))))
+        return hp.sequence[index]
+
+    raise ValueError(f"Can't perturb {hp}")

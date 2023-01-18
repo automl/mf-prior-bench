@@ -72,37 +72,47 @@ class GeneratePriorsHandler(CommandHandler):
             fidelity=args.fidelity,
             only=args.only,
             exclude=args.exclude,
+            prior_spec=args.priors,
             clean=args.clean,
-            quantiles=args.quantiles,
-            hartmann_perfect=args.hartmann_perfect,
-            hartmann_optimum_with_noise=args.hartmann_perfect_with_noise,
+            use_hartmann_optimum=args.use_hartmann_optimum,
         )
 
     @classmethod
-    def prior_quantile(cls, s: str) -> tuple[str, float]:
-        name, quantile = s.split(":")
+    def parse_prior(cls, s: str) -> tuple[str, int, float | None, float | None]:
+        name, index, noise, categorical_swap_chance = s.split(":")
         try:
-            _quantile = float(quantile)
+            _index = int(index)
         except ValueError as e:
-            raise TypeError(
-                f"Can't convert {quantile} to float in ({name}:{quantile})"
-            ) from e
+            raise ValueError(f"Invalid index {index}") from e
 
-        if not (0 <= _quantile <= 1):
-            raise ValueError(f"Quantile must be in [0, 1] in ({name}:{_quantile})")
+        if noise in ("None", "0", "0.0", "0.00"):
+            _noise = None
+        else:
+            try:
+                _noise = float(noise)
+                if not (0 <= _noise <= 1):
+                    raise ValueError(f"noise must be in [0, 1] in ({name}:{_noise})")
+            except ValueError as e:
+                raise TypeError(
+                    f"Can't convert {noise} to float in ({name}:{noise})"
+                ) from e
 
-        return name, _quantile
+        if categorical_swap_chance in ("None", "0", "0.0", "0.00"):
+            _categorical_swap_chance = None
+        else:
+            try:
+                _categorical_swap_chance = float(categorical_swap_chance)
+                if not (0 <= _categorical_swap_chance <= 1):
+                    raise ValueError(
+                        f"categorical_swap_chance must be in [0, 1] in ({s})"
+                    )
+            except ValueError as e:
+                raise TypeError(
+                    f"Can't convert categorical_swap_chance ({categorical_swap_chance})"
+                    f" to float in ({s})"
+                ) from e
 
-    @classmethod
-    def hartmann_priors_noisy(cls, s: str) -> tuple[str, float]:
-        name, noise = s.split(":")
-        try:
-            _noise = float(noise)
-            return name, _noise
-        except ValueError as e:
-            raise TypeError(
-                f"Can't convert {noise} to float in ({name}:{noise})"
-            ) from e
+        return name, _index, _noise, _categorical_swap_chance
 
     @property
     def parser(self) -> argparse.ArgumentParser:
@@ -113,7 +123,7 @@ class GeneratePriorsHandler(CommandHandler):
         parser.add_argument(
             "--nsamples",
             type=int,
-            default=100,
+            default=1_000_000,
             help="The number of samples to generate",
         )
         parser.add_argument(
@@ -129,11 +139,17 @@ class GeneratePriorsHandler(CommandHandler):
             help="The fidelity to evaluated at, defaults to max fidelity",
         )
         parser.add_argument(
-            "--quantiles",
-            type=self.prior_quantile,
+            "--priors",
+            type=self.parse_prior,
             nargs="+",
-            help="The quantiles to use for the priors with their name (name:quantile)",
-            default=[("good", 0.1), ("bad", 0.9)],
+            help=(
+                "The <priorname>:<index>:<std>:<categorical_swap_chance>"
+                " of the priors to generate. You can use python's negative"
+                " indexing to index from the end. If a value for std or"
+                " categorical_swap_chance is 0 or None, then it will not"
+                " be used. However it must be specified."
+            ),
+            default=[("good", 0, 0.01, None), ("bad", -1, None, None)],
         )
         parser.add_argument(
             "--only",
@@ -153,21 +169,11 @@ class GeneratePriorsHandler(CommandHandler):
             help="Clean out any files in the directory first",
         )
         parser.add_argument(
-            "--hartmann-perfect-with-noise",
-            nargs="+",
-            type=self.hartmann_priors_noisy,
-            help=(
-                "The (name:noise) of priors to generate from"
-                " the Hartmann benchmark's optimum"
-            ),
-            default=[("perfect-noisy0.25", 0.250)],
+            "--use-hartmann-optimum",
+            type=str,
+            required=False,
         )
-        parser.add_argument(
-            "--hartmann-perfect",
-            action="store_true",
-            help="Generate optimum of Hartmann benchmarks",
-            default=True,
-        )
+
         return parser
 
 

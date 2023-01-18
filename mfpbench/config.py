@@ -9,7 +9,14 @@ from typing import Any, Iterator, Mapping, TypeVar
 
 import numpy as np
 import yaml
-from ConfigSpace import Configuration, ConfigurationSpace, Constant
+from ConfigSpace import (
+    CategoricalHyperparameter,
+    Configuration,
+    ConfigurationSpace,
+    Constant,
+)
+
+from mfpbench.util import perturb
 
 # Just so `def copy(...)` can give back the correct type
 SelfT = TypeVar("SelfT", bound="Config")
@@ -51,6 +58,54 @@ class Config(ABC, Mapping[str, Any]):
     def copy(self: SelfT, **kwargs: Any) -> SelfT:
         """Copy this config and mutate it if needed."""
         return self.mutate(self, **kwargs)
+
+    def perturb(
+        self,
+        space: ConfigurationSpace,
+        *,
+        seed: int | np.random.RandomState | None = None,
+        std: float | None = None,
+        categorical_swap_chance: float | None = None,
+    ) -> Config:
+        """Perturb this config.
+
+        Add gaussian noise to each hyperparameter. The mean is centered at
+        the current config.
+
+        Parameters
+        ----------
+        space: ConfigurationSpace
+            The space to perturb in
+
+        seed: int | np.random.RandomState | None = None
+            The seed to use for the perturbation
+
+        std: float | None = None
+            A value in [0, 1] representing the fraction of the hyperparameter range
+            to use as the std. If None, will use keep the current value
+
+        categorical_swap_chance: float | None = None
+            The probability that a categorical hyperparameter will be changed
+            If None, will use keep the current value
+
+        Returns
+        -------
+        config: Config
+            The perturbed config
+        """
+        new_values: dict = {}
+        for name, value in self.items():
+            hp = space[name]
+            if isinstance(hp, CategoricalHyperparameter) and categorical_swap_chance:
+                new_value = perturb(value, hp, seed=seed, std=categorical_swap_chance)
+            elif not isinstance(hp, CategoricalHyperparameter) and std:
+                new_value = perturb(value, hp, seed=seed, std=std)
+            else:
+                new_value = value
+
+            new_values[name] = new_value
+
+        return self.__class__.from_dict(new_values)
 
     @abstractmethod
     def validate(self) -> None:

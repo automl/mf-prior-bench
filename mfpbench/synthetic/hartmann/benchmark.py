@@ -250,6 +250,11 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
     def space(self) -> ConfigurationSpace:
         return self._configspace
 
+    @property
+    def optimum(self) -> C:
+        optimum = {f"X_{i}": x for i, x in enumerate(self.Generator.optimum)}
+        return self.Config.from_dict(optimum)
+
     def __repr__(self) -> str:
         params = f"bias={self.bias}, noise={self.noise}, prior={self._prior_arg}"
         return f"{self.__class__.__name__}({params})"

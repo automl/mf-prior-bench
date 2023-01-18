@@ -52,10 +52,13 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=["tests"]),
     python_requires=">=3.7",
     install_requires=[
-        "numpy",
+        "tqdm",
+        "pyyaml",
+        "numpy>=1.0.0",
         # We need to hardlock the benchmarks to provide consistency
         "yahpo-gym==1.0.1",
-        "jahs_bench @ git+https://github.com/automl/jahs_bench_201.git@c1e92dd92a0c4906575c4e3e4ee9e7420efca5f1#egg=jahs_bench",  # noqa
+        "jahs_bench @ git+https://github.com/automl/jahs_bench_201.git@880fbcb35a83df7b6c02440a6c13adb921f54657#egg=jahs_bench",  # noqa
+        "xgboost>=1.0.0",
     ],
     extras_require=extras_require,
     test_suite="pytest",

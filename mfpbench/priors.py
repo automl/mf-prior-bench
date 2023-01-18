@@ -3,12 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, Iterator
 
-import numpy as np
+from tqdm import tqdm
 
 import mfpbench
 from mfpbench import Benchmark, MFHartmannBenchmark, YAHPOBenchmark
 from mfpbench.result import Result
-from mfpbench.util import pairs
 
 
 def benchmarks(
@@ -51,13 +50,12 @@ def generate_priors(
     seed: int,
     nsamples: int,
     to: Path,
-    quantiles: Iterable[tuple[str, float]],
+    prior_spec: Iterable[tuple[str, int, float | None, float | None]],
     prefix: str | None = None,
     fidelity: int | float | None = None,
     only: list[str] | None = None,
     exclude: list[str] | None = None,
-    hartmann_perfect: bool = True,
-    hartmann_optimum_with_noise: Iterable[tuple[str, float]] | None = None,
+    use_hartmann_optimum: str | None = None,
     clean: bool = False,
 ) -> None:
     """Generate priors for a benchmark."""
@@ -66,6 +64,7 @@ def generate_priors(
             child.unlink()
 
     to.mkdir(exist_ok=True)
+    prior_spec = list(prior_spec)
 
     for bench in benchmarks(seed=seed, only=only, exclude=exclude):
 
@@ -87,30 +86,39 @@ def generate_priors(
         else:
             at = max_fidelity
 
-        configs = bench.sample(n=nsamples)
-        results = [bench.query(config, at=at) for config in configs]
-        results = sorted(results, key=lambda result: result.error)
+        results: list[Result] = []
+        for _ in tqdm(range(nsamples), desc=f"Evaluating {bench.basename}"):
+            config = bench.sample()
+            result = bench.query(config, at=at)
+            results.append(result)
 
-        errors = np.asarray([result.error for result in results])
+        results = sorted(results, key=lambda r: r.error)
 
-        def get_result(q: float, _errors: np.ndarray, _results: list[Result]) -> Result:
-            quantile_value = np.quantile(_errors, q)
-            indices_below_quantile = np.argwhere(_errors <= quantile_value).flatten()
-            selected = indices_below_quantile[-1]
-            return _results[selected]
+        # Take out the results as specified by the prior and store the perturbations
+        # to make, if any.
+        prior_configs = {
+            name: (results[index].config, std, categorical_swap_chance)
+            for name, index, std, categorical_swap_chance in prior_spec
+        }
 
-        quantile_results = [
-            (name, q, get_result(q, errors, results)) for name, q in quantiles
-        ]
+        # Inject hartmann optimum in if specified
+        if use_hartmann_optimum is not None and isinstance(bench, MFHartmannBenchmark):
+            if use_hartmann_optimum not in prior_configs:
+                raise ValueError(f"Prior '{use_hartmann_optimum}' not found in priors.")
 
-        # Sort quantiles by the value, so we can assert later that the actual
-        # results are what we expect
-        # Make sure the ordered quartile results make sense, i.e.
-        # the result at quartile .1 should be worse than the one at .9
-        quantile_results = sorted(quantile_results, key=lambda q: q[1])
-        if len(quantile_results) > 1:
-            for (_, _, better), (_, _, worse) in pairs(quantile_results):
-                assert better.error <= worse.error
+            prior_configs[use_hartmann_optimum] = bench.optimum
+
+        # Perturb each of the configs as specified to make the offset priors
+        space = bench.space
+        priors = {
+            name: config.perturb(
+                space,
+                seed=seed,
+                std=std,
+                categorical_swap_chance=categorical_swap_chance,
+            )
+            for name, (config, std, categorical_swap_chance) in prior_configs.items()
+        }
 
         name_components = []
         if prefix is not None:
@@ -121,45 +129,8 @@ def generate_priors(
         name = "-".join(name_components)
 
         path_priors = [
-            (to / f"{name}-{prior_name}.yaml", result.config)
-            for prior_name, _, result in quantile_results
+            (to / f"{name}-{prior_name}.yaml", prior_config)
+            for prior_name, prior_config in priors.items()
         ]
         for path, prior in path_priors:
             prior.save(path)
-
-        # For Hartmann, we need to do some extra work for optimum
-        if hartmann_perfect and isinstance(bench, MFHartmannBenchmark):
-            # Reserved keyword
-            assert not any(qname == "perfect" for qname, _, _ in quantile_results)
-            optimum = bench.Config.from_dict(
-                {f"X_{i}": x for i, x in enumerate(bench.Generator.optimum)}
-            )
-            # Generate a perfect prior, the prior which is located at the optimum
-            optimum.save(to / f"{name}-perfect.yaml")
-
-        if hartmann_optimum_with_noise and isinstance(bench, MFHartmannBenchmark):
-            hartmann_optimum_with_noise = list(hartmann_optimum_with_noise)
-
-            # Reserved keyword
-            assert not any(
-                pname == "perfect" for pname, _ in hartmann_optimum_with_noise
-            ), "Reserved keyword"
-
-            optimum = bench.Config.from_dict(
-                {f"X_{i}": x for i, x in enumerate(bench.Generator.optimum)}
-            )
-
-            for prior, noise in hartmann_optimum_with_noise:
-                assert prior != "perfect", "reserved keyword"
-
-                rng = np.random.default_rng(seed=seed)
-                uniform = rng.uniform(low=-1, high=1, size=bench.dims)
-                noise_values = uniform * noise
-
-                config = optimum.from_dict(
-                    {
-                        k: float(np.clip(v + n, a_min=0, a_max=1))
-                        for (k, v), n in zip(optimum.items(), noise_values)
-                    }
-                )
-                config.save(to / f"{name}-{prior}.yaml")
