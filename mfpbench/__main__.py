@@ -75,7 +75,6 @@ class GeneratePriorsHandler(CommandHandler):
             prior_spec=args.priors,
             clean=args.clean,
             use_hartmann_optimum=args.use_hartmann_optimum,
-            datadir=args.data_dir,
         )
 
     @classmethod
@@ -121,12 +120,6 @@ class GeneratePriorsHandler(CommandHandler):
             description="Generate priors for the benchmarks"
         )
         parser.add_argument("--seed", type=int, default=103_377, help="The seed to use")
-        parser.add_argument(
-            "--data-dir",
-            type=Path,
-            help="Path to the data directory",
-            default=mfpbench.download.DATAROOT,
-        )
         parser.add_argument(
             "--nsamples",
             type=int,
@@ -179,6 +172,10 @@ class GeneratePriorsHandler(CommandHandler):
             "--use-hartmann-optimum",
             type=str,
             required=False,
+            help=(
+                "The name of the prior to replace with the optimum if using"
+                " hartmann benchmarks. Must be contained in `--priors`"
+            )
         )
 
         return parser
