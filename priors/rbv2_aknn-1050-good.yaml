@@ -1,6 +1,0 @@
-M: 32
-distance: cosine
-ef: 62
-ef_construction: 75
-k: 23
-num.impute.selected.cpo: impute.hist

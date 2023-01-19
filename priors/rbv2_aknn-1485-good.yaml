@@ -1,6 +1,0 @@
-M: 37
-distance: cosine
-ef: 199
-ef_construction: 13
-k: 47
-num.impute.selected.cpo: impute.mean

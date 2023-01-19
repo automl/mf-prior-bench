@@ -172,6 +172,8 @@ def perturb(
     std: float,
     seed: int | np.random.RandomState | None = None,
 ) -> ValueT:
+    # TODO:
+    # * https://github.com/automl/ConfigSpace/issues/289
     assert 0 <= std <= 1, "Noise must be between 0 and 1"
     rng: np.random.RandomState
     if seed is None:
@@ -184,31 +186,56 @@ def perturb(
     if isinstance(hp, Constant):
         return value
 
-    if isinstance(hp, (UniformIntegerHyperparameter, UniformFloatHyperparameter)):
-        transformed_value = hp._inverse_transform(np.asarray([value]))[0]
-        neighbors = hp.get_neighbors(
-            transformed_value, rs=rng, number=1, transform=True, std=std
-        )
-        return neighbors[0]
-
-    if isinstance(hp, (NormalIntegerHyperparameter, NormalFloatHyperparameter)):
-        # TODO: https://github.com/automl/ConfigSpace/issues/287
+    if isinstance(
+        hp,
+        (
+            NormalIntegerHyperparameter,
+            NormalFloatHyperparameter,
+            UniformFloatHyperparameter,
+            UniformIntegerHyperparameter,
+        ),
+    ):
+        # TODO:
+        # * https://github.com/automl/ConfigSpace/issues/287
+        # * https://github.com/automl/ConfigSpace/issues/290
+        # * https://github.com/automl/ConfigSpace/issues/291
         # Doesn't act as intended
         assert hp.upper is not None and hp.lower is not None
+        assert hp.q is None
         assert isinstance(value, (int, float))
 
-        # _lower, _higher are logged if it is a log var
-        space_length = std * (hp._upper - hp._lower)
-        rescaled_std = std * space_length
-        sample = np.clip(rng.normal(value, rescaled_std), hp._lower, hp._upper)
+        if isinstance(hp, UniformIntegerHyperparameter):
+            if hp.log:
+                _lower = np.log(hp.lower)
+                _upper = np.log(hp.upper)
+            else:
+                _lower = hp.lower
+                _upper = hp.upper
+        elif isinstance(hp, NormalIntegerHyperparameter):
+            _lower = hp.nfhp._lower
+            _upper = hp.nfhp._upper
+        elif isinstance(hp, (UniformFloatHyperparameter, NormalFloatHyperparameter)):
+            _lower = hp._lower
+            _upper = hp._upper
+        else:
+            raise RuntimeError("Wut")
 
-        if hp.log:
+        space_length = std * (_upper - _lower)
+        rescaled_std = std * space_length
+
+
+
+        if not hp.log:
+            sample = np.clip(rng.normal(value, rescaled_std), _lower, _upper)
+        else:
+            logged_value = np.log(value)
+            sample = rng.normal(logged_value, rescaled_std)
             sample = np.clip(np.exp(sample), hp.lower, hp.upper)
 
-        if isinstance(value, int):
+        if isinstance(hp, (UniformIntegerHyperparameter, NormalIntegerHyperparameter)):
             return int(np.rint(sample))
-        elif isinstance(value, float):
-            return float(sample)
+        elif isinstance(hp, (UniformFloatHyperparameter, NormalFloatHyperparameter)):
+            return float(sample)  # type: ignore
         else:
             raise RuntimeError("Please report to github, shouldn't get here")
 
@@ -228,6 +255,8 @@ def perturb(
         return rng.choice(list(choices))
 
     if isinstance(hp, OrdinalHyperparameter):
+        # TODO:
+        # * https://github.com/automl/ConfigSpace/issues/288
         # We build a normal centered at the value
         if rng.uniform() < 1 - std:
             return value

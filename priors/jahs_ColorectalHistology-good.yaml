@@ -1,5 +1,5 @@
-Activation: ReLU
-LearningRate: 0.059367224629645894
+Activation: Mish
+LearningRate: 0.05769353082886988
 N: 5
 Op1: 0
 Op2: 3
@@ -9,6 +9,6 @@ Op5: 3
 Op6: 3
 Optimizer: SGD
 Resolution: 1.0
-TrivialAugment: true
+TrivialAugment: false
 W: 16
-WeightDecay: 6.374346244131464e-05
+WeightDecay: 1.529243947356581e-05

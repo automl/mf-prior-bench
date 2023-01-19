@@ -3,8 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, Iterator
 
-from tqdm import trange
-
 import mfpbench
 from mfpbench import Benchmark, MFHartmannBenchmark, YAHPOBenchmark
 from mfpbench.result import Result
@@ -45,9 +43,7 @@ def benchmarks(
         if task_id is not None:
             kwargs["task_id"] = task_id
 
-        benchmark = mfpbench.get(**kwargs)  # type: ignore
-
-        yield benchmark
+        yield mfpbench.get(**kwargs)  # type: ignore
 
 
 def generate_priors(
@@ -71,6 +67,7 @@ def generate_priors(
     prior_spec = list(prior_spec)
 
     for bench in benchmarks(seed=seed, only=only, exclude=exclude):
+        print(f" - Benchmark: {bench.basename}")  # noqa: T201
 
         max_fidelity = bench.fidelity_range[1]
 
@@ -91,13 +88,12 @@ def generate_priors(
             at = max_fidelity
 
         results: list[Result] = []
-        for _ in trange(nsamples, desc=f"Evaluating {bench.basename}"):
-            config = bench.sample()
-            result = bench.query(config, at=at)
-            results.append(result)
+        configs = bench.sample(n=nsamples)
+        results = [bench.query(config, at=at) for config in configs]
 
         print(" - Finished results")  # noqa: T201
         results = sorted(results, key=lambda r: r.error)
+        print(" - Finished sorting")  # noqa: T201
 
         # Take out the results as specified by the prior and store the perturbations
         # to make, if any.
@@ -105,7 +101,6 @@ def generate_priors(
             name: (results[index].config, std, categorical_swap_chance)
             for name, index, std, categorical_swap_chance in prior_spec
         }
-        print(" - Priors: ", prior_configs)  # noqa: T201
 
         # Inject hartmann optimum in if specified
         if use_hartmann_optimum is not None and isinstance(bench, MFHartmannBenchmark):
@@ -116,6 +111,8 @@ def generate_priors(
             _, std, categorical_swap_chance = prior_configs[use_hartmann_optimum]
 
             prior_configs[use_hartmann_optimum] = (opt, std, categorical_swap_chance)
+
+        print(" - Priors: ", prior_configs)  # noqa: T201
 
         # Perturb each of the configs as specified to make the offset priors
         space = bench.space
