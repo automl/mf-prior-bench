@@ -6,13 +6,7 @@ from typing import Iterable, Iterator
 from tqdm import trange
 
 import mfpbench
-from mfpbench import (
-    Benchmark,
-    JAHSBenchmark,
-    MFHartmannBenchmark,
-    PD1Benchmark,
-    YAHPOBenchmark,
-)
+from mfpbench import Benchmark, MFHartmannBenchmark, YAHPOBenchmark
 from mfpbench.result import Result
 
 
@@ -21,7 +15,6 @@ def benchmarks(
     only: list[str] | None = None,
     exclude: list[str] | None = None,
     conditional_spaces: bool = False,  # Note supported due to `remove_hyperparamter`
-    datadir: Path | None = None,
 ) -> Iterator[Benchmark]:
 
     # A mapping from the indexable name to the argument name and cls
@@ -52,12 +45,6 @@ def benchmarks(
         if task_id is not None:
             kwargs["task_id"] = task_id
 
-        if (
-            issubclass(cls, (YAHPOBenchmark, JAHSBenchmark, PD1Benchmark))
-            and datadir is not None
-        ):
-            kwargs["datadir"] = datadir
-
         benchmark = mfpbench.get(**kwargs)  # type: ignore
 
         yield benchmark
@@ -74,7 +61,6 @@ def generate_priors(
     exclude: list[str] | None = None,
     use_hartmann_optimum: str | None = None,
     clean: bool = False,
-    datadir: Path | None = None,
 ) -> None:
     """Generate priors for a benchmark."""
     if to.exists() and clean:
@@ -84,7 +70,7 @@ def generate_priors(
     to.mkdir(exist_ok=True)
     prior_spec = list(prior_spec)
 
-    for bench in benchmarks(seed=seed, only=only, exclude=exclude, datadir=datadir):
+    for bench in benchmarks(seed=seed, only=only, exclude=exclude):
 
         max_fidelity = bench.fidelity_range[1]
 
