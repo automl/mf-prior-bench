@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Iterable, Iterator
 
-from tqdm import tqdm
+from tqdm import trange
 
 import mfpbench
 from mfpbench import (
@@ -105,11 +105,12 @@ def generate_priors(
             at = max_fidelity
 
         results: list[Result] = []
-        for _ in tqdm(range(nsamples), desc=f"Evaluating {bench.basename}"):
+        for _ in trange(nsamples, desc=f"Evaluating {bench.basename}"):
             config = bench.sample()
             result = bench.query(config, at=at)
             results.append(result)
 
+        print(" - Finished results")  # noqa: T201
         results = sorted(results, key=lambda r: r.error)
 
         # Take out the results as specified by the prior and store the perturbations
@@ -118,6 +119,7 @@ def generate_priors(
             name: (results[index].config, std, categorical_swap_chance)
             for name, index, std, categorical_swap_chance in prior_spec
         }
+        print(" - Priors: ", prior_configs)  # noqa: T201
 
         # Inject hartmann optimum in if specified
         if use_hartmann_optimum is not None and isinstance(bench, MFHartmannBenchmark):
@@ -137,6 +139,7 @@ def generate_priors(
             )
             for name, (config, std, categorical_swap_chance) in prior_configs.items()
         }
+        print(" - Perturbed priors: ", priors)  # noqa: T201
 
         name_components = []
         if prefix is not None:
