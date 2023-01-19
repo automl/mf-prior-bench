@@ -112,7 +112,10 @@ def generate_priors(
             if use_hartmann_optimum not in prior_configs:
                 raise ValueError(f"Prior '{use_hartmann_optimum}' not found in priors.")
 
-            prior_configs[use_hartmann_optimum] = bench.optimum
+            opt = bench.optimum
+            _, std, categorical_swap_chance = prior_configs[use_hartmann_optimum]
+
+            prior_configs[use_hartmann_optimum] = (opt, std, categorical_swap_chance)
 
         # Perturb each of the configs as specified to make the offset priors
         space = bench.space
@@ -133,10 +136,10 @@ def generate_priors(
 
         name_components.append(bench.basename)
 
-        name = "-".join(name_components)
+        basename = "-".join(name_components)
 
         path_priors = [
-            (to / f"{name}-{prior_name}.yaml", prior_config)
+            (to / f"{basename}-{prior_name}.yaml", prior_config)
             for prior_name, prior_config in priors.items()
         ]
         for path, prior in path_priors:
