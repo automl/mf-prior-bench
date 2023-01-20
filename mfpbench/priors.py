@@ -55,7 +55,7 @@ def generate_priors(
     fidelity: int | float | None = None,
     only: list[str] | None = None,
     exclude: list[str] | None = None,
-    use_hartmann_optimum: str | None = None,
+    use_hartmann_optimum: list[str] | None = None,
     clean: bool = False,
 ) -> None:
     """Generate priors for a benchmark."""
@@ -104,13 +104,15 @@ def generate_priors(
 
         # Inject hartmann optimum in if specified
         if use_hartmann_optimum is not None and isinstance(bench, MFHartmannBenchmark):
-            if use_hartmann_optimum not in prior_configs:
-                raise ValueError(f"Prior '{use_hartmann_optimum}' not found in priors.")
 
-            opt = bench.optimum
-            _, std, categorical_swap_chance = prior_configs[use_hartmann_optimum]
+            for optimum_replace in use_hartmann_optimum:
+                if optimum_replace not in prior_configs:
+                    raise ValueError(f"Prior '{optimum_replace}' not found in priors.")
 
-            prior_configs[use_hartmann_optimum] = (opt, std, categorical_swap_chance)
+                opt = bench.optimum
+                _, std, categorical_swap_chance = prior_configs[optimum_replace]
+
+                prior_configs[optimum_replace] = (opt, std, categorical_swap_chance)
 
         print(" - Priors: ", prior_configs)  # noqa: T201
 
