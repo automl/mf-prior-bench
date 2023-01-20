@@ -1,5 +1,5 @@
 batch_size: 80
-learning_rate: 0.10000000000000002
+learning_rate: 0.1000000000000000
 max_dropout: 0.8803894354329516
 max_units: 1024
 momentum: 0.9751408555610411
