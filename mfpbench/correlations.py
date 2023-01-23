@@ -6,6 +6,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from typing_extensions import Literal
+import seaborn as sns
 
 import mfpbench
 from mfpbench import Benchmark
@@ -83,6 +84,10 @@ def plot(
     dpi: int = 200,
     large_legend: bool = False,
     outside_right_legend: bool = False,
+    log: bool = False,
+    xlines: list[float] | None = None,
+    ylines: list[float] | None = None,
+    sort_at: float | None = None,
 ) -> None:
     if to is None:
         to = Path("correlations.png")
@@ -91,18 +96,48 @@ def plot(
     assert isinstance(ax, plt.Axes)
 
     handles = []
-    for name, (mean, std) in stats.items():
+    n_colors = len(stats.items())
+    colors = sns.color_palette("husl", n_colors)
+
+    sorter = sort_at if sort_at else 0.0
+    # Yup this looks awful, basically sorting by the mean at a particular index
+    sorted_stats = sorted(stats.items(), key=lambda t: t[1][0][int(sorter * len(t[1][0]))], reverse=True)
+
+    for color, (name, (mean, std)) in zip(colors, sorted_stats):
         xs = np.linspace(0, 1, len(mean))
-        style = STYLES.get(name, {})
-        h = ax.plot(xs, mean, label=name, **style)
-        ax.fill_between(xs, mean - std, mean + std, alpha=0.2)  # type: ignore
+        h = ax.plot(xs, mean, label=name, c=color)
+        ax.fill_between(xs, mean - std, mean + std, alpha=0.2, color=color)  # type: ignore
         handles.append(h)
 
     ax.set_xlim(auto=True)
-    ax.set_ylim([-0.3, 1])
+    ax.set_ylim([0, 1])
     ax.set_ylabel("Spearman correlation", fontsize=18)
     ax.set_xlabel("Fidelity %", fontsize=18)
-    ax.set_xscale("log")
+
+
+    for i, x in enumerate(xlines, start=0):
+        alignments = {
+            1: "right",
+            2: "right",
+            3: "right",
+            4: "right",
+        }
+        alignment = alignments.get(i, "right")
+        y_offset = 0.05 if i % 2 == 0 else 0.10
+        x_text = f"Rung: {i} " if alignment == "right" else f" Rung: {i}"
+        alpha = 0.8 if sort_at is not None and np.isclose(x, sort_at) else 0.3
+
+        ax.axvline(x, alpha=alpha, c="black", linestyle=":")
+        ax.text(x, y_offset, s=x_text, alpha=alpha, c="black", horizontalalignment=alignment, fontweight="bold")
+
+    for y in ylines:
+        ax.axhline(y, xmin=0, xmax=1, c="black", linestyle="--")
+        ax.text(0.005, y, s=f"{y}", c="black", horizontalalignment="left", verticalalignment="bottom", fontweight="bold")
+
+    if log:
+        ax.set_xscale("log")
+
+
     ax.tick_params(axis="both", which="major", labelsize=15, labelcolor=(0, 0, 0, 0.69))
     ax.grid(True, which="major", ls="-", alpha=0.6)
 
@@ -172,6 +207,10 @@ if __name__ == "__main__":
     parser.add_argument("--no-legend", action="store_true", default=False)
     parser.add_argument("--large_legend", action="store_true", default=False)
     parser.add_argument("--outside_right_legend", action="store_true", default=False)
+    parser.add_argument("--plot_log", action="store_true")
+    parser.add_argument("--sort-at", type=float, default=0.11)
+    parser.add_argument("--xlines", type=float, nargs="+", default=[0.03, 0.11, 0.33, 1.00])
+    parser.add_argument("--ylines", type=float, nargs="+", default=[0.5])
 
     args = parser.parse_args()
 
@@ -205,6 +244,10 @@ if __name__ == "__main__":
             legend=not args.no_legend,
             large_legend=args.large_legend,
             outside_right_legend=args.outside_right_legend,
+            log=args.plot_log,
+            sort_at=args.sort_at,
+            xlines=args.xlines,
+            ylines=args.ylines,
         )
 
     else:
