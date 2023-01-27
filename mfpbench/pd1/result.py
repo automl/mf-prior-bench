@@ -59,14 +59,16 @@ class PD1ResultSimple(PD1Result):
 
 @dataclass(frozen=True)
 class PD1ResultTransformer(PD1Result):
-    """Used for imagenet, lm1b, translate_wmt, uniref50. Contains no test error."""
+    """Imagenet, lm1b, translate_wmt, uniref50, cifar100 contains no test error."""
 
     @property
     def test_score(self) -> float:
         """The score on the test set."""
+        warnings.warn("Using valid error rate as there is no test error rate")
         return self.valid_error_rate
 
     @property
     def test_error(self) -> float:
         """The error on the test set."""
+        warnings.warn("Using valid error rate as there is no test error rate")
         return self.valid_error_rate
