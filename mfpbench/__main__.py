@@ -119,7 +119,7 @@ class GeneratePriorsHandler(CommandHandler):
         parser = argparse.ArgumentParser(
             description="Generate priors for the benchmarks"
         )
-        parser.add_argument("--seed", type=int, default=103_377, help="The seed to use")
+        parser.add_argument("--seed", type=int, default=133_077, help="The seed to use")
         parser.add_argument(
             "--nsamples",
             type=int,
@@ -149,7 +149,11 @@ class GeneratePriorsHandler(CommandHandler):
                 " categorical_swap_chance is 0 or None, then it will not"
                 " be used. However it must be specified."
             ),
-            default=[("good", 0, 0.01, None), ("bad", -1, None, None)],
+            default=[
+                ("good", 0, 0.01, None),
+                ("medium", 0, 0.125, None),
+                ("bad", -1, None, None)
+            ],
         )
         parser.add_argument(
             "--only",
@@ -171,9 +175,10 @@ class GeneratePriorsHandler(CommandHandler):
         parser.add_argument(
             "--use-hartmann-optimum",
             type=str,
+            nargs="+",
             required=False,
             help=(
-                "The name of the prior to replace with the optimum if using"
+                "The name of the prior(s) to replace with the optimum if using"
                 " hartmann benchmarks. Must be contained in `--priors`"
             )
         )
