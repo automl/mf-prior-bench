@@ -114,7 +114,6 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             seed=seed,  # type: ignore
         )
 
-
         if self._task_id_name is not None:
             if self.has_conditionals:
                 raise NotImplementedError(
@@ -128,17 +127,34 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             for key in self._forced_hps:
                 if key in names:
                     if self.has_conditionals:
-                        raise NotImplementedError(
-                            f"{self.name} has conditionals, can't remove task_id from space"
+                        msg = (
+                            f"{self.name} has conditionals,"
+                            " can't remove task_id from space"
                         )
+                        raise NotImplementedError(msg)
+
                     space = remove_hyperparameter(key, space)
 
-        self.bench = bench
+        self._bench: yahpo_gym.BenchmarkSet | None = None
         self.datadir = datadir
         self._configspace = space
 
         if self.prior is not None:
             self.prior.set_as_default_prior(self._configspace)
+
+    @property
+    def bench(self) -> yahpo_gym.BenchmarkSet:
+        if self._bench is None:
+            bench = yahpo_gym.BenchmarkSet(
+                self.name,
+                instance=self.task_id,
+                multithread=False,
+            )
+            self._bench = bench
+        return self._bench
+
+    def load(self) -> None:
+        _ = self.bench
 
     @property
     def basename(self) -> str:
