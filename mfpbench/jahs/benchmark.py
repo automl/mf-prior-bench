@@ -15,7 +15,7 @@ from mfpbench.jahs.spaces import jahs_configspace
 from mfpbench.util import rename
 
 
-class JAHSBenchmark(Benchmark, ABC):
+class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
     """Manages access to jahs-bench.
 
     Use one of the concrete classes below to access a specific version:
@@ -48,6 +48,7 @@ class JAHSBenchmark(Benchmark, ABC):
         datadir: str | Path | None = None,
         seed: int | None = None,
         prior: str | Path | JAHSConfig | dict[str, Any] | Configuration | None = None,
+        perturb_prior: float | None = None,
         **kwargs: Any,  # pyright: ignore
     ):
         """Initialize the benchmark.
@@ -68,10 +69,14 @@ class JAHSBenchmark(Benchmark, ABC):
             * if dict, Config, Configuration - A config
             * None - Use the default if available
 
+        perturb_prior: float | None = None
+            If given, will perturb the prior by this amount. Only used if `prior` is
+            given as a config.
+
         **kwargs : Any
             Additional arguments ignored for compatibility
         """
-        super().__init__(seed=seed, prior=prior)
+        super().__init__(seed=seed, prior=prior, perturb_prior=perturb_prior)
 
         if datadir is None:
             datadir = JAHSBenchmark._default_download_dir
@@ -88,6 +93,14 @@ class JAHSBenchmark(Benchmark, ABC):
         self._configspace = jahs_configspace(name=str(self), seed=self.seed)
 
         if self.prior is not None:
+            if self.perturb_prior is not None:
+                self.prior = self.prior.perturb(
+                    self._configspace,
+                    seed=self.seed,
+                    std=self.perturb_prior,
+                    categorical_swap_chance=0,  # TODO
+                )
+
             self.prior.set_as_default_prior(self._configspace)
 
     @property
