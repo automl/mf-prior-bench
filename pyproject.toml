@@ -18,6 +18,10 @@ numpy = [
     {version = "^1.22.0", python = ">=3.8, <3.10"},
     {version = "^1.23.0", python = ">=3.10"}
 ]
+scipy = [
+    {version = "~1.7.0", python = "<3.10"},
+    {version = "^1.8.0", python = ">=3.10"}
+]
 yahpo-gym = "1.0.1"
 jahs-bench = { git = "https://github.com/automl/jahs_bench_201.git", rev = "v1.0.2" }
 xgboost = "^1"
