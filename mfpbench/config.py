@@ -60,13 +60,13 @@ class Config(ABC, Mapping[str, Any]):
         return self.mutate(self, **kwargs)
 
     def perturb(
-        self,
+        self: SelfT,
         space: ConfigurationSpace,
         *,
         seed: int | np.random.RandomState | None = None,
         std: float | None = None,
         categorical_swap_chance: float | None = None,
-    ) -> Config:
+    ) -> SelfT:
         """Perturb this config.
 
         Add gaussian noise to each hyperparameter. The mean is centered at

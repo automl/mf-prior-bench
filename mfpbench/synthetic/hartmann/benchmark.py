@@ -57,6 +57,7 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         prior: str | Path | C | dict[str, Any] | Configuration | None = None,
         noisy_prior: bool = False,
         prior_noise_scale: float = 0.125,
+        perturb_prior: float | None = None,
     ):
         """Initialize the benchmark.
 
@@ -84,15 +85,27 @@ class MFHartmannBenchmark(Benchmark, Generic[G, C]):
         prior_noise_scale: float = 0.125
             The scaling factor for noise added to the prior
             `noise = prior_noise_scale * np.random.random(size=...)`
+
+        perturb_prior: float | None = None
+            A synonm for the two arguments `noisy_prior` and `prior_noise_scale`.
+            This takes precedence over prior_noise_scale
         """
-        super().__init__(seed=seed, prior=prior)
+        super().__init__(seed=seed, prior=prior, perturb_prior=perturb_prior)
         if self.prior is None and noisy_prior:
             raise ValueError("`noisy_prior = True` specified but no `prior` given")
 
         self.bias = bias if bias is not None else self.bias_noise[0]
         self.noise = noise if noise is not None else self.bias_noise[1]
-        self.noisy_prior = noisy_prior
-        self.prior_noise_scale = prior_noise_scale
+
+        if noisy_prior or perturb_prior is not None:
+            self.noisy_prior = True
+            self.prior_noise_scale = (
+                perturb_prior if perturb_prior is not None else prior_noise_scale
+            )
+        else:
+            self.noisy_prior = False
+            self.prior_noise_scale = prior_noise_scale
+
         self.mfh = self.Generator(
             n_fidelities=self.end,
             fidelity_noise=self.noise,

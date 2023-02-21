@@ -43,8 +43,9 @@ class PD1Benchmark(Benchmark[C, R, int]):
         datadir: str | Path | None = None,
         seed: int | None = None,
         prior: str | Path | C | dict[str, Any] | Configuration | None = None,
+        perturb_prior: float | None = None,
     ):
-        super().__init__(seed=seed, prior=prior)
+        super().__init__(seed=seed, prior=prior, perturb_prior=perturb_prior)
 
         if datadir is None:
             datadir = PD1Benchmark._default_download_dir
@@ -59,6 +60,14 @@ class PD1Benchmark(Benchmark[C, R, int]):
         self._configspace = self._create_space(seed=self.seed)
 
         if self.prior is not None:
+            if self.perturb_prior is not None:
+                self.prior = self.prior.perturb(
+                    self._configspace,
+                    seed=self.seed,
+                    std=self.perturb_prior,
+                    categorical_swap_chance=0,  # TODO
+                )
+
             self.prior.set_as_default_prior(self._configspace)
 
         self._surrogates: dict[str, XGBRegressor] | None = None

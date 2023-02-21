@@ -55,6 +55,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         datadir: str | Path | None = None,
         seed: int | None = None,
         prior: str | Path | C | dict[str, Any] | Configuration | None = None,
+        perturb_prior: float | None = None,
     ):
         """Initialize a Yahpo Benchmark.
 
@@ -75,6 +76,10 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             * if str - A preset
             * if Path - path to a file
             * if dict, Config, Configuration - A config
+
+        perturb_prior: float | None = None
+            If given, will perturb the prior by this amount. Only used if `prior` is
+            given as a config.
         """
         # Validation
         cls = self.__class__
@@ -90,7 +95,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         # Needs to be set before the call to super
         self.task_id = task_id
 
-        super().__init__(seed=seed, prior=prior)
+        super().__init__(seed=seed, prior=prior, perturb_prior=perturb_prior)
         if datadir is None:
             datadir = self._default_download_dir
 
@@ -114,7 +119,6 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             seed=seed,  # type: ignore
         )
 
-
         if self._task_id_name is not None:
             if self.has_conditionals:
                 raise NotImplementedError(
@@ -128,17 +132,42 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             for key in self._forced_hps:
                 if key in names:
                     if self.has_conditionals:
-                        raise NotImplementedError(
-                            f"{self.name} has conditionals, can't remove task_id from space"
+                        msg = (
+                            f"{self.name} has conditionals,"
+                            " can't remove task_id from space"
                         )
+                        raise NotImplementedError(msg)
+
                     space = remove_hyperparameter(key, space)
 
-        self.bench = bench
+        self._bench: yahpo_gym.BenchmarkSet | None = None
         self.datadir = datadir
         self._configspace = space
 
         if self.prior is not None:
+            if self.perturb_prior is not None:
+                self.prior = self.prior.perturb(
+                    self._configspace,
+                    seed=self.seed,
+                    std=self.perturb_prior,
+                    categorical_swap_chance=0,  # TODO
+                )
+
             self.prior.set_as_default_prior(self._configspace)
+
+    @property
+    def bench(self) -> yahpo_gym.BenchmarkSet:
+        if self._bench is None:
+            bench = yahpo_gym.BenchmarkSet(
+                self.name,
+                instance=self.task_id,
+                multithread=False,
+            )
+            self._bench = bench
+        return self._bench
+
+    def load(self) -> None:
+        _ = self.bench
 
     @property
     def basename(self) -> str:

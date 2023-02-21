@@ -45,6 +45,7 @@ class Benchmark(Generic[C, R, F], ABC):
         self,
         seed: int | None = None,
         prior: str | Path | C | dict[str, Any] | Configuration | None = None,
+        perturb_prior: float | None = None,
         **kwargs: Any,  # pyright: ignore
     ):
         self.seed = seed
@@ -53,6 +54,16 @@ class Benchmark(Generic[C, R, F], ABC):
         self.step: F = self.fidelity_range[2]
 
         self._prior_arg = prior
+
+        # NOTE: This is handled entirely by subclasses as it requires knowledge
+        # of the overall space the prior comes from, which only the subclasses now
+        # at construction time. There's probably a better way to handle this but
+        # for now this is fine.
+        if perturb_prior is not None and not (0 <= perturb_prior < 1):
+            raise NotImplementedError(
+                "If perturbing prior, `perturb_prior` must be in (0, 1]"
+            )
+        self.perturb_prior = perturb_prior
 
         self.prior: C | None
         if prior is not None:
