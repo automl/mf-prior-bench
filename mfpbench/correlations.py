@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from itertools import cycle
 import numpy as np
 from typing_extensions import Literal
 import seaborn as sns
@@ -87,6 +88,8 @@ def plot(
     log: bool = False,
     xlines: list[float] | None = None,
     ylines: list[float] | None = None,
+    highlight: list[str] | None = None,
+    ymin: float = 0.0,
     sort_at: float | None = None,
 ) -> None:
     if to is None:
@@ -96,40 +99,71 @@ def plot(
     assert isinstance(ax, plt.Axes)
 
     handles = []
-    n_colors = len(stats.items())
-    colors = sns.color_palette("husl", n_colors)
 
     sorter = sort_at if sort_at else 0.0
     # Yup this looks awful, basically sorting by the mean at a particular index
-    sorted_stats = sorted(stats.items(), key=lambda t: t[1][0][int(sorter * len(t[1][0]))], reverse=True)
+    sorted_names = sorted(
+        stats.keys(),
+        key=lambda name: stats[name][0][int(sorter * len(stats[name][0]))],
+        reverse=True,
+    )
+    markers = cycle(["o", "P", "X", "D", "v"])
 
-    for color, (name, (mean, std)) in zip(colors, sorted_stats):
-        xs = np.linspace(0, 1, len(mean))
-        h = ax.plot(xs, mean, label=name, c=color)
-        ax.fill_between(xs, mean - std, mean + std, alpha=0.2, color=color)  # type: ignore
-        handles.append(h)
+    if highlight is None:
+        n_colors = len(stats.items())
+        colors = sns.color_palette("viridis", n_colors)
+        alpha_line = 1
+        alpha_std = 0.2
+        for color, name, marker in zip(colors, sorted_names, markers):
+            label = name
+            mean, std = stats[name]
+            xs = np.linspace(0, 1, len(mean))
+            h = ax.plot(xs, mean, label=label, c=color, alpha=alpha_line, marker=marker, markersize=5)
+            ax.fill_between(xs, mean - std, mean + std, alpha=alpha_std, color=color)  # type: ignore
+            handles.append(h)
+    else:
+        # Sort the highlights by their index in the sorted_names above.
+        highlight_names_sorted = sorted(highlight, key=lambda name: sorted_names.index(name))
+        colors = {
+            name: color for name, color
+            in zip(highlight_names_sorted, sns.color_palette("husl", len(highlight)))
+        }
+
+        # Plot the non highlighted stuff
+        for name in stats.keys():
+            if name in colors:
+                continue # Skip anything plotted above
+            mean, std = stats[name]
+            xs = np.linspace(0, 1, len(mean))
+            h = ax.plot(xs, mean, c="black", alpha=0.15)
+            handles.append(h)
+
+        # Plot the highlight stuff
+        for (name, color), marker in zip(colors.items(), markers):
+            label = name
+            mean, std = stats[name]
+            xs = np.linspace(0, 1, len(mean))
+            h = ax.plot(xs, mean, label=label, c=color, alpha=1, marker=marker, markersize=5)
+            ax.fill_between(xs, mean - std, mean + std, alpha=0.1, color=color)  # type: ignore
+            handles.append(h)
+
+
 
     ax.set_xlim(auto=True)
-    ax.set_ylim([0, 1])
+    ax.set_ylim([ymin, 1])
     ax.set_ylabel("Spearman correlation", fontsize=18)
     ax.set_xlabel("Fidelity %", fontsize=18)
 
 
+    xlines = xlines or []
     for i, x in enumerate(xlines, start=0):
-        alignments = {
-            1: "right",
-            2: "right",
-            3: "right",
-            4: "right",
-        }
-        alignment = alignments.get(i, "right")
-        y_offset = 0.05 if i % 2 == 0 else 0.10
-        x_text = f"Rung: {i} " if alignment == "right" else f" Rung: {i}"
+        #y_offset = 0.05 if i % 2 == 0 else 0.10
+        #x_text = f" {int(i * 100)}"
         alpha = 0.8 if sort_at is not None and np.isclose(x, sort_at) else 0.3
-
         ax.axvline(x, alpha=alpha, c="black", linestyle=":")
-        ax.text(x, y_offset, s=x_text, alpha=alpha, c="black", horizontalalignment=alignment, fontweight="bold")
+        # ax.text(x, y_offset, s=x_text, alpha=alpha, c="black", fontweight="bold")
 
+    ylines = ylines or []
     for y in ylines:
         ax.axhline(y, xmin=0, xmax=1, c="black", linestyle="--")
         ax.text(0.005, y, s=f"{y}", c="black", horizontalalignment="left", verticalalignment="bottom", fontweight="bold")
@@ -139,6 +173,7 @@ def plot(
 
 
     ax.tick_params(axis="both", which="major", labelsize=15, labelcolor=(0, 0, 0, 0.69))
+    ax.set_xticks([0.1, 1], labels=["10%", "100%"])
     ax.grid(True, which="major", ls="-", alpha=0.6)
 
     if legend:
@@ -209,8 +244,10 @@ if __name__ == "__main__":
     parser.add_argument("--outside_right_legend", action="store_true", default=False)
     parser.add_argument("--plot_log", action="store_true")
     parser.add_argument("--sort-at", type=float, default=0.11)
-    parser.add_argument("--xlines", type=float, nargs="+", default=[0.03, 0.11, 0.33, 1.00])
-    parser.add_argument("--ylines", type=float, nargs="+", default=[0.5])
+    parser.add_argument("--xlines", type=float, nargs="+", default=None)
+    parser.add_argument("--ylines", type=float, nargs="+", default=None)
+    parser.add_argument("--highlight", type=str, nargs="+", default=None)
+    parser.add_argument("--ymin", type=float, default=0.0)
 
     args = parser.parse_args()
 
@@ -248,6 +285,8 @@ if __name__ == "__main__":
             sort_at=args.sort_at,
             xlines=args.xlines,
             ylines=args.ylines,
+            highlight=args.highlight,
+            ymin=args.ymin,
         )
 
     else:
