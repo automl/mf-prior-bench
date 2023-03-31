@@ -1,4 +1,4 @@
-lr_decay_factor: 0.1
-lr_initial: 0.1
+lr_decay_factor: 0.2
+lr_initial: 2.0
 lr_power: 0.9
 opt_momentum: 0.9
