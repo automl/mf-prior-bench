@@ -41,25 +41,23 @@ class PD1imagenet_resnet_512(PD1Benchmark):
                     "lr_decay_factor",
                     lower=0.010294,
                     upper=0.989753,
-                    default_value=0.499432,
                 ),
                 UniformFloatHyperparameter(
                     "lr_initial",
                     lower=0.000010,
                     upper=9.774312,
-                    default_value=0.482590,
+                    log=True,
                 ),
                 UniformFloatHyperparameter(
                     "lr_power",
                     lower=0.100225,
                     upper=1.999326,
-                    default_value=1.044667,
                 ),
                 UniformFloatHyperparameter(
                     "opt_momentum",
                     lower=0.000059,
                     upper=0.998993,
-                    default_value=0.843744,
+                    log=True,
                 ),
             ]
         )

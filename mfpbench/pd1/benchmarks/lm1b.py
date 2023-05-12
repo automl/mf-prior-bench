@@ -41,25 +41,23 @@ class PD1lm1b_transformer_2048(PD1Benchmark):
                     "lr_decay_factor",
                     lower=0.010543,
                     upper=9.885653e-01,
-                    default_value=4.890111e-01,
                 ),
                 UniformFloatHyperparameter(
                     "lr_initial",
                     lower=0.000010,
                     upper=9.986256e00,
-                    default_value=4.993123e00,
+                    log=True,
                 ),
                 UniformFloatHyperparameter(
                     "lr_power",
                     lower=0.100811,
                     upper=1.999659e00,
-                    default_value=9.494239e-01,
                 ),
                 UniformFloatHyperparameter(
                     "opt_momentum",
                     lower=0.000059,
                     upper=9.989986e-01,
-                    default_value=4.994700e-01,
+                    log=True,
                 ),
             ]
         )
