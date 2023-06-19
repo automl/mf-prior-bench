@@ -71,7 +71,7 @@ class PD1Source(Source):
     surrogate_url: str = (
         "https://ml.informatik.uni-freiburg.de/research-artifacts/mfp-bench"
     )
-    surrogate_version: str = "vPaper-PriorBand"
+    surrogate_version: str = "vPaper-Arxiv"
 
     @property
     def name(self) -> str:
@@ -86,13 +86,14 @@ class PD1Source(Source):
         self.download_surrogates()
 
     def download_rawdata(self) -> None:
-
+        print(f"Downloading raw data from {self.url}")
         # Download the file
         if not self.tarpath.exists():
             with urllib.request.urlopen(self.url) as response, open(
                 self.tarpath, "wb"
             ) as f:
                 shutil.copyfileobj(response, f)
+        print(f"Done downloading raw data from {self.url}")
 
     def download_surrogates(self) -> None:
         surrogate_dir = self.path / "surrogates"
@@ -101,12 +102,16 @@ class PD1Source(Source):
 
         # Download the surrogates zip
         url = f"{self.surrogate_url}/{self.surrogate_version}/surrogates.zip"
+        print(f"Downloading from {url}")
+
         if not zip_path.exists():
             with urllib.request.urlopen(url) as response, open(zip_path, "wb") as f:
                 shutil.copyfileobj(response, f)
 
         with zipfile.ZipFile(zip_path, "r") as zip:
             zip.extractall(surrogate_dir)
+
+        print(f"Finished downloading from {url}")
 
 
 sources = {
