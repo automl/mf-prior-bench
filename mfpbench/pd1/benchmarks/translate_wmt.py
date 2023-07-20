@@ -41,25 +41,23 @@ class PD1translatewmt_xformer_64(PD1Benchmark):
                     "lr_decay_factor",
                     lower=0.0100221257,
                     upper=0.988565263,
-                    default_value=0.48927156865,
                 ),
                 UniformFloatHyperparameter(
                     "lr_initial",
                     lower=1.00276e-05,
                     upper=9.8422475735,
-                    default_value=4.92111877295,
+                    log=True,
                 ),
                 UniformFloatHyperparameter(
                     "lr_power",
                     lower=0.1004250993,
                     upper=1.9985927056,
-                    default_value=0.94908380315,
                 ),
                 UniformFloatHyperparameter(
                     "opt_momentum",
                     lower=5.86114e-05,
                     upper=0.9989999746,
-                    default_value=0.4994706816,
+                    log=True,
                 ),
             ]
         )

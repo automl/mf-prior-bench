@@ -41,25 +41,23 @@ class PD1cifar100_wideresnet_2048(PD1Benchmark):
                     "lr_decay_factor",
                     lower=0.010093,
                     upper=0.989012,
-                    default_value=0.501390,
                 ),
                 UniformFloatHyperparameter(
                     "lr_initial",
                     lower=0.000010,
                     upper=9.779176,
-                    default_value=0.408311,
+                    log=True,
                 ),
                 UniformFloatHyperparameter(
                     "lr_power",
                     lower=0.100708,
                     upper=1.999376,
-                    default_value=1.058792,
                 ),
                 UniformFloatHyperparameter(
                     "opt_momentum",
                     lower=0.000059,
                     upper=0.998993,
-                    default_value=0.842776,
+                    log=True,
                 ),
             ]
         )
