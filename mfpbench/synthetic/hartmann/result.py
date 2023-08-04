@@ -22,7 +22,7 @@ class MFHartmannResult(Result[C, int]):
         # Hartmann functions have multiple minimas with the global valued at < 0
         # The function evaluates to a y-value that needs to be minimized
         #  https://www.sfu.ca/~ssurjano/hart3.html
-        return self.value
+        raise NotImplementedError("There's no meaninfgul score for Hartmann functions")
 
     @property
     def error(self) -> float:
@@ -36,7 +36,7 @@ class MFHartmannResult(Result[C, int]):
     @property
     def test_score(self) -> float:
         """Just returns the score."""
-        return self.score
+        raise NotImplementedError("There's no meaninfgul score for Hartmann functions")
 
     @property
     def test_error(self) -> float:
@@ -46,7 +46,7 @@ class MFHartmannResult(Result[C, int]):
     @property
     def val_score(self) -> float:
         """Just returns the score."""
-        return self.score
+        raise NotImplementedError("There's no meaninfgul score for Hartmann functions")
 
     @property
     def val_error(self) -> float:

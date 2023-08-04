@@ -49,12 +49,12 @@ class PD1ResultSimple(PD1Result):
     @property
     def test_score(self) -> float:
         """The score on the test set."""
-        return self.test_error_rate
+        return 1 - self.test_error_rate
 
     @property
     def test_error(self) -> float:
         """The error on the test set."""
-        return 1 - self.test_error_rate
+        return self.test_error_rate
 
 
 @dataclass(frozen=True)
@@ -65,7 +65,7 @@ class PD1ResultTransformer(PD1Result):
     def test_score(self) -> float:
         """The score on the test set."""
         warnings.warn("Using valid error rate as there is no test error rate")
-        return self.valid_error_rate
+        return 1 - self.valid_error_rate
 
     @property
     def test_error(self) -> float:
