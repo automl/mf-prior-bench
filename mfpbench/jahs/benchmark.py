@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from abc import ABC
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-import jahs_bench
 from ConfigSpace import Configuration, ConfigurationSpace
+from typing_extensions import Literal
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.download import DATAROOT
@@ -13,6 +13,9 @@ from mfpbench.jahs.config import JAHSConfig
 from mfpbench.jahs.result import JAHSResult
 from mfpbench.jahs.spaces import jahs_configspace
 from mfpbench.util import rename
+
+if TYPE_CHECKING:
+    import jahs_bench
 
 
 class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
@@ -117,6 +120,25 @@ class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
     def bench(self) -> jahs_bench.Benchmark:
         """The underlying benchmark used."""
         if not self._bench:
+            try:
+                import jahs_bench
+            except ImportError as e:
+                raise ImportError(
+                    "jahs-bench not installed, please install it with "
+                    "`pip install jahs-bench`"
+                ) from e
+
+            tasks = {
+                "cifar10": jahs_bench.BenchmarkTasks.CIFAR10,
+                "colorectal_histology": jahs_bench.BenchmarkTasks.ColorectalHistology,
+                "fashion_mnist": jahs_bench.BenchmarkTasks.FashionMNIST,
+            }
+            task = tasks.get(self.task, None)
+            if task is None:
+                raise ValueError(
+                    f"Unknown task {self.task}, must be one of {list(tasks.keys())}"
+                )
+
             self._bench = jahs_bench.Benchmark(
                 task=self.task,
                 save_dir=self.datadir,
@@ -242,12 +264,11 @@ class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
 
 
 class JAHSCifar10(JAHSBenchmark):
-    task = jahs_bench.BenchmarkTasks.CIFAR10
+    task = "cifar10"
 
 
 class JAHSColorectalHistology(JAHSBenchmark):
-    task = jahs_bench.BenchmarkTasks.ColorectalHistology
-
+    task = "colorectal_histology"
 
 class JAHSFashionMNIST(JAHSBenchmark):
-    task = jahs_bench.BenchmarkTasks.FashionMNIST
+    task = "fashion_mnist"

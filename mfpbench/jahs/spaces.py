@@ -9,7 +9,6 @@ from ConfigSpace import (
     Constant,
     UniformFloatHyperparameter,
 )
-from jahs_bench.lib.core.constants import Activations
 
 
 def jahs_configspace(
@@ -32,6 +31,14 @@ def jahs_configspace(
     """
     if isinstance(seed, np.random.RandomState):
         seed = seed.tomaxint()
+
+    try:
+        from jahs_bench.lib.core.constants import Activations
+    except ImportError as e:
+        raise ImportError(
+            "jahs-bench not installed, please install it with "
+            "`pip install jahs-bench`"
+        ) from e
 
     space = ConfigurationSpace(name=name, seed=seed)
     space.add_hyperparameters(

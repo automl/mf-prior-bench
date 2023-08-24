@@ -14,8 +14,10 @@ pyyaml = "*"
 tqdm = "*"
 numpy = "1.*"
 yahpo-gym = "1.0.1"
-jahs-bench = { git = "https://github.com/automl/jahs_bench_201.git", rev = "880fbcb35a83df7b6c02440a6c13adb921f54657" }
 xgboost = "^1"
+
+[tool.poetry.group.jahs.dependencies]
+jahs-bench = { git = "https://github.com/automl/jahs_bench_201.git", rev = "880fbcb35a83df7b6c02440a6c13adb921f54657" }
 
 
 [tool.poetry.group.dev.dependencies]
