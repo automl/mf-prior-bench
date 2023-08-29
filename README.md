@@ -10,6 +10,7 @@ cd mf-prior-bench
 
 # I use pip and virtualenv
 pip install -e  ".[dev]"
+# pipe install -e ".[dev, jahs-bench]  # If requiring jahs bench
 
 # Pre-commit
 pre-commit install
@@ -19,10 +20,7 @@ make install-dev  # use `make help` if you like
 
 # You're going to want to download things needed jahs-bench, YAHPO, and pd1
 # Just leave --data-dir at default to be safest  "./data/{jahs-bench-data, yahpo-gym-data, pb1-data}"
-python -m mfpbench.download [--force] [--data-dir PATH]
-
-# To see all registered benchmarks
-python -m mfpbench.__init__ --benchmarks [--has-conditional-hps]
+python -m mfpbench download [--force] [--data-dir PATH]
 ```
 
 ### Usage
