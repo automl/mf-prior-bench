@@ -15,6 +15,7 @@ tqdm = "*"
 numpy = "1.*"
 yahpo-gym = "1.0.1"
 xgboost = "^1"
+ConfigSpace = "<0.7"
 
 [tool.poetry.group.jahs.dependencies]
 jahs-bench = { git = "https://github.com/automl/jahs_bench_201.git", rev = "880fbcb35a83df7b6c02440a6c13adb921f54657" }

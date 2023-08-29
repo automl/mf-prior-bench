@@ -20,6 +20,7 @@ from mfpbench.pd1 import (
     PD1translatewmt_xformer_64,
     PD1uniref50_transformer_128,
 )
+from mfpbench.result import Result  # noqa: F401
 from mfpbench.synthetic.hartmann import (
     MFHartmann3Benchmark,
     MFHartmann3BenchmarkBad,
