@@ -1,5 +1,8 @@
-from mfpbench.synthetic.hartmann import MFHartmann3BenchmarkGood
+from __future__ import annotations
+
 from pytest_cases import fixture
+
+from mfpbench.synthetic.hartmann import MFHartmann3BenchmarkGood
 
 SEED = 1
 
@@ -10,11 +13,6 @@ def bench() -> MFHartmann3BenchmarkGood:
 
 
 def test_add(bench: MFHartmann3BenchmarkGood) -> None:
-    """
-    Expects
-    -------
-    * Should be able to add results individuall.
-    """
     samples = bench.sample(3)
     results = [bench.query(s) for s in samples]
 
@@ -26,11 +24,6 @@ def test_add(bench: MFHartmann3BenchmarkGood) -> None:
 
 
 def test_extend(bench: MFHartmann3BenchmarkGood) -> None:
-    """
-    Expects
-    -------
-    * Should be able to add results individuall.
-    """
     samples = bench.sample(3)
     results = [bench.query(s) for s in samples]
 
@@ -42,12 +35,6 @@ def test_extend(bench: MFHartmann3BenchmarkGood) -> None:
 
 
 def test_getitem(bench: MFHartmann3BenchmarkGood) -> None:
-    """
-    Expects
-    -------
-    * Should be able to index by fidelity and get all results at that fidelity
-    * Should be able to index by config and get all results for that config.
-    """
     config1, config2 = bench.sample(2)
 
     result11 = bench.query(config1, at=bench.start)

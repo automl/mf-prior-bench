@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import cast
+import contextlib
 
 import numpy as np
 
@@ -34,10 +34,8 @@ if __name__ == "__main__":
 
     # Like in this case where we used a bad optmizer
     bad_copy = config.copy(momentum=-10)
-    try:
+    with contextlib.suppress(AssertionError):
         bad_copy.validate()
-    except AssertionError:
-        pass
 
     # Anyways, here's the results for the config
     result: mfpbench.Result
@@ -83,9 +81,7 @@ if __name__ == "__main__":
     #               ...
     #    200:   [Run1, ..., Run100]
     # }
-    results_by_epoch = {
-        epoch: results for epoch, results in enumerate(transposed, start=1)
-    }
+    results_by_epoch = dict(enumerate(transposed, start=1))
 
     # {
     #   0: RunX

@@ -1,0 +1,141 @@
+site_name: "<code>mfpbench</code>"
+repo_url: https://github.com/automl/mf-prior-bench/
+repo_name: automl/mf-prior-bench
+theme:
+  name: material
+  logo: assets/automl_org_black.png
+  favicon: assets/automl_org.svg
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - content.code.annotate
+    - content.code.copy
+    - navigation.footer
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - toc.follow
+    - header.autohide
+    - search.suggest
+    - search.highlight
+    - search.share
+  font:
+    text: Roboto
+    code: Roboto Mono
+  palette:
+    - scheme: slate
+      media: "(prefers-color-scheme: dark)"
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/eye-outline
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - scheme: default
+      media: "(prefers-color-scheme: light)"
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/eye
+        name: Switch to dark mode
+extra:
+  # version:
+  #  provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/automl
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/automl_org
+extra_css:
+  - stylesheets/custom.css
+watch:
+  - src/mfpbench
+  - docs
+markdown_extensions:
+  - admonition
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: "#"
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.magiclink:
+      hide_protocol: true
+      repo_url_shortener: true
+      repo_url_shorthand: true
+      user: automl
+      repo: mfpbench
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+plugins:
+  - search
+  - autorefs
+  - markdown-exec
+  - gen-files:
+      scripts:
+        - docs/api_generator.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings:
+      default_handler: python
+      enable_inventory: true
+      custom_templates: docs/_templates
+      handlers:
+        python:
+          paths: [src]
+          import:
+            - 'https://docs.python.org/3/objects.inv'
+            - 'https://numpy.org/doc/stable/objects.inv'
+            - 'https://pandas.pydata.org/docs/objects.inv'
+          options: # https://mkdocstrings.github.io/python/usage/
+            docstring_section_style: spacy
+            docstring_options:
+              ignore_init_summary: true
+              trim_doctest_flags: true
+            show_docstring_attributes: true
+            show_docstring_description: true
+            show_root_heading: false
+            show_root_toc_entry: false
+            show_object_full_path: false
+            merge_init_into_class: true
+            docstring_style: google
+            show_if_no_docstring: false
+            show_bases: true
+            show_source: true
+            members_order: "source"
+            # Would like to set `group_by_category` to false
+            # https://github.com/mkdocstrings/mkdocstrings/issues/579
+            group_by_category: true
+            show_signature: true
+            separate_signature: false
+            show_signature_annotations: false
+            filters:
+              - "!^_[^_]"
+              - "_sample" # Kind of a hack to have this render a private method
+nav:
+  - Home: "index.md"
+    # Auto generated with docs/api_generator.py
+  - Setup: "setup.md"
+  - Quickstart: "quickstart.md"
+  - Priors: "priors.md"
+  - Examples:
+      - "examples/mfh.md"
+      - "examples/lcbench-tabular.md"
+      - "examples/pd1.md"
+      - "examples/yahpo-gym.md"
+      - "examples/jahs-bench.md"
+      - "examples/integrating_objective_function_benchmark.md"
+      - "examples/integrating_tabular_benchmark.md"
+  - API: "api/"
