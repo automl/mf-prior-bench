@@ -7,7 +7,7 @@ on:
   # Trigger on any push to the main
   push:
     branches:
-      - master
+      - main
 
 permissions:
   contents: write
