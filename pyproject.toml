@@ -56,7 +56,7 @@ dev = [
   "black",
   "pre-commit",
   "mypy",
-  "mf-prior-bench[docs, tabular]",
+  "mf-prior-bench[docs,tabular]",
 ]
 
 [tool.pytest.ini_options]

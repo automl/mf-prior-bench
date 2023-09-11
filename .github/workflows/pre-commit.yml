@@ -31,10 +31,6 @@ jobs:
       with:
         python-version: 3.8
 
-    - name: Install pre-commit
-      run: |
-        pip install pre-commit
-        pre-commit install
-    - name: Run pre-commit
-      run: |
-        pre-commit run --all-files
+    - run: pip install pre-commit
+    - run: pre-commit install
+    - run: pre-commit run --all-files
