@@ -9,7 +9,6 @@ from typing_extensions import override
 
 import numpy as np
 import pandas as pd
-from xgboost import XGBRegressor
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.config import Config
@@ -18,6 +17,7 @@ from mfpbench.setup_benchmark import PD1Source
 
 if TYPE_CHECKING:
     from ConfigSpace import ConfigurationSpace
+    from xgboost import XGBRegressor
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
@@ -183,6 +183,8 @@ class PD1Benchmark(Benchmark[C, R, int]):
     def surrogates(self) -> dict[str, XGBRegressor]:
         """The surrogates for this benchmark, one per metric."""
         if self._surrogates is None:
+            from xgboost import XGBRegressor
+
             self._surrogates = {}
             for metric, path in self.surrogate_paths.items():
                 if not path.exists():

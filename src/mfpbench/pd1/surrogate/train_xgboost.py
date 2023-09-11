@@ -4,13 +4,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from xgboost import XGBRegressor
 
 # TODO: Should really move this
 from mfpbench.pd1.processing.columns import COLUMNS
 
 if TYPE_CHECKING:
     from ConfigSpace import Configuration
+    from xgboost import XGBRegressor
 
 HERE = Path(__file__).absolute().resolve().parent
 DATADIR = HERE.parent.parent.parent / "data"
@@ -35,6 +35,8 @@ def train_xgboost(
     Returns:
         The trained XGBoost model
     """
+    from xgboost import XGBRegressor
+
     if y.name == "train_cost":
         model = XGBRegressor(
             **config,
@@ -52,6 +54,8 @@ def train_xgboost(
 
 if __name__ == "__main__":
     import argparse
+
+    from xgboost import XGBRegressor  # noqa: F811
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", required=True, type=str)
