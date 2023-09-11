@@ -10,7 +10,7 @@ dependencies = [
   "more_itertools",
   "pyarrow"
 ]
-version = "0.2.0"
+version = "1.0.0"
 description = "A wrapper for multi-fidelity benchmarks with priors"
 authors = [{name = "Eddie Bergman", email="eddiebergmanhs@gmail.com"}]
 readme = "README.md"
@@ -40,6 +40,7 @@ pd1 = ["xgboost>=1.7"]
 surrogates = ["dehb"]
 docs = [
   "mkdocs",
+  "mike",
   "mkdocs-material",
   "mkdocs-gen-files",
   "mkdocs-literate-nav",
