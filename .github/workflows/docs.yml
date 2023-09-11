@@ -16,8 +16,8 @@ jobs:
           python-version: 3.x
       - uses: actions/cache@v3
         with:
-          key: ${{ github.ref }}
-          path: .cache
+          path: ${{ env.pythonLocation }}
+          key: ubuntu-latest-${{ env.pythonLocation }}-${{hashFiles('pyproject.toml')}}
       - run: pip install ".[dev]"
       - run: git config --local user.name "docs-bot"
       - run: git config --local user.email "docs-bot@automl.org"
