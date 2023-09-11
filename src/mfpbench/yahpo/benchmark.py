@@ -4,16 +4,17 @@ import os
 import tempfile
 import uuid
 from pathlib import Path
-from typing import Any, ClassVar, Mapping, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Mapping, Sequence, TypeVar
 from typing_extensions import override
-
-import yahpo_gym
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.setup_benchmark import YAHPOSource
 from mfpbench.util import remove_hyperparameter
 from mfpbench.yahpo.config import YAHPOConfig
 from mfpbench.yahpo.result import YAHPOResult
+
+if TYPE_CHECKING:
+    import yahpo_gym
 
 _YAHPO_LOADED = False
 
@@ -66,6 +67,8 @@ def _ensure_yahpo_config_set(datapath: Path) -> None:
     yahpo_dump_dir.mkdir(exist_ok=True)
 
     config_for_this_process = yahpo_dump_dir / f"config_{unique_process_id}.yaml"
+
+    import yahpo_gym
 
     yahpo_gym.local_config.settings_path = config_for_this_process
     yahpo_gym.local_config.init_config(data_path=str(datapath))
@@ -163,6 +166,8 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             )
         _ensure_yahpo_config_set(datadir)
 
+        import yahpo_gym
+
         bench = yahpo_gym.BenchmarkSet(
             cls.yahpo_base_benchmark_name,
             instance=task_id,
@@ -201,6 +206,8 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
     def bench(self) -> yahpo_gym.BenchmarkSet:
         """The underlying yahpo gym benchmark."""
         if self._bench is None:
+            import yahpo_gym
+
             bench = yahpo_gym.BenchmarkSet(
                 self.yahpo_base_benchmark_name,
                 instance=self.task_id,
