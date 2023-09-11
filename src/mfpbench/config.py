@@ -252,16 +252,16 @@ class TabularConfig(Config):
         return cls.from_dict({"id": row.name, **row.to_dict()})
 
     @override
-    def dict(self) -> Any:
+    def dict(self, *, with_id: bool = False) -> Any:
         """As a raw dictionary.
 
-        !!! note
 
-            Will remove the id key.
-
+        Args:
+            with_id: Whether to include the id key
         """
         d = {**super().dict()}
-        d.pop("id")
+        if not with_id:
+            d.pop("id")
         return d
 
     @classmethod
@@ -286,7 +286,7 @@ class TabularConfig(Config):
         """
 
 
-@dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
+@dataclass(frozen=True, eq=False)  # type: ignore[misc]
 class GenericTabularConfig(TabularConfig):
     """A generic tabular config.
 
@@ -296,15 +296,21 @@ class GenericTabularConfig(TabularConfig):
 
     _values: dict[str, Any]
 
-    def dict(self) -> Any:
+    def __hash__(self) -> int:
+        """Hash based on the dictionary repr."""
+        return hash(self.id) ^ hash(tuple(self._values.items()))
+
+    @override
+    def dict(self, *, with_id: bool = False) -> Any:
         """As a raw dictionary.
 
-        !!! note
-
-            Will remove the id key.
-
+        Args:
+            with_id: Whether to include the id key
         """
-        return {**self._values}
+        d = {**self._values}
+        if with_id:
+            d["id"] = self.id
+        return d
 
     # Make .property acces work
     def __getattr__(self, __name: str) -> Any:

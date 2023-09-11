@@ -103,7 +103,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         if table.index.names != index_cols:
             # Only drop the index if it's not relevant.
             relevant_cols: list[str] = [  # type: ignore
-                *list(index_cols),
+                *list(index_cols),  # type: ignore
                 *list(result_keys),
                 *list(config_keys),
             ]
@@ -122,6 +122,11 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         for key in chain(result_keys, config_keys):
             if key not in table.columns:
                 raise ValueError(f"{key=} not in columns {table.columns}")
+
+        # Make sure the keyword "id" is not in the columns as we use it to
+        # identify configs
+        if "id" in table.columns:
+            raise ValueError(f"{table.columns=} contains 'id'. Please rename it")
 
         # Make sure we have equidistance fidelities for all configs
         fidelity_values = table.index.get_level_values(fidelity_name)
@@ -186,7 +191,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
 
     def query(
         self,
-        config: CTabular | Mapping[str, Any],
+        config: CTabular | Mapping[str, Any] | str,
         at: F | None = None,
         *,
         argmax: str | None = None,
@@ -222,22 +227,32 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         Returns:
             The result of the query
         """
-        if not isinstance(config, self.Config):
-            assert self.configs is not None
-            match = first_true(
-                self.configs.values(),
-                pred=lambda c: c == config,  # type: ignore
-                default=None,
-            )
-            if match is None:
-                raise ValueError(
-                    f"Could not find config matching {config}. Please pass the `Config`"
-                    f"object or specify the `id` in the {type(config)}",
+        if isinstance(config, str):
+            _config = self.configs[config]
+        elif not isinstance(config, self.Config):
+            if self.config_name in config:
+                _id = config[self.config_name]
+                _config = self.configs[_id]
+            elif "id" in config:
+                _id = config["id"]
+                _config = self.configs[_id]
+            else:
+                match = first_true(
+                    self.configs.values(),
+                    pred=lambda c: c == config,  # type: ignore
+                    default=None,
                 )
-            config = match
+                if match is None:
+                    raise ValueError(
+                        f"Could not find config matching {config}. Please pass the"
+                        f" `Config` object or specify the `id` in the {type(config)}",
+                    )
+                _config = match
+        else:
+            _config = config
 
         return super().query(
-            config,
+            _config,
             at=at,  # type: ignore # Mypy seems confused about this
             argmax=argmax,
             argmin=argmin,
@@ -507,7 +522,7 @@ if __name__ == "__main__":
         remove_constants=True,
     )
     # benchmark = LCBenchTabular(task="adult")
-    all_configs = benchmark.configs
+    all_configs = benchmark.configs  # type: ignore
     config_ids = list(all_configs.keys())
     configs = list(all_configs.values())
 

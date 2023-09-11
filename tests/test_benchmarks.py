@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import product
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 import pytest
 from pytest_cases import (
@@ -97,37 +97,32 @@ def case_mfh() -> BenchmarkTest:
 
 @case(tags="generic_tabular")
 def case_generic_tabular() -> BenchmarkTest:
-    df = pd.DataFrame(
-        {
-            "config": ["a", "a", "a", "b", "b", "b", "c", "c", "c"],
-            "fidelity": [1, 2, 3, 1, 2, 3, 1, 2, 3],
-            "balanced_accuracy": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-            "color": [
-                "red",
-                "red",
-                "red",
-                "blue",
-                "blue",
-                "blue",
-                "green",
-                "green",
-                "green",
+    ids = "abcdefghijklmnopqrstuvwxyz"
+    colors = ["red", "green", "blue"]
+    shapes = ["circle", "square", "triangle"]
+    animals = ["cat", "dog", "bird"]
+    numbers = [1, 2, 3]
+    floats = [1.0, 2.0, 3.0]
+    config_values = product(colors, shapes, animals, numbers, floats)
+    values = [
+        pd.DataFrame(
+            [
+                {
+                    "config": k,
+                    "color": c,
+                    "shape": s,
+                    "animal": a,
+                    "number": n,
+                    "float": f,
+                    "balanced_accuracy": v,
+                    "fidelity": fid,
+                }
+                for fid, v in zip([10, 20, 30], [0.5, 0.6, 0.7])
             ],
-            "shape": [
-                "circle",
-                "circle",
-                "circle",
-                "square",
-                "square",
-                "square",
-                "triangle",
-                "triangle",
-                "triangle",
-            ],
-            "kind": ["mlp", "mlp", "mlp", "mlp", "mlp", "mlp", "mlp", "mlp", "mlp"],
-        },
-    )
-
+        )
+        for k, (c, s, a, n, f) in zip(ids, config_values)
+    ]
+    df = pd.concat(values, ignore_index=True)
     benchmark = GenericTabularBenchmark(
         df,
         name="testdata",
@@ -137,7 +132,12 @@ def case_generic_tabular() -> BenchmarkTest:
         result_keys=["balanced_accuracy"],
         result_mapping={
             "error": lambda df: 1 - df["balanced_accuracy"],
+            "val_error": lambda df: 1 - df["balanced_accuracy"],
+            "test_error": lambda df: 1 - df["balanced_accuracy"],
             "score": lambda df: df["balanced_accuracy"],
+            "val_score": lambda df: df["balanced_accuracy"],
+            "test_score": lambda df: df["balanced_accuracy"],
+            "cost": lambda df: df["float"],
         },
         remove_constants=True,
     )
@@ -185,11 +185,18 @@ def test_query_api_validity(benchmark: Benchmark) -> None:
 
     configspace_sample = benchmark.space.sample_configuration()
     result = benchmark.query(configspace_sample)
-    assert result.config == configspace_sample
+
+    if isinstance(benchmark, TabularBenchmark):
+        assert result.config.id == configspace_sample["id"]
+    else:
+        assert result.config == configspace_sample
 
     configspace_sample_dict = {**configspace_sample}
     result = benchmark.query(configspace_sample_dict)
-    assert result.config == configspace_sample_dict
+    if isinstance(benchmark, TabularBenchmark):
+        assert result.config.id == configspace_sample["id"]
+    else:
+        assert result.config == configspace_sample_dict
 
 
 def test_result_api_validity(benchmark: Benchmark) -> None:
@@ -233,15 +240,10 @@ def test_repeated_trajectory(benchmark: Benchmark) -> None:
     configs = benchmark.sample(10)
 
     for config in configs:
-        results = np.asarray(
-            [[benchmark.trajectory(config)] for _ in range(3)],
-            dtype=object,
-        )
-
-        for row in results.T:
-            first = row[0]
-            for other in row[1:]:
-                assert first == other
+        traj1 = benchmark.trajectory(config)
+        traj2 = benchmark.trajectory(config)
+        for r1, r2 in zip(traj1, traj2):
+            assert r1 == r2, f"{r1}\n{r2}"
 
 
 def test_query_default_is_max_fidelity(benchmark: Benchmark) -> None:
@@ -307,8 +309,13 @@ def test_argmin_query(benchmark: Benchmark) -> None:
 def test_config_with_same_content_hashes_correctly(benchmark: Benchmark) -> None:
     config = benchmark.sample()
 
+    if isinstance(benchmark, TabularBenchmark):
+        config_dict = config.dict(with_id=True)
+    else:
+        config_dict = config.dict()
+
     # Turn it into a dict and back again
-    new_config = benchmark.Config.from_dict(config.dict())
+    new_config = benchmark.Config.from_dict(config_dict)
 
     assert hash(config) == hash(new_config)
 
@@ -318,10 +325,10 @@ def test_result_with_same_content_hashes_correctly(benchmark: Benchmark) -> None
     result = benchmark.query(config)
 
     # Turn it into a dict and back again
-    new_result = benchmark.Result(
+    new_result = benchmark.Result.from_dict(
         config=config,
         fidelity=result.fidelity,
-        **result.dict(),
+        result=result.dict(),
     )
 
     assert hash(result) == hash(new_result)
@@ -334,10 +341,10 @@ def test_result_same_value_but_different_fidelity_has_different_hash(
     result = benchmark.query(config)
 
     # Turn it into a dict and back again
-    new_result = benchmark.Result(
+    new_result = benchmark.Result.from_dict(
         config=config,
         fidelity=result.fidelity - 1,
-        **result.dict(),
+        result=result.dict(),
     )
 
     assert hash(result) != hash(new_result)

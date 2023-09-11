@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Generic, Mapping, TypeVar
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from mfpbench.config import Config
 
@@ -113,7 +113,7 @@ class Result(ABC, Generic[C, F]):
         return d
 
 
-@dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
+@dataclass(frozen=True, eq=False)  # type: ignore[misc]
 class GenericTabularResult(Result[C, F], Generic[C, F]):
     """A generic tabular result.
 
@@ -121,6 +121,12 @@ class GenericTabularResult(Result[C, F], Generic[C, F]):
     """
 
     _values: dict[str, Any]
+
+    def __hash__(self) -> int:
+        """Hash based on the dictionary repr."""
+        return (
+            hash(self.config) ^ hash(self.fidelity) ^ hash(tuple(self._values.items()))
+        )
 
     def dict(self) -> Any:
         """As a raw dictionary."""
@@ -133,10 +139,11 @@ class GenericTabularResult(Result[C, F], Generic[C, F]):
     def __getattr__(self, __name: str) -> Any:
         return self._values[__name]
 
+    @override
     @classmethod
-    def from_dict(cls, config: C, d: Mapping[str, Any], fidelity: F) -> Self:
+    def from_dict(cls, config: C, result: Mapping[str, Any], fidelity: F) -> Self:
         """Create from a dict or mapping object."""
-        return cls(config=config, _values=dict(d), fidelity=fidelity)
+        return cls(config=config, _values=dict(result), fidelity=fidelity)
 
     @property
     def score(self) -> float:
