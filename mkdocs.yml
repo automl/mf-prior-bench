@@ -38,8 +38,8 @@ theme:
         icon: material/eye
         name: Switch to dark mode
 extra:
-  # version:
-  #  provider: mike
+  version:
+    provider: mike
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/automl
