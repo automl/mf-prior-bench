@@ -1,6 +1,8 @@
 # Data
 data
 .dehb_output
+example_config.json
+example_config.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

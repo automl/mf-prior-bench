@@ -216,11 +216,11 @@ print("dict", dict(config))
     config = benchmark.sample()
     print(config)
 
-    config.save("config.yaml")
-    loaded_config = benchmark.Config.from_file("config.yaml")
+    config.save("example_config.yaml")
+    loaded_config = benchmark.Config.from_file("example_config.yaml")
 
-    config.save("config.json")
-    loaded_config = benchmark.Config.from_file("config.json")
+    config.save("example_config.json")
+    loaded_config = benchmark.Config.from_file("example_config.json")
 
     print(loaded_config == config)
     ```
