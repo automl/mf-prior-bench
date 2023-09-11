@@ -21,5 +21,5 @@ jobs:
       - run: pip install ".[dev]"
       - run: git config --local user.name "docs-bot"
       - run: git config --local user.email "docs-bot@automl.org"
-      - run: mike deploy ${{ github.ref_name }} latest --force --push --update-aliases
-      - run: mike set-default --push --force latest
+      - run: mike deploy --push --update-aliases ${{ github.event.release.tag_name }} latest
+      - run: mike set-default latest latest --push
