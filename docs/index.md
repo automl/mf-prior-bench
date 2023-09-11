@@ -40,7 +40,7 @@ This includes any necessary setup commands which you can find in the [setup](set
 ```python exec="true" source="material-block" result="python" title="Example"
 import mfpbench
 
-benchmark = mfpbench.get("mfh3_good", bias=2.5, noise=0, prior="good")
+benchmark = mfpbench.get("mfh3", bias=2.5, noise=0)
 
 config = benchmark.sample()
 result = benchmark.query(config, at=34)
