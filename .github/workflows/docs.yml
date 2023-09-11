@@ -16,7 +16,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
@@ -24,5 +24,12 @@ jobs:
         with:
           key: ${{ github.ref }}
           path: .cache
-      - run: pip install "mf-prior-bench[dev]"
-      - run: mkdocs gh-deploy --force
+      - name: Install 
+        run: pip install "mf-prior-bench[docs, tabular]"
+      - name: Configure Git User
+        run: |
+          git config --local user.name "docs-bot"
+          git config --local user.email "docs-bot@automl.org"
+      - run: |
+          mike deploy ${{ github.ref_name }} latest --push --update-aliases
+          mike set-default --push latest
