@@ -32,7 +32,7 @@ classifiers = [
 [project.optional-dependencies]
 yahpo = ["yahpo-gym==1.0.1"]
 jahs-bench = [
-  "jahs_bench@git+ssh://git@github.com/automl/jahs_bench_201#egg=880fbcb35a83df7b6c02440a6c13adb921f54657",
+  "jahs_bench==1.1",
   "pandas<1.4",
 ]
 tabular = ["pandas>2", "pyarrow"]
