@@ -5,13 +5,13 @@
 ### Using `pip`
 
 ```bash
-pip install mfpbench
+pip install mf-prior-bench
 ```
 
 To install specific benchmark dependancies, you can specify any or all of the following:
 
 ```bash
-pip install "mfpbench[yahpo, jahs-bench, pd1]"
+pip install "mf-prior-bench[yahpo, jahs-bench, pd1]"
 ```
 
 ### From source
