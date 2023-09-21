@@ -291,7 +291,7 @@ def print_download_status(
         if download_status(name, datadir=datadir):
             print(f"[✓] {name}")
         else:
-            print(f"[x] {name: <20} python -m mpfbench download --benchmark {name}")
+            print(f"[x] {name: <20} python -m mfpbench download --benchmark {name}")
 
 
 def print_requirements(benchmarks: list[str]) -> None:

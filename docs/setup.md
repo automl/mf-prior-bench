@@ -31,7 +31,7 @@ pip install "mf-prior-bench[yahpo, jahs-bench, pd1]"
 ```
 
 ## CLI
-`mpfbench` provides some helpful commands for downloading data as well as generating priors
+`mfpbench` provides some helpful commands for downloading data as well as generating priors
 for benchmarks.
 
 ```bash exec="true" source="material-block" result="ansi" title="CLI Help"
