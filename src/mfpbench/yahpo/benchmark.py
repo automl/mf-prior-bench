@@ -20,11 +20,11 @@ if TYPE_CHECKING:
 _YAHPO_LOADED = False
 
 
-def _yahpo_set_session(
+def _yahpo_create_session(
     *,
     benchmark: yahpo_gym.BenchmarkSet,
     multithread: bool = True,
-) -> None:
+) -> onnxruntime.InferenceSession:
     """Get a session for the Yahpo Benchmark.
 
     !!! note "Reason"
@@ -41,6 +41,9 @@ def _yahpo_set_session(
             Should the ONNX session be allowed to leverage multithreading capabilities?
             Initialized to `True` but on some HPC clusters it may be needed to set this
             to `False`, depending on your setup. Only relevant if no session is given.
+
+    Returns:
+        The session to use for the benchmark.
     """
     import onnxruntime
 
@@ -53,12 +56,11 @@ def _yahpo_set_session(
         options.inter_op_num_threads = 1
         options.intra_op_num_threads = 1
 
-    session = onnxruntime.InferenceSession(
+    return onnxruntime.InferenceSession(
         model_path,
         sess_options=options,
         providers=["CPUExecutionProvider"],
     )
-    benchmark.set_session(session)
 
 
 def _ensure_yahpo_config_set(datapath: Path) -> None:
@@ -217,19 +219,26 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
 
         import yahpo_gym
 
+        if session is None:
+            dummy_bench = yahpo_gym.BenchmarkSet(
+                cls.yahpo_base_benchmark_name,
+                instance=task_id,
+                multithread=False,
+                # HACK: Used to fix onnxruntime session issue with 1.16.0 where
+                # `providers` is required. By setting these options, we prevent
+                # the benchmark from automatically creating a session.
+                # We will manually do so and set it later.
+                active_session=False,
+                session=None,
+            )
+            session = _yahpo_create_session(benchmark=dummy_bench)
+
         bench = yahpo_gym.BenchmarkSet(
             cls.yahpo_base_benchmark_name,
             instance=task_id,
             multithread=False,
-            # HACK: Used to fix onnxruntime session issue with 1.16.0 where `providers`
-            # is required. By setting these options, we prevent the benchmark from
-            # automatically creating a session. We will manually do so and set it later.
-            active_session=False,
-            session=None,
+            session=session,
         )
-
-        if session is None:
-            _yahpo_set_session(benchmark=bench, multithread=False)
 
         name = f"{cls.yahpo_base_benchmark_name}-{task_id}"
 
