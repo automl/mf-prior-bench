@@ -14,9 +14,51 @@ from mfpbench.yahpo.config import YAHPOConfig
 from mfpbench.yahpo.result import YAHPOResult
 
 if TYPE_CHECKING:
+    import onnxruntime
     import yahpo_gym
 
 _YAHPO_LOADED = False
+
+
+def _yahpo_set_session(
+    *,
+    benchmark: yahpo_gym.BenchmarkSet,
+    multithread: bool = True,
+) -> None:
+    """Get a session for the Yahpo Benchmark.
+
+    !!! note "Reason"
+
+        In onnx 1.16.0, the `onnxruntime.InferenceSession` is explicitly required
+        to provide the `providers=` argument.
+
+    Code is taken from `yahpo_gym.benchmark.BenchmarkSet.set_session` and modified
+
+    Args:
+        benchmark:
+            The benchmark to use for the session.
+        multithread:
+            Should the ONNX session be allowed to leverage multithreading capabilities?
+            Initialized to `True` but on some HPC clusters it may be needed to set this
+            to `False`, depending on your setup. Only relevant if no session is given.
+    """
+    import onnxruntime
+
+    model_path = benchmark._get_model_path()
+    if not Path(model_path).is_file():
+        raise Exception(f"ONNX file {model_path} not found!")
+
+    options = onnxruntime.SessionOptions()
+    if not multithread:
+        options.inter_op_num_threads = 1
+        options.intra_op_num_threads = 1
+
+    session = onnxruntime.InferenceSession(
+        model_path,
+        sess_options=options,
+        providers=["CPUExecutionProvider"],
+    )
+    benchmark.set_session(session)
 
 
 def _ensure_yahpo_config_set(datapath: Path) -> None:
@@ -105,7 +147,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
     task_id: str
     """The task id for this benchmark."""
 
-    def __init__(  # noqa: C901
+    def __init__(  # noqa: C901, PLR0912
         self,
         task_id: str,
         *,
@@ -113,6 +155,7 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
         seed: int | None = None,
         prior: str | Path | C | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
+        session: onnxruntime.InferenceSession | None = None,
     ):
         """Initialize a Yahpo Benchmark.
 
@@ -129,6 +172,12 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
                 If a Mapping, will be used directly.
             perturb_prior: If given, will perturb the prior by this amount. Only used if
                 `prior=` is given as a config.
+            session: The onnxruntime session to use. If None, will create a new one.
+
+                !!! warning "Not for faint hearted"
+
+                    This is only a backdoor for onnx compatibility issues with YahpoGym.
+                    You are advised not to use this unless you know what you are doing.
         """
         # Validation
         cls = self.__class__
@@ -172,7 +221,16 @@ class YAHPOBenchmark(Benchmark[C, R, F]):
             cls.yahpo_base_benchmark_name,
             instance=task_id,
             multithread=False,
+            # HACK: Used to fix onnxruntime session issue with 1.16.0 where `providers`
+            # is required. By setting these options, we prevent the benchmark from
+            # automatically creating a session. We will manually do so and set it later.
+            active_session=False,
+            session=None,
         )
+
+        if session is None:
+            _yahpo_set_session(benchmark=bench, multithread=False)
+
         name = f"{cls.yahpo_base_benchmark_name}-{task_id}"
 
         # These can have one or two fidelities
