@@ -227,33 +227,10 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         Returns:
             The result of the query
         """
-        if isinstance(config, str):
-            _config = self.configs[config]
-        elif not isinstance(config, self.Config):
-            if self.config_name in config:
-                _id = config[self.config_name]
-                _config = self.configs[_id]
-            elif "id" in config:
-                _id = config["id"]
-                _config = self.configs[_id]
-            else:
-                match = first_true(
-                    self.configs.values(),
-                    pred=lambda c: c == config,  # type: ignore
-                    default=None,
-                )
-                if match is None:
-                    raise ValueError(
-                        f"Could not find config matching {config}. Please pass the"
-                        f" `Config` object or specify the `id` in the {type(config)}",
-                    )
-                _config = match
-        else:
-            _config = config
-
+        _config = self._find_config(config)
         return super().query(
             _config,
-            at=at,  # type: ignore # Mypy seems confused about this
+            at=at,  # type: ignore
             argmax=argmax,
             argmin=argmin,
         )
@@ -261,7 +238,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
     @override
     def trajectory(
         self,
-        config: CTabular | Mapping[str, Any],
+        config: CTabular | Mapping[str, Any] | str,
         *,
         frm: F | None = None,
         to: F | None = None,
@@ -295,22 +272,41 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         Returns:
             The result of the query
         """
-        if not isinstance(config, self.Config):
-            assert self.configs is not None
-            match = first_true(
-                self.configs.values(),
-                pred=lambda c: c == config,  # type: ignore
-                default=None,
-            )
-            if match is None:
-                raise ValueError(
-                    f"Could not find config matching {config}. Please pass the `Config`"
-                    f"object or specify the `id` in the {type(config)}",
-                )
-            config = match
+        _config = self._find_config(config)
+        return super().trajectory(_config, frm=frm, to=to, step=step)  # type: ignore
 
-        # Mypy seems confused by the TypeVar F
-        return super().trajectory(config, frm=frm, to=to, step=step)  # type: ignore
+    def _find_config(
+        self,
+        config: CTabular | Mapping[str, Any] | str | int,
+    ) -> CTabular:
+        if isinstance(config, int):
+            config = str(config)
+
+        if isinstance(config, str):
+            return self.configs[config]
+
+        if isinstance(config, self.Config):
+            return config
+
+        if self.config_name in config:
+            _id = config[self.config_name]
+            return self.configs[_id]
+
+        if "id" in config:
+            _id = config["id"]
+            return self.configs[_id]
+
+        match = first_true(
+            self.configs.values(),
+            pred=lambda c: c == config,  # type: ignore
+            default=None,
+        )
+        if match is None:
+            raise ValueError(
+                f"Could not find config matching {config}. Please pass the"
+                f" `Config` object or specify the `id` in the {type(config)}",
+            )
+        return match
 
     @override
     def _objective_function(self, config: CTabular, at: F) -> R:
