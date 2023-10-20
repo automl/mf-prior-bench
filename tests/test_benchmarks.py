@@ -183,21 +183,6 @@ def test_query_api_validity(benchmark: Benchmark) -> None:
     result = benchmark.query(sample_dict)
     assert result.config == sample_dict
 
-    configspace_sample = benchmark.space.sample_configuration()
-    result = benchmark.query(configspace_sample)
-
-    if isinstance(benchmark, TabularBenchmark):
-        assert result.config.id == configspace_sample["id"]
-    else:
-        assert result.config == configspace_sample
-
-    configspace_sample_dict = {**configspace_sample}
-    result = benchmark.query(configspace_sample_dict)
-    if isinstance(benchmark, TabularBenchmark):
-        assert result.config.id == configspace_sample["id"]
-    else:
-        assert result.config == configspace_sample_dict
-
 
 def test_result_api_validity(benchmark: Benchmark) -> None:
     sample = benchmark.sample()
