@@ -413,6 +413,7 @@ class GenericTabularBenchmark(
         config_keys: Sequence[str],
         result_mapping: (dict[str, str | Callable[[pd.DataFrame], Any]] | None) = None,
         remove_constants: bool = False,
+        space: ConfigurationSpace | None = None,
         seed: int | None = None,
         prior: str | Path | GenericTabularConfig | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
@@ -432,6 +433,8 @@ class GenericTabularBenchmark(
                 If a string, will be used as the key in the table. If a callable,
                 will be called with the table and the result will be used as the value.
             remove_constants: Remove constant config columns from the data or not.
+            space: The configuration space to use for the benchmark. If None, will
+                just be an empty space.
             seed: The seed to use.
             prior: The prior to use for the benchmark. If None, no prior is used.
                 If a str, will check the local location first for a prior
@@ -469,6 +472,7 @@ class GenericTabularBenchmark(
             result_keys=[*result_keys, *_result_mapping.keys()],
             config_keys=config_keys,
             remove_constants=remove_constants,
+            space=space,
             seed=seed,
             prior=prior,
             perturb_prior=perturb_prior,
