@@ -8,10 +8,7 @@ from typing_extensions import override
 
 import numpy as np
 import pandas as pd
-from ConfigSpace import (
-    CategoricalHyperparameter,
-    ConfigurationSpace,
-)
+from ConfigSpace import ConfigurationSpace
 from more_itertools import first_true
 
 from mfpbench.benchmark import Benchmark
@@ -51,7 +48,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
     # Whether this benchmark has conditonals in it or not
     has_conditionals: bool = False
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0913, C901
         self,
         name: str,
         table: pd.DataFrame,
@@ -61,6 +58,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         result_keys: Sequence[str],
         config_keys: Sequence[str],
         remove_constants: bool = False,
+        space: ConfigurationSpace | None = None,
         seed: int | None = None,
         prior: str | Path | CTabular | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
@@ -75,6 +73,8 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             result_keys: The columns in the table that contain the results
             config_keys: The columns in the table that contain the config values
             remove_constants: Remove constant config columns from the data or not.
+            space: The configuration space to use for the benchmark. If None, will
+                just be an empty space.
             prior: The prior to use for the benchmark. If None, no prior is used.
                 If a string, will be treated as a prior specific for this benchmark
                 if it can be found, otherwise assumes it to be a Path.
@@ -169,9 +169,9 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         end = sorted_fids[-1]
         step = sorted_fids[1] - sorted_fids[0]
 
-        # Create the configuration space with just the ids
-        space = ConfigurationSpace(name, seed=seed)
-        space.add_hyperparameter(CategoricalHyperparameter("id", list(configs)))
+        # Create the configuration space
+        if space is None:
+            space = ConfigurationSpace(name, seed=seed)
 
         self.table = table
         self.configs = configs

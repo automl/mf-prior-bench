@@ -5,6 +5,12 @@ from pathlib import Path
 from typing import Any, ClassVar, Mapping
 
 import pandas as pd
+from ConfigSpace import ConfigurationSpace
+from ConfigSpace.hyperparameters import (
+    Constant,
+    UniformFloatHyperparameter,
+    UniformIntegerHyperparameter,
+)
 
 from mfpbench.config import TabularConfig
 from mfpbench.result import Result
@@ -12,10 +18,91 @@ from mfpbench.setup_benchmark import LCBenchTabularSource
 from mfpbench.tabular import TabularBenchmark
 
 
+def _get_raw_lcbench_space(name: str, seed: int | None = None) -> ConfigurationSpace:
+    """Get the raw configuration space for lcbench tabular.
+
+    !!! note
+
+        This configuration space is the same across all tasks that lcbench tabular
+        has.
+
+    Args:
+        name: The name for the space.
+        seed: The seed to use.
+
+    Returns:
+        The configuration space.
+    """
+    # obtained from https://github.com/automl/lcbench#dataset-overview
+    cs = ConfigurationSpace(name=name, seed=seed)
+    cs.add_hyperparameters(
+        [
+            UniformIntegerHyperparameter(
+                "batch_size",
+                lower=16,
+                upper=512,
+                log=True,
+                default_value=128,  # approximately log-spaced middle of range
+            ),
+            UniformFloatHyperparameter(
+                "learning_rate",
+                lower=1.0e-4,
+                upper=1.0e-1,
+                log=True,
+                default_value=1.0e-3,  # popular choice of LR
+            ),
+            UniformFloatHyperparameter(
+                "momentum",
+                lower=0.1,
+                upper=0.99,
+                log=False,
+                default_value=0.9,  # popular choice, also not on the boundary
+            ),
+            UniformFloatHyperparameter(
+                "weight_decay",
+                lower=1.0e-5,
+                upper=1.0e-1,
+                log=False,
+                default_value=1.0e-2,  # reasonable default
+            ),
+            UniformIntegerHyperparameter(
+                "num_layers",
+                lower=1,
+                upper=5,
+                log=False,
+                default_value=3,  # middle of range
+            ),
+            UniformIntegerHyperparameter(
+                "max_units",
+                lower=64,
+                upper=1024,
+                log=True,
+                default_value=256,  # approximately log-spaced middle of range
+            ),
+            UniformFloatHyperparameter(
+                "max_dropout",
+                lower=0,
+                upper=1,
+                log=False,
+                default_value=0.2,  # reasonable default
+            ),
+            Constant("cosine_annealing_T_max", 50),
+            Constant("cosine_annealing_eta_min", 0.0),
+            Constant("normalization_strategy", "standardize"),
+            Constant("optimizer", "sgd"),
+            Constant("learning_rate_scheduler", "cosine_annealing"),
+            Constant("network", "shapedmlpnet"),
+            Constant("activation", "relu"),
+            Constant("mlp_shape", "funnel"),
+            Constant("imputation_strategy", "mean"),
+        ],
+    )
+    return cs
+
+
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class LCBenchTabularConfig(TabularConfig):
     batch_size: int
-    loss: str
     imputation_strategy: str
     learning_rate_scheduler: str
     network: str
@@ -36,6 +123,7 @@ class LCBenchTabularConfig(TabularConfig):
 @dataclass(frozen=True)  # type: ignore[misc]
 class LCBenchTabularResult(Result[LCBenchTabularConfig, int]):
     time: float
+    loss: float
     val_accuracy: float
     val_cross_entropy: float
     val_balanced_accuracy: float
@@ -175,14 +263,28 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         self.datadir = Path(datadir) if isinstance(datadir, str) else datadir
 
         table = pd.read_parquet(table_path)
+
+        # NOTE: Dropping of 0'th epoch
+        # As the 0'th epoch is a completely untrained model, this is different
+        # from 1st epoch where it is trained and it's score is somewhat representitive.
+        # This is a benchmarking library for HPO and we do not want to include untrained
+        # models nor have it be part of the fidelity range. For that reason, we drop
+        # the 0'th epoch.
+        drop_epoch = 0
+        table = table.drop(index=drop_epoch, level="epoch")
+
+        benchmark_task_name = f"lcbench_tabular-{task_id}"
+        space = _get_raw_lcbench_space(name=f"lcbench_tabular-{task_id}", seed=seed)
+
         super().__init__(
-            table=table,
-            name=f"lcbench_tabular-{task_id}",
+            table=table,  # type: ignore
+            name=benchmark_task_name,
             config_name="config_id",
             fidelity_name=cls.fidelity_name,
             result_keys=LCBenchTabularResult.names(),
             config_keys=LCBenchTabularConfig.names(),
             remove_constants=remove_constants,
+            space=space,
             seed=seed,
             prior=prior,
             perturb_prior=perturb_prior,
