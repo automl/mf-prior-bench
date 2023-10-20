@@ -5,6 +5,9 @@ from pathlib import Path
 from typing import Any, ClassVar, Mapping
 
 import pandas as pd
+from ConfigSpace import (
+    ConfigurationSpace, Constant, UniformFloatHyperparameter, UniformIntegerHyperparameter
+)
 
 from mfpbench.config import TabularConfig
 from mfpbench.result import Result
@@ -15,7 +18,7 @@ from mfpbench.tabular import TabularBenchmark
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class LCBenchTabularConfig(TabularConfig):
     batch_size: int
-    loss: str
+    # loss: str
     imputation_strategy: str
     learning_rate_scheduler: str
     network: str
@@ -35,6 +38,7 @@ class LCBenchTabularConfig(TabularConfig):
 
 @dataclass(frozen=True)  # type: ignore[misc]
 class LCBenchTabularResult(Result[LCBenchTabularConfig, int]):
+    loss: float
     time: float
     val_accuracy: float
     val_cross_entropy: float
@@ -178,7 +182,7 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         super().__init__(
             table=table,
             name=f"lcbench_tabular-{task_id}",
-            config_name="config_id",
+            config_name="id",
             fidelity_name=cls.fidelity_name,
             result_keys=LCBenchTabularResult.names(),
             config_keys=LCBenchTabularConfig.names(),
@@ -187,3 +191,89 @@ class LCBenchTabularBenchmark(TabularBenchmark):
             prior=prior,
             perturb_prior=perturb_prior,
         )
+
+    @property
+    def fidelity_range(self) -> tuple[int, int, int]:
+        return (1, 51, 1)
+        
+    def get_raw_space(self, name: int | None = None, seed: int | None = None) -> ConfigurationSpace:
+        """Create the configuration space for the benchmark.
+
+        Args:
+            name: The name for the configuration space.
+            seed: The seed to use for the configuration space.
+
+        Returns:
+            The configuration space for the benchmark.
+        """
+        # obtained from https://github.com/automl/lcbench#dataset-overview
+        cs = ConfigurationSpace(name=name, seed=seed)
+        cs.add_hyperparameters(
+            [
+                UniformIntegerHyperparameter(
+                    "batch_size",
+                    lower=16,
+                    upper=512,
+                    log=True,
+                    default_value=128,  # approximately log-spaced middle of range
+                ),
+                UniformFloatHyperparameter(
+                    "learning_rate",
+                    lower=1.0e-4,
+                    upper=1.0e-1,
+                    log=True,
+                    default_value=1.0e-3,  # popular choice of LR
+                ),
+                UniformFloatHyperparameter(
+                    "momentum",
+                    lower=0.1,
+                    upper=0.99,
+                    log=False,
+                    default_value=0.9,  # popular choice, also not on the boundary
+                ),
+                UniformFloatHyperparameter(
+                    "weight_decay",
+                    lower=1.0e-5,
+                    upper=1.0e-1,
+                    log=False,
+                    default_value=1.0e-2,  # reasonable default
+                ),
+                UniformIntegerHyperparameter(
+                    "num_layers",
+                    lower=1,
+                    upper=5,
+                    log=False,
+                    default_value=3,  # middle of range
+                ),
+                UniformIntegerHyperparameter(
+                    "max_units",
+                    lower=64,
+                    upper=1024,
+                    log=True,
+                    default_value=256,  # approximately log-spaced middle of range
+                ),
+                UniformFloatHyperparameter(
+                    "max_dropout",
+                    lower=0,
+                    upper=1,
+                    log=False,
+                    default_value=0.2,  # reasonable default
+                ),
+                *self._get_constant_hyperparameters(),
+            ],
+        )
+        return cs
+    
+    def _get_constant_hyperparameters(self) -> list:
+        constants = [
+            Constant("cosine_annealing_T_max", 50),
+            Constant("cosine_annealing_eta_min", 0.0),
+            Constant("normalization_strategy", "standardize"),
+            Constant("optimizer", "sgd"),
+            Constant("learning_rate_scheduler", "cosine_annealing"),
+            Constant("network", "shapedmlpnet"),
+            Constant("activation", "relu"),
+            Constant("mlp_shape", "funnel"),
+            Constant("imputation_strategy", "mean"),
+        ]
+        return constants

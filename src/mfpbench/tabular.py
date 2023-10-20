@@ -168,18 +168,27 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         start = sorted_fids[0]
         end = sorted_fids[-1]
         step = sorted_fids[1] - sorted_fids[0]
+        self._start = sorted_fids[0]
+        self._end = sorted_fids[-1]
+        self._step = sorted_fids[1] - sorted_fids[0]
 
         # Create the configuration space with just the ids
         space = ConfigurationSpace(name, seed=seed)
         space.add_hyperparameter(CategoricalHyperparameter("id", list(configs)))
 
+        # Create the raw configuration space
+        try:
+            self.raw_space = self.get_raw_space(name=name, seed=seed)
+        except NotImplementedError:
+            self.raw_space = None
+        
         self.table = table
         self.configs = configs
         self.fidelity_name = fidelity_name
         self.config_name = config_name
         self.config_keys = sorted(config_keys)
         self.result_keys = sorted(result_keys)
-        self.fidelity_range = (start, end, step)  # type: ignore
+        # self.fidelity_range = (start, end, step)  # type: ignore
 
         super().__init__(
             name=name,
@@ -188,6 +197,31 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             prior=prior,
             perturb_prior=perturb_prior,
         )
+
+    @property
+    def fidelity_range(self) -> tuple[int, int, int]:
+        """Get the range of fidelities for this benchmark.
+
+        Returns:
+            The range of fidelities for this benchmark.
+        """
+        return (self._start, self._end, self._step)
+
+    @property
+    def raw_search_space(self) -> ConfigurationSpace:
+        return self.raw_space
+
+    def get_raw_space(self, name: int | None = None, seed: int | None = None) -> ConfigurationSpace:
+        """Create the configuration space for the benchmark.
+
+        Args:
+            name: The name for the configuration space.
+            seed: The seed to use for the configuration space.
+
+        Returns:
+            The configuration space for the benchmark.
+        """
+        raise NotImplementedError
 
     def query(
         self,

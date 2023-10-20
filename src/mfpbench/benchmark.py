@@ -263,7 +263,6 @@ class Benchmark(Generic[C, R, F], ABC):
         to = to if to is not None else self.end
         frm = frm if frm is not None else self.start
         step = step if step is not None else self.step
-
         if not isinstance(config, self.Config):
             _config = self.Config.from_dict(config)
         else:
