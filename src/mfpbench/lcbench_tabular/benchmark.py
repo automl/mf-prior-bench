@@ -134,32 +134,32 @@ class LCBenchTabularResult(Result[LCBenchTabularConfig, int]):
     @property
     def score(self) -> float:
         """The score of interest."""
-        return self.val_accuracy
+        return self.val_score
 
     @property
     def error(self) -> float:
         """The error of interest."""
-        return 1 - self.val_error
+        return self.val_error
 
     @property
     def val_score(self) -> float:
         """The score on the validation set."""
-        return self.val_accuracy
+        return self.val_accuracy / 100
 
     @property
     def val_error(self) -> float:
         """The error on the validation set."""
-        return 1 - self.val_accuracy
+        return (100 - self.val_accuracy) / 100
 
     @property
     def test_score(self) -> float:
         """The score on the test set."""
-        return self.test_accuracy
+        return self.test_accuracy / 100
 
     @property
     def test_error(self) -> float:
         """The error on the test set."""
-        return 1 - self.test_accuracy
+        return (100 - self.test_accuracy) / 100
 
     @property
     def cost(self) -> float:
@@ -279,7 +279,7 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         super().__init__(
             table=table,  # type: ignore
             name=benchmark_task_name,
-            config_name="config_id",
+            config_name="id",
             fidelity_name=cls.fidelity_name,
             result_keys=LCBenchTabularResult.names(),
             config_keys=LCBenchTabularConfig.names(),
