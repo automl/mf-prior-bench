@@ -210,7 +210,7 @@ class LCBenchTabularSource(BenchmarkSetup):
                 config: dict = config_data["config"]
 
                 log_data: dict = config_data["log"]
-                loss: list[float] = log_data["Train/loss"]
+                loss: list[str] = log_data["Train/loss"]  # Name of the loss
                 val_ce: list[float] = log_data["Train/val_cross_entropy"]
                 val_acc: list[float] = log_data["Train/val_accuracy"]
                 val_bal_acc: list[float] = log_data["Train/val_balanced_accuracy"]
@@ -240,7 +240,7 @@ class LCBenchTabularSource(BenchmarkSetup):
                 )
                 # These are single valued but this will make them as a list into
                 # the dataframe
-                df = df.assign(**{"config_id": config_id, **config})
+                df = df.assign(**{"id": config_id, **config})
 
                 config_frames_for_dataset.append(df)
 
@@ -249,7 +249,7 @@ class LCBenchTabularSource(BenchmarkSetup):
             df_for_dataset = (
                 pd.concat(config_frames_for_dataset, ignore_index=True)
                 .convert_dtypes()
-                .set_index(["config_id", "epoch"])
+                .set_index(["id", "epoch"])
                 .sort_index()
             )
             table_path = path / f"{dataset_name}.parquet"

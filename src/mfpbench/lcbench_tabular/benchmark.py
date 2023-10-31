@@ -115,27 +115,28 @@ def _get_raw_lcbench_space(
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
 class LCBenchTabularConfig(TabularConfig):
     batch_size: int
-    imputation_strategy: str
-    learning_rate_scheduler: str
-    network: str
     max_dropout: float
-    normalization_strategy: str
-    optimizer: str
-    cosine_annealing_T_max: int
-    cosine_annealing_eta_min: float
-    activation: str
     max_units: int
-    mlp_shape: str
     num_layers: int
     learning_rate: float
     momentum: float
     weight_decay: float
+    # All of these are constant and hence optional
+    loss: str | None = None  # This is the name of the loss function used, not a float
+    imputation_strategy: str | None = None
+    learning_rate_scheduler: str | None = None
+    network: str | None = None
+    normalization_strategy: str | None = None
+    optimizer: str | None = None
+    cosine_annealing_T_max: int | None = None
+    cosine_annealing_eta_min: float | None = None
+    activation: str | None = None
+    mlp_shape: str | None = None
 
 
 @dataclass(frozen=True)  # type: ignore[misc]
 class LCBenchTabularResult(Result[LCBenchTabularConfig, int]):
     time: float
-    loss: float
     val_accuracy: float
     val_cross_entropy: float
     val_balanced_accuracy: float
@@ -233,7 +234,7 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         task_id: str,
         datadir: str | Path | None = None,
         *,
-        remove_constants: bool = True,
+        remove_constants: bool = False,
         seed: int | None = None,
         prior: str | Path | LCBenchTabularConfig | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
@@ -295,8 +296,8 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         super().__init__(
             table=table,  # type: ignore
             name=benchmark_task_name,
-            config_name="config_id",
-            fidelity_name=cls.fidelity_name,
+            id_key="id",
+            fidelity_key=cls.fidelity_name,
             result_keys=LCBenchTabularResult.names(),
             config_keys=LCBenchTabularConfig.names(),
             remove_constants=remove_constants,
