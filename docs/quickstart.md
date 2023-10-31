@@ -266,7 +266,7 @@ Predefined tabular benchmarks will fill these in easily for you, e.g. [`LCBenchT
 
 ??? example "Required arguments for a `TabularBenchmark`"
 
-    The main required arguments are [`.config_name`][mfpbench.TabularBenchmark.config_name], [`.fidelity_name`][mfpbench.TabularBenchmark.fidelity_name],
+    The main required arguments are [`.id_key`][mfpbench.TabularBenchmark.id_key], [`.fidelity_key`][mfpbench.TabularBenchmark.fidelity_key],
     [`.config_keys`][mfpbench.TabularBenchmark.config_keys], [`.result_keys`][mfpbench.TabularBenchmark.result_keys]
 
     ::: mfpbench.TabularBenchmark.__init__
@@ -309,8 +309,8 @@ print()
 benchmark = GenericTabularBenchmark(
     df,
     name="mydata",
-    config_name="config",
-    fidelity_name="fidelity",
+    id_key="config",
+    fidelity_key="fidelity",
     config_keys=["color", "shape"],
     result_keys=["balanced_accuracy"],
     result_mapping={

@@ -167,7 +167,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         #     0         0    |
         #     1         0    |
         #   ...
-        id_table = table.groupby(level=id_key).agg("first")
+        id_table = table.groupby(level="id").agg("first")
         configs = {
             str(config_id): cls.Config.from_dict(
                 {

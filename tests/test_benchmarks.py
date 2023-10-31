@@ -126,8 +126,8 @@ def case_generic_tabular() -> BenchmarkTest:
     benchmark = GenericTabularBenchmark(
         df,
         name="testdata",
-        config_name="config",
-        fidelity_name="fidelity",
+        id_key="config",
+        fidelity_key="fidelity",
         config_keys=["color", "shape"],
         result_keys=["balanced_accuracy"],
         result_mapping={
