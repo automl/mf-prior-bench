@@ -18,7 +18,12 @@ from mfpbench.setup_benchmark import LCBenchTabularSource
 from mfpbench.tabular import TabularBenchmark
 
 
-def _get_raw_lcbench_space(name: str, seed: int | None = None) -> ConfigurationSpace:
+def _get_raw_lcbench_space(
+    name: str,
+    seed: int | None = None,
+    *,
+    with_constants: bool = False,
+) -> ConfigurationSpace:
     """Get the raw configuration space for lcbench tabular.
 
     !!! note
@@ -29,6 +34,7 @@ def _get_raw_lcbench_space(name: str, seed: int | None = None) -> ConfigurationS
     Args:
         name: The name for the space.
         seed: The seed to use.
+        with_constants: Whether to include constants or not
 
     Returns:
         The configuration space.
@@ -86,17 +92,23 @@ def _get_raw_lcbench_space(name: str, seed: int | None = None) -> ConfigurationS
                 log=False,
                 default_value=0.2,  # reasonable default
             ),
-            Constant("cosine_annealing_T_max", 50),
-            Constant("cosine_annealing_eta_min", 0.0),
-            Constant("normalization_strategy", "standardize"),
-            Constant("optimizer", "sgd"),
-            Constant("learning_rate_scheduler", "cosine_annealing"),
-            Constant("network", "shapedmlpnet"),
-            Constant("activation", "relu"),
-            Constant("mlp_shape", "funnel"),
-            Constant("imputation_strategy", "mean"),
         ],
     )
+
+    if with_constants:
+        cs.add_hyperparameters(
+            [
+                Constant("cosine_annealing_T_max", 50),
+                Constant("cosine_annealing_eta_min", 0.0),
+                Constant("normalization_strategy", "standardize"),
+                Constant("optimizer", "sgd"),
+                Constant("learning_rate_scheduler", "cosine_annealing"),
+                Constant("network", "shapedmlpnet"),
+                Constant("activation", "relu"),
+                Constant("mlp_shape", "funnel"),
+                Constant("imputation_strategy", "mean"),
+            ],
+        )
     return cs
 
 
@@ -221,7 +233,7 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         task_id: str,
         datadir: str | Path | None = None,
         *,
-        remove_constants: bool = False,
+        remove_constants: bool = True,
         seed: int | None = None,
         prior: str | Path | LCBenchTabularConfig | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
@@ -274,12 +286,16 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         table = table.drop(index=drop_epoch, level="epoch")
 
         benchmark_task_name = f"lcbench_tabular-{task_id}"
-        space = _get_raw_lcbench_space(name=f"lcbench_tabular-{task_id}", seed=seed)
+        space = _get_raw_lcbench_space(
+            name=f"lcbench_tabular-{task_id}",
+            seed=seed,
+            with_constants=not remove_constants,
+        )
 
         super().__init__(
             table=table,  # type: ignore
             name=benchmark_task_name,
-            config_name="id",
+            config_name="config_id",
             fidelity_name=cls.fidelity_name,
             result_keys=LCBenchTabularResult.names(),
             config_keys=LCBenchTabularConfig.names(),
