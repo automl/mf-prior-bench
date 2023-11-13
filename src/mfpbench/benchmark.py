@@ -347,12 +347,12 @@ class Benchmark(Generic[C, R, F], ABC):
         """
         space = copy.deepcopy(self.space)
         if isinstance(seed, np.random.RandomState):
-            rng = seed.randint(0, 2**32 - 1)
+            rng = seed.randint(0, 2**31 - 1)
         else:
             rng = (
                 seed
                 if seed is not None
-                else np.random.default_rng().integers(0, 2**32 - 1)
+                else np.random.default_rng().integers(0, 2**31 - 1)
             )
 
         space.seed(rng)

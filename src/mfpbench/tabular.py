@@ -390,7 +390,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         """
         _seed: int | None
         if isinstance(seed, np.random.RandomState):
-            _seed = seed.random_integers(0, 2**32 - 1)
+            _seed = seed.random_integers(0, 2**31 - 1)
         else:
             _seed = seed
 
