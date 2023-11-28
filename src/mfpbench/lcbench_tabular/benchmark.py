@@ -293,7 +293,7 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         )
 
         # for tabular benchmarks, the `global` optima can be retrieved
-        table = _get_optima(table)
+        optimal_metrics = _get_optima(table)
 
         super().__init__(
             table=table,  # type: ignore
@@ -307,10 +307,11 @@ class LCBenchTabularBenchmark(TabularBenchmark):
             seed=seed,
             prior=prior,
             perturb_prior=perturb_prior,
+            optimal_metrics=optimal_metrics
         )
 
 
-def _get_optima(table: pd.DataFrame) -> pd.DataFrame:
+def _get_optima(table: pd.DataFrame) -> dict:
     metrics = [
         ("val_accuracy", max),
         ("val_cross_entropy", min),
@@ -319,7 +320,8 @@ def _get_optima(table: pd.DataFrame) -> pd.DataFrame:
         ("test_cross_entropy", min),
         ("test_balanced_accuracy", max)
     ]
-    for i, (metric_name, metric_order) in enumerate(metrics):
-        new_col = f"optima-{metric_name}"
-        table.loc[:, new_col] = metric_order(table.loc[:, metric_name])
-    return table
+    optimal_metrics = {
+        metric_name: metric_order(table.loc[:, metric_name])
+        for i, (metric_name, metric_order) in enumerate(metrics)
+    }
+    return optimal_metrics

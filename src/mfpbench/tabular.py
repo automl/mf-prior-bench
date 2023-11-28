@@ -64,6 +64,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         seed: int | None = None,
         prior: str | Path | CTabular | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
+        optimal_metrics: dict | None = None
     ):
         """Initialize the benchmark.
 
@@ -189,6 +190,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         self.config_keys = sorted(config_keys)
         self.result_keys = sorted(result_keys)
         self.fidelity_range = (start, end, step)  # type: ignore
+        self.optimal_metrics = optimal_metrics
 
         super().__init__(
             name=name,
