@@ -285,13 +285,15 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         # the 0'th epoch.
         drop_epoch = 0
         table = table.drop(index=drop_epoch, level="epoch")
-
         benchmark_task_name = f"lcbench_tabular-{task_id}"
         space = _get_raw_lcbench_space(
             name=f"lcbench_tabular-{task_id}",
             seed=seed,
             with_constants=not remove_constants,
         )
+
+        # for tabular benchmarks, the `global` optima can be retrieved
+        table = _get_optima(table)
 
         super().__init__(
             table=table,  # type: ignore
@@ -306,3 +308,18 @@ class LCBenchTabularBenchmark(TabularBenchmark):
             prior=prior,
             perturb_prior=perturb_prior,
         )
+
+
+def _get_optima(table: pd.DataFrame) -> pd.DataFrame:
+    metrics = [
+        ("val_accuracy", max),
+        ("val_cross_entropy", min),
+        ("val_balanced_accuracy", max),
+        ("test_accuracy", max),
+        ("test_cross_entropy", min),
+        ("test_balanced_accuracy", max)
+    ]
+    for i, (metric_name, metric_order) in enumerate(metrics):
+        new_col = f"optima-{metric_name}"
+        table.loc[:, new_col] = metric_order(table.loc[:, metric_name])
+    return table
