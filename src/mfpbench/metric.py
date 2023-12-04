@@ -9,16 +9,13 @@ class OutOfBoundsError(ValueError):
     """Raised when a value is outside of the bounds of a metric."""
 
 
-@dataclass
+@dataclass(frozen=True)
 class Metric:
     """A metric to be used in the benchmark.
 
     It's main use is to convert a raw value into a value that can always be
     minimized.
     """
-
-    name: str
-    """The name of the metric."""
 
     minimize: bool
     """Whether or not to minimize the metric."""
@@ -32,42 +29,106 @@ class Metric:
                 f"bounds[0] must be less than bounds[1], got {self.bounds}",
             )
 
-    def as_minimize_value(self, value: float) -> float:
-        """Calculate a minimization value for the metric based on its raw value.
+    def as_value(self, value: float) -> Metric.Value:
+        """Convert a raw value into a metric value.
 
-        The calculation is as follows:
-
-            | direction | lower | upper |     | minimize_value                     |
-            |-----------|-------|-------|-----|------------------------------------|
-            | minimize  | inf   | inf   |     | value                              |
-            | minimize  | A     | inf   |     | abs(A-value) # distance to optimal |
-            | minimize  | inf   | B     |     | value                              |
-            | minimize  | A     | B     |     | (value - A) / (B - A)  # 0-1 |
-            | ---       | ---   | ---   | --- | ---                                |
-            | maximize  | inf   | inf   |     | -value  # convert to minimize      |
-            | maximize  | A     | inf   |     | -value # convert to minimize       |
-            | maximize  | inf   | B     |     | abs(B - value) # distance optimal  |
-            | maximize  | A     | B     |     | (value - A) / (B - a) # 0 -1       |
+        Args:
+            value: The raw value to convert.
 
         Returns:
-            The cost of the metric.
+            The metric value.
         """
-        lower, upper = self.bounds
-        if value < lower or value > upper:
-            raise OutOfBoundsError(f"Value {value} is outside of bounds {self.bounds}")
+        return Metric.Value(value=value, definition=self)
 
+    @property
+    def optimum_value(self) -> Metric.Value:
+        """Get the optimum value for this metric.
+
+        Returns:
+            The optimum value.
+        """
         if self.minimize:
-            if np.isinf(lower):
+            return self.as_value(self.bounds[0])
+
+        return self.as_value(self.bounds[1])
+
+    @dataclass(frozen=True)
+    class Value:
+        """A value of a metric."""
+
+        value: float
+        definition: Metric = field(hash=False)
+
+        def __post_init__(self) -> None:
+            if not self.definition.bounds[0] <= self.value <= self.definition.bounds[1]:
+                raise OutOfBoundsError(
+                    f"Value {self.value} is outside of bounds {self.definition.bounds}",
+                )
+
+        @property
+        def error(self) -> float:
+            """Calculate a minimization value for the metric based on its raw value.
+
+            The calculation is as follows:
+
+                | direction | lower | upper |     | error                              |
+                |-----------|-------|-------|-----|------------------------------------|
+                | minimize  | inf   | inf   |     | value                              |
+                | minimize  | A     | inf   |     | value                              |
+                | minimize  | inf   | B     |     | value                              |
+                | minimize  | A     | B     |     | abs(A - value) / abs(B - A)  # 0-1 |
+                | ---       | ---   | ---   | --- | ---                                |
+                | maximize  | inf   | inf   |     | -value                             |
+                | maximize  | A     | inf   |     | -value                             |
+                | maximize  | inf   | B     |     | -value                             |
+                | maximize  | A     | B     |     | abs(B - value) / abs(B - a) # 0 -1 |
+
+            Returns:
+                The cost of the metric.
+            """
+            value = self.value
+            lower, upper = self.definition.bounds
+            if self.definition.minimize:
+                if np.isinf(lower) or np.isinf(upper):
+                    return value
+
+                return abs(lower - value) / abs(upper - lower)
+
+            if np.isinf(upper) or np.isinf(lower):
+                return -value
+
+            return abs(upper - value) / abs(upper - lower)
+
+        @property
+        def score(self) -> float:
+            """Calculate a minimization value for the metric based on its raw value.
+
+            The calculation is as follows:
+
+                | direction | lower | upper |     | score                              |
+                |-----------|-------|-------|-----|------------------------------------|
+                | minimize  | inf   | inf   |     | -value                             |
+                | minimize  | A     | inf   |     | -value                             |
+                | minimize  | inf   | B     |     | -value                             |
+                | minimize  | A     | B     |     | abs(B - value) / abs(B - A)  # 0-1 |
+                | ---       | ---   | ---   | --- | ---                                |
+                | maximize  | inf   | inf   |     | value                              |
+                | maximize  | A     | inf   |     | value                              |
+                | maximize  | inf   | B     |     | value                              |
+                | maximize  | A     | B     |     | abs(A - value) / abs(B - A) # 0 -1 |
+
+            Returns:
+                The cost of the metric.
+            """
+            value = self.value
+            lower, upper = self.definition.bounds
+            if self.definition.minimize:
+                if np.isinf(lower) or np.isinf(upper):
+                    return -value
+
+                return abs(upper - value) / abs(upper - lower)
+
+            if np.isinf(upper) or np.isinf(lower):
                 return value
-            if np.isinf(upper):
-                return abs(lower - value)
 
-            return (value - lower) / (upper - lower)
-
-        if np.isinf(upper):
-            return -value
-
-        if np.isinf(lower):
-            return abs(upper - value)
-
-        return (value - lower) / (upper - lower)
+            return abs(lower - value) / abs(upper - lower)

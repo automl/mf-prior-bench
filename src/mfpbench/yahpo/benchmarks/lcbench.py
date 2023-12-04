@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import ClassVar, Mapping
 
-from mfpbench.yahpo.benchmark import YAHPOBenchmark
-from mfpbench.yahpo.config import YAHPOConfig
-from mfpbench.yahpo.result import YAHPOResult
+import numpy as np
+
+from mfpbench.metric import Metric
+from mfpbench.yahpo.benchmark import Config, Result, YAHPOBenchmark
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
-class LCBenchConfig(YAHPOConfig):
+class LCBenchConfig(Config):
     """A LCBench Config.
 
     Note:
@@ -25,74 +27,38 @@ class LCBenchConfig(YAHPOConfig):
     max_units: int  # [64, 1024] int log
     max_dropout: float  # [0.0, 1.0] float
 
-    def validate(self) -> None:
-        """Validate this is a correct config."""
-        assert 16 <= self.batch_size <= 512
-        assert 1e-04 <= self.learning_rate <= 0.1
-        assert 0.1 <= self.momentum <= 0.99
-        assert 1e-05 <= self.weight_decay <= 0.1
-        assert 1 <= self.num_layers <= 5
-        assert 64 <= self.max_units <= 1024
-        assert 0.0 <= self.max_dropout <= 1.0
-
 
 @dataclass(frozen=True)  # type: ignore[misc]
-class LCBenchResult(YAHPOResult[LCBenchConfig, int]):
-    time: float  # unit?
+class LCBenchResult(Result[LCBenchConfig, int]):
+    default_value_metric: ClassVar[str] = "val_balanced_accuracy"
+    default_cost_metric: ClassVar[str] = "time"
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "val_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "val_balanced_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "val_cross_entropy": Metric(minimize=True, bounds=(0, np.inf)),
+        "test_balanced_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "test_cross_entropy": Metric(minimize=True, bounds=(0, np.inf)),
+        "time": Metric(minimize=True, bounds=(0, np.inf)),
+    }
 
-    val_accuracy: float
-    val_cross_entropy: float
-    val_balanced_accuracy: float
+    val_accuracy: Metric.Value
+    val_cross_entropy: Metric.Value
+    val_balanced_accuracy: Metric.Value
 
-    test_cross_entropy: float
-    test_balanced_accuracy: float
+    test_cross_entropy: Metric.Value
+    test_balanced_accuracy: Metric.Value
 
-    @property
-    def score(self) -> float:
-        """The score of interest."""
-        return self.val_balanced_accuracy
-
-    @property
-    def error(self) -> float:
-        """The error of interest."""
-        return 1 - self.val_balanced_accuracy
-
-    @property
-    def test_score(self) -> float:
-        """The score on the test set."""
-        return self.test_balanced_accuracy
-
-    @property
-    def test_error(self) -> float:
-        """The score on the test set."""
-        return 1 - self.test_balanced_accuracy
-
-    @property
-    def val_score(self) -> float:
-        """The score on the validation set."""
-        return self.val_balanced_accuracy
-
-    @property
-    def val_error(self) -> float:
-        """The score on the validation set."""
-        return 1 - self.val_balanced_accuracy
-
-    @property
-    def cost(self) -> float:
-        """Time taken in seconds to train the config (assumed to be seconds)."""
-        return self.time
+    time: Metric.Value  # unit?
 
 
 class LCBenchBenchmark(YAHPOBenchmark):
-    fidelity_name = "epoch"
-    fidelity_range = (1, 52, 1)
-    Config = LCBenchConfig
-    Result = LCBenchResult
-
+    yahpo_fidelity_range = (1, 52, 1)
+    yahpo_fidelity_name = "epoch"
+    yahpo_config_type = LCBenchConfig
+    yahpo_result_type = LCBenchResult
     yahpo_base_benchmark_name = "lcbench"
     yahpo_task_id_name = "OpenML_task_id"
-    yahpo_replacements_hps = None
-    yahpo_forced_remove_hps = None
+    yahpo_has_conditionals = False
     yahpo_instances = (
         "3945",
         "7593",

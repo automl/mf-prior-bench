@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Mapping, Sequence, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, TypeVar, overload
 from typing_extensions import override
 
 import numpy as np
@@ -11,8 +10,12 @@ from ConfigSpace import ConfigurationSpace
 from more_itertools import first_true
 
 from mfpbench.benchmark import Benchmark
-from mfpbench.config import GenericTabularConfig, TabularConfig
-from mfpbench.result import GenericTabularResult, Result
+from mfpbench.config import TabularConfig
+from mfpbench.result import Result
+
+if TYPE_CHECKING:
+    from mfpbench.metric import Metric
+
 
 # The kind of Config to the **tabular** benchmark
 CTabular = TypeVar("CTabular", bound=TabularConfig)
@@ -25,31 +28,6 @@ F = TypeVar("F", int, float)
 
 
 class TabularBenchmark(Benchmark[CTabular, R, F]):
-    id_key: str
-    """The column in the table that contains the config id. Will be set to the index"""
-
-    fidelity_key: str
-    """The name of the fidelity used in this benchmark"""
-
-    config_keys: Sequence[str]
-    """The keys in the table that contain the config"""
-
-    result_keys: Sequence[str]
-    """The keys in the table that contain the results"""
-
-    table: pd.DataFrame
-    """The table of results used for this benchmark"""
-
-    configs: Mapping[str, CTabular]
-    """The configs used in this benchmark"""
-
-    # The config and result type of this benchmark
-    Config: type[CTabular]
-    Result: type[R]
-
-    # Whether this benchmark has conditonals in it or not
-    has_conditionals: bool = False
-
     def __init__(  # noqa: PLR0913
         self,
         name: str,
@@ -57,9 +35,10 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         *,
         id_key: str,
         fidelity_key: str,
-        result_keys: Sequence[str],
-        config_keys: Sequence[str],
-        remove_constants: bool = False,
+        result_type: type[R],
+        config_type: type[CTabular],
+        value_metric: str | None = None,
+        cost_metric: str | None = None,
         space: ConfigurationSpace | None = None,
         seed: int | None = None,
         prior: str | Path | CTabular | Mapping[str, Any] | None = None,
@@ -72,9 +51,12 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             table: The table to use for the benchmark.
             id_key: The column in the table that contains the config id
             fidelity_key: The column in the table that contains the fidelity
-            result_keys: The columns in the table that contain the results
-            config_keys: The columns in the table that contain the config values
-            remove_constants: Remove constant config columns from the data or not.
+            result_type: The result type for this benchmark.
+            config_type: The config type for this benchmark.
+            value_metric: The metric to use for this benchmark. Uses
+                the default metric from the Result if None.
+            cost_metric: The cost to use for this benchmark. Uses
+                the default cost from the Result if None.
             space: The configuration space to use for the benchmark. If None, will
                 just be an empty space.
             prior: The prior to use for the benchmark. If None, no prior is used.
@@ -87,8 +69,6 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
                 probability of swapping the value for a random one.
             seed: The seed to use for the benchmark.
         """
-        cls = self.__class__
-
         # Make sure we work with a clean slate, no issue with index.
         table = table.reset_index()
 
@@ -99,9 +79,13 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         if fidelity_key not in table.columns:
             raise ValueError(f"'{fidelity_key=}' not in columns {table.columns}")
 
+        result_keys: list[str] = list(result_type.metric_defs.keys())
         if not all(key in table.columns for key in result_keys):
-            raise ValueError(f"{result_keys=} not in columns {table.columns}")
+            raise ValueError(
+                f"Not all {result_keys=} not in columns {table.columns}",
+            )
 
+        config_keys: list[str] = config_type.names()
         if not all(key in table.columns for key in config_keys):
             raise ValueError(f"{config_keys=} not in columns {table.columns}")
 
@@ -111,19 +95,6 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
                 f"Can't have `id` in the columns if it's not the {id_key=}."
                 " Please drop it or rename it.",
             )
-
-        # Remove constants from the table
-        if remove_constants:
-
-            def is_constant(_s: pd.Series) -> bool:
-                _arr = _s.to_numpy()
-                return bool((_arr == _arr[0]).all())
-
-            constant_cols = [
-                col for col in table.columns if is_constant(table[col])  # type: ignore
-            ]
-            table = table.drop(columns=constant_cols)  # type: ignore
-            config_keys = [k for k in config_keys if k not in constant_cols]
 
         # Remap their id column to `id`
         table = table.rename(columns={id_key: "id"})
@@ -169,7 +140,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         #   ...
         id_table = table.groupby(level="id").agg("first")
         configs = {
-            str(config_id): cls.Config.from_dict(
+            str(config_id): config_type.from_dict(
                 {
                     **row[config_keys].to_dict(),  # type: ignore
                     "id": str(config_id),
@@ -184,27 +155,48 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
 
         self.table = table
         self.configs = configs
-        self.fidelity_key = fidelity_key
         self.id_key = id_key
+        self.fidelity_key = fidelity_key
         self.config_keys = sorted(config_keys)
         self.result_keys = sorted(result_keys)
-        self.fidelity_range = (start, end, step)  # type: ignore
 
         super().__init__(
             name=name,
             seed=seed,
+            config_type=config_type,
+            result_type=result_type,
+            fidelity_name=fidelity_key,
+            fidelity_range=(start, end, step),
             space=space,
             prior=prior,
             perturb_prior=perturb_prior,
+            value_metric=value_metric,
+            cost_metric=cost_metric,
         )
+
+        _raw_optimums = {
+            (k, metric): (
+                float(table[k].min()) if metric.minimize else float(table[k].max())
+            )
+            for k, metric in self.Result.metric_defs.items()
+        }
+        self.table_optimums: dict[str, Metric.Value] = {
+            k: metric.as_value(v) for (k, metric), v in _raw_optimums.items()
+        }
+
+        if self.value_metric not in self.result_keys:
+            raise ValueError(f"{self.value_metric=} not in {self.result_keys}")
+
+        if self.cost_metric not in self.result_keys:
+            raise ValueError(f"{self.cost_metric=} not in {self.result_keys}")
 
     def query(
         self,
         config: CTabular | Mapping[str, Any] | str,
-        at: F | None = None,
         *,
-        argmax: str | None = None,
-        argmin: str | None = None,
+        at: F | None = None,
+        value_metric: str | None = None,
+        cost_metric: str | None = None,
     ) -> R:
         """Submit a query and get a result.
 
@@ -228,20 +220,36 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         Args:
             config: The query to use
             at: The fidelity at which to query, defaults to None which means *maximum*
-            argmax: Whether to return the argmax up to the point `at`. Will be slower as
-                it has to get the entire trajectory. Uses the key from the Results.
-            argmin: Whether to return the argmin up to the point `at`. Will be slower as
-                it has to get the entire trajectory. Uses the key from the Results.
+            value_metric: The metric to use for this result. Uses
+                the value metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None.
+            cost_metric: The metric to use for this result. Uses
+                the cost metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None.
 
         Returns:
             The result of the query
         """
         _config = self._find_config(config)
-        return super().query(
-            _config,
-            at=at,  # type: ignore
-            argmax=argmax,
-            argmin=argmin,
+
+        at = at if at is not None else self.end
+        assert self.start <= at <= self.end
+
+        __config = _config.as_dict(with_id=True)
+        if self._config_renames is not None:
+            _reverse_renames = {v: k for k, v in self._config_renames.items()}
+            __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
+
+        value_metric = value_metric if value_metric is not None else self.value_metric
+        cost_metric = cost_metric if cost_metric is not None else self.cost_metric
+
+        return self.Result.from_dict(
+            config=config,
+            fidelity=at,
+            result=self._objective_function(__config, at=at),
+            value_metric=str(value_metric),
+            cost_metric=str(cost_metric),
+            renames=self._result_renames,
         )
 
     @override
@@ -252,6 +260,8 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         frm: F | None = None,
         to: F | None = None,
         step: F | None = None,
+        value_metric: str | None = None,
+        cost_metric: str | None = None,
     ) -> list[R]:
         """Submit a query and get a result.
 
@@ -277,12 +287,46 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             frm: Start of the curve, should default to the start
             to: End of the curve, should default to the total
             step: Step size, defaults to ``cls.default_step``
+            value_metric: The metric to use for this result. Uses
+                the value metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None.
+            cost_metric: The metric to use for this result. Uses
+                the cost metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None.
 
         Returns:
             The result of the query
         """
         _config = self._find_config(config)
-        return super().trajectory(_config, frm=frm, to=to, step=step)  # type: ignore
+
+        to = to if to is not None else self.end
+        frm = frm if frm is not None else self.start
+        step = step if step is not None else self.step
+
+        __config = _config.as_dict(with_id=True)
+        if self._config_renames is not None:
+            _reverse_renames = {v: k for k, v in self._config_renames.items()}
+            __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
+
+        value_metric = value_metric if value_metric is not None else self.value_metric
+        cost_metric = cost_metric if cost_metric is not None else self.cost_metric
+
+        return [
+            self.Result.from_dict(
+                config=config,
+                fidelity=fidelity,
+                result=result,
+                value_metric=str(value_metric),
+                cost_metric=str(cost_metric),
+                renames=self._result_renames,
+            )
+            for fidelity, result in self._trajectory(
+                __config,
+                frm=frm,
+                to=to,
+                step=step,
+            )
+        ]
 
     def _find_config(
         self,
@@ -299,6 +343,10 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
 
         # If's a Config, that's fine
         if isinstance(config, self.Config):
+            if config.id not in self.configs:
+                raise ValueError(
+                    f"Config {config.id} not in {self.configs.keys()}",
+                )
             return config
 
         # At this point, we assume we're basically dealing with a dictionary
@@ -319,7 +367,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         # id that way
         match = first_true(
             self.configs.values(),
-            pred=lambda c: c == config,  # type: ignore
+            pred=lambda c: c.as_dict(with_id=False) == config,  # type: ignore
             default=None,
         )
         if match is None:
@@ -330,7 +378,12 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         return match
 
     @override
-    def _objective_function(self, config: CTabular, at: F) -> R:
+    def _objective_function(
+        self,
+        config: Mapping[str, Any],
+        *,
+        at: F,
+    ) -> Mapping[str, float]:
         """Submit a query and get a result.
 
         Args:
@@ -340,12 +393,46 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         Returns:
             The result of the query
         """
-        row = self.table.loc[(config.id, at)]
+        config = dict(config)
+        _id = config.pop("id")
+        row = self.table.loc[(_id, at)]
 
-        row.name = config.id
-        config = self.Config.from_row(row[self.config_keys])
-        results = row[self.result_keys]
-        return self.Result.from_row(config=config, row=results, fidelity=at)
+        row.name = _id
+        _config = dict(row[self.config_keys])
+        if config != _config:
+            raise ValueError(
+                f"Config queried with is not equal to the one in the table with {_id=}."
+                f"\nconfig provided {config=}"
+                f"\nconfig in table {_config=}",
+            )
+
+        return dict(row[self.result_keys])
+
+    @override
+    def _trajectory(
+        self,
+        config: Mapping[str, Any],
+        *,
+        frm: F,
+        to: F,
+        step: F,
+    ) -> Iterable[tuple[F, Mapping[str, float]]]:
+        config = dict(config)
+        _id = config.pop("id")
+        rows = self.table.loc[(_id, frm):(_id, to):step]  # type: ignore
+        first_config = dict(rows.iloc[0][self.config_keys])
+
+        if config != first_config:
+            raise ValueError(
+                f"Config queried with is not equal to the one in the table with {_id=}."
+                f"\nconfig provided {config=}"
+                f"\nconfig in table {first_config=}",
+            )
+
+        return [
+            (fidelity, dict(row[self.result_keys]))
+            for (_, fidelity), row in rows.iterrows()
+        ]
 
     # No number specified, just return one config
     @overload
@@ -413,133 +500,19 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         return [config_items[i] for i in indices]
 
 
-class GenericTabularBenchmark(
-    TabularBenchmark[
-        GenericTabularConfig,
-        GenericTabularResult[GenericTabularConfig, F],
-        F,
-    ],
-):
-    Result = GenericTabularResult
-    Config = GenericTabularConfig
-
-    def __init__(  # noqa: PLR0913
-        self,
-        table: pd.DataFrame,
-        *,
-        name: str | None = None,
-        id_key: str,
-        fidelity_key: str,
-        result_keys: Sequence[str],
-        config_keys: Sequence[str],
-        result_mapping: (dict[str, str | Callable[[pd.DataFrame], Any]] | None) = None,
-        remove_constants: bool = False,
-        space: ConfigurationSpace | None = None,
-        seed: int | None = None,
-        prior: str | Path | GenericTabularConfig | Mapping[str, Any] | None = None,
-        perturb_prior: float | None = None,
-    ):
-        """Initialize the benchmark.
-
-        Args:
-            table: The table to use for the benchmark
-            name: The name of the benchmark. If None, will be set to
-                `unknown-{datetime.now().isoformat()}`
-            id_key: The column in the table that contains the config id
-            fidelity_key: The column in the table that contains the fidelity
-            result_keys: The columns in the table that contain the results
-            config_keys: The columns in the table that contain the config values
-            result_mapping: A mapping from the result keys to the table keys.
-                If a string, will be used as the key in the table. If a callable,
-                will be called with the table and the result will be used as the value.
-            remove_constants: Remove constant config columns from the data or not.
-            space: The configuration space to use for the benchmark. If None, will
-                just be an empty space.
-            seed: The seed to use.
-            prior: The prior to use for the benchmark. If None, no prior is used.
-                If a str, will check the local location first for a prior
-                specific for this benchmark, otherwise assumes it to be a Path.
-                If a Path, will load the prior from the path.
-                If a Mapping, will be used directly.
-            perturb_prior: If not None, will perturb the prior by this amount.
-                For numericals, this is interpreted as the standard deviation of a
-                normal distribution while for categoricals, this is interpreted
-                as the probability of swapping the value for a random one.
-        """
-        if name is None:
-            name = f"unknown-{datetime.now().isoformat()}"
-
-        _result_mapping: dict = result_mapping if result_mapping is not None else {}
-
-        # Remap the result keys so it works with the generic result types
-        if _result_mapping is not None:
-            for k, v in _result_mapping.items():
-                if isinstance(v, str):
-                    if v not in table.columns:
-                        raise ValueError(f"{v} not in columns\n{table.columns}")
-
-                    table[k] = table[v]
-                elif callable(v):
-                    table[k] = v(table)
-                else:
-                    raise ValueError(f"Unknown result mapping {v} for {k}")
-
-        super().__init__(
-            name=name,
-            table=table,
-            id_key=id_key,
-            fidelity_key=fidelity_key,
-            result_keys=[*result_keys, *_result_mapping.keys()],
-            config_keys=config_keys,
-            remove_constants=remove_constants,
-            space=space,
-            seed=seed,
-            prior=prior,
-            perturb_prior=perturb_prior,
-        )
-
-
 if __name__ == "__main__":
     HERE = Path(__file__).parent
     path = HERE.parent.parent / "data" / "lcbench-tabular" / "adult.parquet"
     table = pd.read_parquet(path)
-    benchmark = GenericTabularBenchmark(
-        table=table,
+    from mfpbench.lcbench_tabular import LCBenchTabularConfig, LCBenchTabularResult
+
+    benchmark = TabularBenchmark(
+        "toy",
+        table,
         id_key="id",
         fidelity_key="epoch",
-        result_keys=[
-            "time",
-            "val_accuracy",
-            "val_cross_entropy",
-            "val_balanced_accuracy",
-            "test_accuracy",
-            "test_cross_entropy",
-            "test_balanced_accuracy",
-        ],
-        result_mapping={
-            "error": lambda df: 1 - df["val_accuracy"],
-            "score": lambda df: df["val_accuracy"],
-        },
-        config_keys=[
-            "batch_size",
-            "loss",
-            "imputation_strategy",
-            "learning_rate_scheduler",
-            "network",
-            "max_dropout",
-            "normalization_strategy",
-            "optimizer",
-            "cosine_annealing_T_max",
-            "cosine_annealing_eta_min",
-            "activation",
-            "max_units",
-            "mlp_shape",
-            "num_layers",
-            "learning_rate",
-            "momentum",
-            "weight_decay",
-        ],
-        remove_constants=True,
+        result_type=LCBenchTabularResult,
+        config_type=LCBenchTabularConfig,
     )
     # benchmark = LCBenchTabular(task="adult")
     all_configs = benchmark.configs  # type: ignore
@@ -550,7 +523,7 @@ if __name__ == "__main__":
     config_id = config.id
 
     result = benchmark.query(config, at=1)
-    argmin_score = benchmark.query(config, at=42, argmin="error")
+    argmin_score = benchmark.query(config, at=42)
 
     trajectory = benchmark.trajectory(config, frm=1, to=10)
 

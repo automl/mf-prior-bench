@@ -56,7 +56,7 @@ def test_hartmann_priors_with_and_without_noise_added(
     assert isinstance(bench_no_noise._prior_arg, str)
 
     # All values different
-    for v1, v2 in zip(clean_prior.dict().values(), noisy_prior.dict().values()):
+    for v1, v2 in zip(clean_prior.as_dict().values(), noisy_prior.as_dict().values()):
         assert v1 != v2
 
     # configspace seeded with these priors
@@ -79,8 +79,7 @@ def test_hartmann_priors_noise_in_bounds(
     config = bench.prior
     assert config is not None
 
-    config.validate()
-    for x in config.dict().values():
+    for x in config.as_dict().values():
         assert 0 <= x <= 1
 
 

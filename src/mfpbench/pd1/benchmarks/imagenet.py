@@ -1,33 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing_extensions import override
-
 from ConfigSpace import ConfigurationSpace, UniformFloatHyperparameter
 
-from mfpbench.pd1.benchmark import PD1Benchmark, PD1Config, PD1ResultTransformer
-
-
-@dataclass(frozen=True, eq=False, unsafe_hash=True)
-class PD1Config_imagenet_resnet_512(PD1Config):
-    @override
-    def validate(self) -> None:
-        assert 0.010294 <= self.lr_decay_factor <= 0.989753
-        assert 0.000010 <= self.lr_initial <= 9.774312
-        assert 0.100225 <= self.lr_power <= 1.999326
-        assert 0.000059 <= self.opt_momentum <= 0.998993
+from mfpbench.pd1.benchmark import PD1Benchmark, PD1ResultTransformer
 
 
 class PD1imagenet_resnet_512(PD1Benchmark):
-    fidelity_name = "epoch"
-    fidelity_range = (3, 99, 1)
-    Config = PD1Config_imagenet_resnet_512
-    Result = PD1ResultTransformer
-
-    pd1_dataset = "imagenet"
-    pd1_model = "resnet"
-    pd1_batchsize = 512
-    pd1_metrics = ("valid_error_rate", "train_cost")
+    pd1_result_type = PD1ResultTransformer
+    pd1_fidelity_range = (3, 99, 1)
+    pd1_name = "imagenet-resnet-512"
 
     @classmethod
     def _create_space(cls, seed: int | None = None) -> ConfigurationSpace:

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import asdict, dataclass, field, fields, replace
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterator, Mapping
+from typing import Any, Iterator, Mapping
 from typing_extensions import Self, override
 
 import numpy as np
@@ -17,9 +17,6 @@ from ConfigSpace import (
 )
 
 from mfpbench.util import perturb
-
-if TYPE_CHECKING:
-    import pandas as pd
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
@@ -35,20 +32,22 @@ class Config(ABC, Mapping[str, Any]):
     """
 
     @classmethod
-    def from_dict(cls, d: Mapping[str, Any]) -> Self:
+    def from_dict(
+        cls,
+        d: Mapping[str, Any],
+        renames: Mapping[str, str] | None = None,
+    ) -> Self:
         """Create from a dict or mapping object."""
+        if renames is not None:
+            d = {renames.get(k, k): v for k, v in d.items()}
+
         field_names = {f.name for f in fields(cls)}
         if not field_names.issuperset(d.keys()):
             raise ValueError(f"Dict keys {d.keys()} must be a subset of {field_names}")
 
         return cls(**{f.name: d[f.name] for f in fields(cls) if f.name in d})
 
-    @classmethod
-    def from_row(cls, row: pd.Series) -> Self:
-        """Create from a row of a dataframe."""
-        return cls.from_dict(row.to_dict())
-
-    def dict(self) -> dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """As a raw dictionary."""
         return asdict(self)
 
@@ -99,24 +98,15 @@ class Config(ABC, Mapping[str, Any]):
 
         return self.mutate(**new_values)
 
-    @abstractmethod
-    def validate(self) -> None:
-        """Validate the config, just useful early on while testing.
-
-        Raises:
-            AssertionError: If the config is not valid
-        """
-        ...
-
     def __eq__(self, that: Any) -> bool:
         """Equality is defined in terms of their dictionary repr."""
-        this = self.dict()
+        this = self.as_dict()
         if isinstance(that, dict):
             that = that.copy()
         elif isinstance(that, Configuration):
             that = dict(that)
         elif isinstance(that, self.__class__):
-            that = that.dict()
+            that = that.as_dict()
         else:
             return False
 
@@ -129,13 +119,13 @@ class Config(ABC, Mapping[str, Any]):
         return this == _that
 
     def __getitem__(self, key: str) -> Any:
-        return self.dict()[key]
+        return self.as_dict()[key]
 
     def __len__(self) -> int:
-        return len(self.dict())
+        return len(self.as_dict())
 
     def __iter__(self) -> Iterator[str]:
-        return self.dict().__iter__()
+        return self.as_dict().__iter__()
 
     def set_as_default_prior(self, configspace: ConfigurationSpace) -> None:
         """Apply this configuration as a prior on a configspace.
@@ -144,7 +134,7 @@ class Config(ABC, Mapping[str, Any]):
             configspace: The space to apply this config to
         """
         # We convert to dict incase there's any special transformation that happen
-        d = self.dict()
+        d = self.as_dict()
         for k, v in d.items():
             hp = configspace[k]
             # https://github.com/automl/ConfigSpace/issues/270
@@ -211,7 +201,7 @@ class Config(ABC, Mapping[str, Any]):
             path: Where to save to. Will infer json or yaml based on filename
             format: The format to save as. Will use file suffix if not provided
         """
-        d = self.dict()
+        d = self.as_dict()
         path = Path(path)
         if format is None:
             if path.suffix == "json":
@@ -246,29 +236,31 @@ class TabularConfig(Config):
         an id key.
     """
 
-    @classmethod
-    def from_row(cls, row: pd.Series) -> Self:
-        """Create from a row of a dataframe."""
-        return cls.from_dict({"id": row.name, **row.to_dict()})
-
     @override
-    def dict(self, *, with_id: bool = False) -> Any:
+    def as_dict(self, *, with_id: bool = False) -> Any:
         """As a raw dictionary.
 
 
         Args:
             with_id: Whether to include the id key
         """
-        d = {**super().dict()}
+        d = {**super().as_dict()}
         if not with_id:
             d.pop("id")
         return d
 
     @classmethod
     @override
-    def from_dict(cls, d: Mapping[str, Any]) -> Self:
+    def from_dict(
+        cls,
+        d: Mapping[str, Any],
+        renames: Mapping[str, str] | None = None,
+    ) -> Self:
         """Create from a dict or mapping object."""
-        d = dict(d)
+        if renames is not None:
+            d = {renames.get(k, k): v for k, v in d.items()}
+        else:
+            d = dict(d)
         d.setdefault("id", None)
         return cls(**d)
 
@@ -276,51 +268,3 @@ class TabularConfig(Config):
     def names(cls) -> list[str]:
         """The names of entries in this config."""
         return [f.name for f in fields(cls) if f.name not in ("id",)]
-
-    def validate(self) -> None:
-        """Validate the config, just useful early on while testing.
-
-        !!! note "Not implemented"
-
-            Does not do anything for Tabular Benchmarks
-        """
-
-
-@dataclass(frozen=True, eq=False)  # type: ignore[misc]
-class GenericTabularConfig(TabularConfig):
-    """A generic tabular config.
-
-    This is useful for adhoc tabular benchmarks and is what they will return, i.e.
-    directly creating a benchmark from TabularBenchmark.
-    """
-
-    _values: dict[str, Any]
-
-    def __hash__(self) -> int:
-        """Hash based on the dictionary repr."""
-        return hash(self.id) ^ hash(tuple(self._values.items()))
-
-    @override
-    def dict(self, *, with_id: bool = False) -> Any:
-        """As a raw dictionary.
-
-        Args:
-            with_id: Whether to include the id key
-        """
-        d = {**self._values}
-        if with_id:
-            d["id"] = self.id
-        return d
-
-    # Make .property acces work
-    def __getattr__(self, __name: str) -> Any:
-        # To prevent recursion
-        return self._values[__name]
-
-    @classmethod
-    @override
-    def from_dict(cls, d: Mapping[str, Any]) -> Self:
-        """Create from a dict or mapping object."""
-        d = dict(d)
-        id = d.pop("id")
-        return cls(id=id, _values=d)

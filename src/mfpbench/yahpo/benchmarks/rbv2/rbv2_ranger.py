@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import no_type_check
 from typing_extensions import Literal
 
-from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
+from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
@@ -20,41 +19,11 @@ class RBV2rangerConfig(RBV2Config):
 
     num__random__splits: int | None = None  # (1, 100)
 
-    @no_type_check
-    def validate(self) -> None:
-        """Validate this config."""
-        assert self.num__impute__selected__cpo in [
-            "impute.mean",
-            "impute.median",
-            "impute.hist",
-        ]
-        assert 1 <= self.min__node__size <= 100
-        assert 0 <= self.mtry__power <= 1
-        assert 1 <= self.num__trees <= 2000
-        assert self.respect__unordered__factors in [
-            "ignore",
-            "order",
-            "partition",
-        ]
-        assert 0.1 <= self.sample__fraction <= 1.0
-        assert self.splitrule in ["gini", "extratrees"]
 
-        if self.num__random__splits is not None:
-            assert self.splitrule == "extratrees"
-            assert 1 <= self.num__random__splits <= 100
-
-
-@dataclass(frozen=True)
-class RBV2rangerResult(RBV2Result):
-    config: RBV2rangerConfig
-
-
-class RBV2rangerBenchmark(RBV2Benchmark):
+class RBV2rangerBenchmark(RBV2Benchmark[RBV2rangerConfig]):
+    yahpo_config_type = RBV2rangerConfig
     yahpo_base_benchmark_name = "rbv2_ranger"
-    Result = RBV2rangerResult
-    Config = RBV2rangerConfig
-    has_conditionals = True
-
+    yahpo_has_conditionals = True
     yahpo_instances = (
         "4135",
         "40981",

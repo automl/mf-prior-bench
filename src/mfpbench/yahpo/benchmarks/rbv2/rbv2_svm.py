@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import no_type_check
 from typing_extensions import Literal
 
-from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
+from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
@@ -17,39 +16,10 @@ class RBV2svmConfig(RBV2Config):
     tolerance: float  # (4.5399929762484854e-05, 2.0) log
     kernel: Literal["linear", "polynomial", "radial"] | None = None
 
-    @no_type_check
-    def validate(self) -> None:
-        """Validate this config."""
-        assert self.num__impute__selected__cpo in [
-            "impute.mean",
-            "impute.median",
-            "impute.hist",
-        ]
 
-        assert 4.5399929762484854e-05 <= self.cost <= 22026.465794806718
-        assert 4.5399929762484854e-05 <= self.gamma <= 22026.465794806718
-        assert self.kernel in ["linear", "polynomial", "radial"]
-        assert 4.5399929762484854e-05 <= self.tolerance <= 2.0
-
-        if self.degree is not None:
-            assert 2 <= self.degree <= 5
-            assert self.kernel == "polynomial"
-
-        if self.gamma is not None:
-            assert 4.5399929762484854e-05 <= self.gamma <= 22026.465794806718
-            assert self.kernel == "radial"
-
-
-@dataclass(frozen=True)
-class RBV2svmResult(RBV2Result):
-    config: RBV2svmConfig
-
-
-class RBV2svmBenchmark(RBV2Benchmark):
-    Result = RBV2svmResult
-    Config = RBV2svmConfig
-    has_conditionals = True
-
+class RBV2svmBenchmark(RBV2Benchmark[RBV2svmConfig]):
+    yahpo_config_type = RBV2svmConfig
+    yahpo_has_conditionals = True
     yahpo_base_benchmark_name = "rbv2_svm"
     yahpo_instances = (
         "41138",

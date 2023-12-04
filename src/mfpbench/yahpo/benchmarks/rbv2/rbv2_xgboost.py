@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import no_type_check
+from typing import ClassVar, Mapping
 from typing_extensions import Literal
 
-from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
+from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
@@ -27,66 +27,12 @@ class RBV2xgboostConfig(RBV2Config):
     rate_drop: float | None = None  # (0.0, 1.0)
     skip_drop: float | None = None  # (0.0, 1.0)
 
-    @no_type_check
-    def validate(self) -> None:
-        """Validate this config."""
-        assert self.booster in ["gblinear", "gbtree", "dart"]
-        assert 0.0009118819655545162 <= self.alpha <= 1096.6331584284585
-        assert 0.0009118819655545162 <= self._lambda <= 1096.6331584284585
-        assert 7 <= self.nrounds <= 2981
-        assert 0.1 <= self.subsample <= 1.0
 
-        if self.colsample_bylevel is not None:
-            assert self.booster in ["dart", "gbtree"]
-            assert 0.01 <= self.colsample_bylevel <= 1.0
-
-        if self.colsample_bytree is not None:
-            assert self.booster in ["dart", "gbtree"]
-            assert 0.01 <= self.colsample_bytree <= 1.0
-
-        if self.eta is not None:
-            assert self.booster in ["dart", "gbtree"]
-            assert 0.0009118819655545162 <= self.eta <= 1.0
-
-        if self.gamma is not None:
-            assert self.booster in ["dart", "gbtree"]
-            assert 4.5399929762484854e-05 <= self.gamma <= 7.38905609893065
-
-        if self.max_depth is not None:
-            assert self.booster in ["dart", "gbtree"]
-            assert 1 <= self.max_depth <= 15
-
-        if self.min_child_weight is not None:
-            assert self.booster in ["dart", "gbtree"]
-            assert 2.718281828459045 <= self.min_child_weight <= 148.4131591025766
-
-        if self.rate_drop is not None:
-            assert self.booster in ["dart"]
-            assert 0.0 <= self.rate_drop <= 1.0
-
-        if self.skip_drop is not None:
-            assert self.booster in ["dart"]
-            assert 0.0 <= self.skip_drop <= 1.0
-
-        assert self.num__impute__selected__cpo in [
-            "impute.mean",
-            "impute.median",
-            "impute.hist",
-        ]
-
-
-@dataclass(frozen=True)
-class RBV2xgboostResult(RBV2Result):
-    config: RBV2xgboostConfig
-
-
-class RBV2xgboostBenchmark(RBV2Benchmark):
-    Result = RBV2xgboostResult
-    Config = RBV2xgboostConfig
-    has_conditionals = True
-
+class RBV2xgboostBenchmark(RBV2Benchmark[RBV2xgboostConfig]):
+    _config_renames: ClassVar[Mapping[str, str]] = {"lambda": "_lambda"}
+    yahpo_config_type = RBV2xgboostConfig
+    yahpo_has_conditionals = True
     yahpo_base_benchmark_name = "rbv2_xgboost"
-    yahpo_replacements_hps = (("_lambda", "lambda"),)
     yahpo_instances = (
         "16",
         "40923",

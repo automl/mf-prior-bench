@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from itertools import product
-from typing import Any, Mapping, TypeVar, no_type_check
-from typing_extensions import Literal
+from typing import Any, ClassVar, Mapping
+from typing_extensions import Literal, Self
 
+import numpy as np
+
+from mfpbench.benchmark import Config, Result
+from mfpbench.metric import Metric
 from mfpbench.yahpo.benchmark import YAHPOBenchmark
-from mfpbench.yahpo.config import YAHPOConfig
-from mfpbench.yahpo.result import YAHPOResult
-
-Self = TypeVar("Self", bound="NB301Config")
 
 ChoicesT = Literal[
     "max_pool_3x3",
@@ -35,7 +34,7 @@ _hp_name_extension = "NetworkSelectorDatasetInfo_COLON_darts_COLON_"
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
-class NB301Config(YAHPOConfig):
+class NB301Config(Config):
     edge_normal_0: ChoicesT
     edge_normal_1: ChoicesT
 
@@ -98,52 +97,18 @@ class NB301Config(YAHPOConfig):
     edge_reduce_12: ChoicesT | None = None
     edge_reduce_13: ChoicesT | None = None
 
-    @no_type_check
-    def validate(self) -> None:
-        """Validate this is a correct config.
-
-        Note:
-        ----
-        We don't check conditionals validity
-        """
-        nodes = list(range(13 + 1))
-        cells = ["normal", "reduce"]
-        for i, cell in product(nodes, cells):
-            attr_name = f"edge_{cell}_{i}"
-            attr = getattr(self, attr_name)
-            assert attr is None or attr in Choices, attr_name
-
-        choices_3 = ["0_1", "0_2", "1_2"]
-        choices_4 = ["0_1", "0_2", "0_3", "1_2", "1_3", "2_3"]
-        choices_5 = [
-            "0_1",
-            "0_2",
-            "0_3",
-            "0_4",
-            "1_2",
-            "1_3",
-            "1_4",
-            "2_3",
-            "2_4",
-            "3_4",
-        ]
-
-        nodes = list(range(3, 5 + 1))
-        for i, choices in [(3, choices_3), (4, choices_4), (5, choices_5)]:
-            normal_node = f"inputs_node_normal_{i}"
-            assert getattr(self, normal_node) in choices
-
-            reduce_node = f"inputs_node_reduce_{i}"
-            assert getattr(self, reduce_node) in choices
-
     @classmethod
-    def from_dict(cls: type[Self], d: Mapping[str, Any]) -> Self:
+    def from_dict(
+        cls,
+        d: Mapping[str, Any],
+        renames: Mapping[str, str] | None = None,
+    ) -> Self:
         """Create from a dict or mapping object."""
-        # We just flatten things because it's way too big of a name
+        # We may have keys that are conditional and hence we need to flatten them
         config = {k.replace(_hp_name_extension, ""): v for k, v in d.items()}
-        return cls(**config)
+        return super().from_dict(config, renames)
 
-    def dict(self) -> dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """Converts the config to a raw dictionary."""
         return {
             _hp_name_extension + k: v for k, v in asdict(self).items() if v is not None
@@ -151,55 +116,23 @@ class NB301Config(YAHPOConfig):
 
 
 @dataclass(frozen=True)  # type: ignore[misc]
-class NB301Result(YAHPOResult[NB301Config, int]):
-    runtime: float  # unit?
-    val_accuracy: float
+class NB301Result(Result[NB301Config, int]):
+    default_value_metric: ClassVar[str] = "val_accuracy"
+    default_cost_metric: ClassVar[str] = "runtime"
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "runtime": Metric(minimize=True, bounds=(0, np.inf)),
+        "val_accuracy": Metric(minimize=False, bounds=(0, 1)),
+    }
 
-    @property
-    def score(self) -> float:
-        """The score of interest."""
-        return self.val_accuracy
-
-    @property
-    def error(self) -> float:
-        """The error of interest."""
-        return 1 - self.val_accuracy
-
-    @property
-    def test_score(self) -> float:
-        """The score on the test set."""
-        return self.val_accuracy
-
-    @property
-    def test_error(self) -> float:
-        """The score on the test set."""
-        return 1 - self.val_accuracy
-
-    @property
-    def val_score(self) -> float:
-        """The score on the validation set."""
-        return self.val_accuracy
-
-    @property
-    def val_error(self) -> float:
-        """The score on the validation set."""
-        return 1 - self.val_accuracy
-
-    @property
-    def cost(self) -> float:
-        """Time taken in seconds to train the config."""
-        return self.runtime
+    runtime: Metric.Value  # unit?
+    val_accuracy: Metric.Value
 
 
 class NB301Benchmark(YAHPOBenchmark):
-    fidelity_name = "epoch"
-    fidelity_range = (1, 98, 1)
-    Config = NB301Config
-    Result = NB301Result
-    has_conditionals = True
-
+    yahpo_fidelity_name = "epoch"
+    yahpo_fidelity_range = (1, 98, 1)
+    yahpo_config_type = NB301Config
+    yahpo_result_type = NB301Result
+    yahpo_has_conditionals = True
     yahpo_base_benchmark_name = "nb301"
-    yahpo_task_id_name = None
     yahpo_instances = ("CIFAR10",)
-    yahpo_replacements_hps = None
-    yahpo_forced_remove_hps = None
