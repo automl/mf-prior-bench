@@ -72,7 +72,7 @@ def remove_hyperparameter(name: str, space: ConfigurationSpace) -> Configuration
     hps = [copy(hp) for hp in space.get_hyperparameters() if hp.name != name]
 
     if isinstance(space.random, np.random.RandomState):
-        new_seed = space.random.randint(2**32 - 1)
+        new_seed = space.random.randint(2**31 - 1)
     else:
         new_seed = copy(space.random)
 

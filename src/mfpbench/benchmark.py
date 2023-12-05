@@ -3,7 +3,17 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generic, Iterator, Mapping, TypeVar, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Generic,
+    Iterable,
+    Iterator,
+    Mapping,
+    TypeVar,
+    overload,
+)
 
 import numpy as np
 
@@ -13,6 +23,8 @@ from mfpbench.resultframe import ResultFrame
 
 if TYPE_CHECKING:
     from ConfigSpace import ConfigurationSpace
+
+    from mfpbench.metric import Metric
 
 HERE = Path(__file__).parent.parent
 PRIOR_DIR = HERE / "priors"
@@ -30,50 +42,49 @@ F = TypeVar("F", int, float)
 class Benchmark(Generic[C, R, F], ABC):
     """Base class for a Benchmark."""
 
-    fidelity_range: tuple[F, F, F]
-    """The fidelity range of this benchmark, (start, end, step)"""
-
-    start: F
-    """The start of the fidelity range"""
-
-    end: F
-    """The end of the fidelity range"""
-
-    step: F
-    """The step of the fidelity range"""
-
-    fidelity_name: str
-    """The name of the fidelity used in this benchmark"""
-
-    space: ConfigurationSpace
-    """The configuration space used in this benchmark"""
-
-    Config: type[C]
-    """The config type of this benchmark"""
-
-    Result: type[R]
-    """The result type of this benchmark"""
-
-    has_conditionals: bool = False
-    """Whether this benchmark has conditionals in it or not"""
-
-    _default_prior_dir = PRIOR_DIR
+    _default_prior_dir: ClassVar[Path] = PRIOR_DIR
     """The default directory for priors"""
 
-    def __init__(
+    _result_renames: ClassVar[Mapping[str, str] | None] = None
+    """Any renaming to be done to raw result names before being passed
+    to the `Result` type. This can be useful if for example, the benchmark returns
+    a result named `valid-error-rate` but the `Result` type expects
+    `valid_error_rate`, as you can't have `-` in a python identifier.
+    """
+
+    _config_renames: ClassVar[Mapping[str, str] | None] = None
+    """Any renaming to be done to raw result names before being passed
+    to the `Config` type. This can be useful if for example, the benchmark returns
+    a result named `lambda` which is a reserved keyword in python but the `Config`
+    type expects `_lambda` as the key.
+    """
+
+    def __init__(  # noqa: PLR0913
         self,
         name: str,
         space: ConfigurationSpace,
+        config_type: type[C],
+        result_type: type[R],
+        fidelity_range: tuple[F, F, F],
+        fidelity_name: str,
         *,
+        has_conditionals: bool = False,
         seed: int | None = None,
         prior: str | Path | C | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
+        value_metric: str | None = None,
+        cost_metric: str | None = None,
     ):
         """Initialize the benchmark.
 
         Args:
             name: The name of this benchmark
             space: The configuration space to use for the benchmark.
+            config_type: The type of config to use for the benchmark.
+            result_type: The type of result to use for the benchmark.
+            fidelity_name: The name of the fidelity to use for the benchmark.
+            fidelity_range: The range of fidelities to use for the benchmark.
+            has_conditionals: Whether this benchmark has conditionals in it or not.
             seed: The seed to use.
             prior: The prior to use for the benchmark. If None, no prior is used.
                 If a str, will check the local location first for a prior
@@ -84,13 +95,35 @@ class Benchmark(Generic[C, R, F], ABC):
                 For numericals, this is interpreted as the standard deviation of a
                 normal distribution while for categoricals, this is interpreted
                 as the probability of swapping the value for a random one.
+            value_metric: The metric to use for this benchmark. Uses
+                the default metric from the Result if None.
+            cost_metric: The cost to use for this benchmark. Uses
+                the default cost from the Result if None.
         """
+        if value_metric is None:
+            value_metric = result_type.default_value_metric
+
+        if cost_metric is None:
+            cost_metric = result_type.default_cost_metric
+
         self.name = name
         self.seed = seed
         self.space = space
-        self.start: F = self.fidelity_range[0]
-        self.end: F = self.fidelity_range[1]
-        self.step: F = self.fidelity_range[2]
+        self.value_metric = value_metric
+        self.cost_metric = cost_metric
+        self.fidelity_range: tuple[F, F, F] = fidelity_range
+        self.fidelity_name = fidelity_name
+        self.has_conditionals = has_conditionals
+        self.Config = config_type
+        self.Result = result_type
+        self.metric_optimums = {
+            metric_name: metric.optimum_value
+            for metric_name, metric in self.Result.metric_defs.items()
+        }
+
+        if value_metric is None:
+            assert getattr(self.Result, "value_metric", None) is not None
+            value_metric = self.Result.value_metric
 
         self._prior_arg = prior
 
@@ -108,7 +141,6 @@ class Benchmark(Generic[C, R, F], ABC):
 
         if prior is not None:
             self.prior = self._load_prior(prior, benchname=self.name)
-            self.prior.validate()
         else:
             self.prior = None
 
@@ -123,18 +155,37 @@ class Benchmark(Generic[C, R, F], ABC):
         if self.prior is not None:
             self.prior.set_as_default_prior(space)
 
-    @classmethod
+    @property
+    def metrics(self) -> dict[str, Metric]:
+        """The metrics for this benchmark."""
+        return dict(self.Result.metric_defs)
+
+    @property
+    def start(self) -> F:
+        """The start of the fidelity range."""
+        return self.fidelity_range[0]
+
+    @property
+    def end(self) -> F:
+        """The end of the fidelity range."""
+        return self.fidelity_range[1]
+
+    @property
+    def step(self) -> F:
+        """The step of the fidelity range."""
+        return self.fidelity_range[2]
+
     def _load_prior(
-        cls,
+        self,
         prior: str | Path | Mapping[str, Any] | C,
         benchname: str | None = None,
     ) -> C:
-        Config: type[C] = cls.Config  # Need to be a bit explicit here
+        Config: type[C] = self.Config  # Need to be a bit explicit here
 
         if isinstance(prior, str):
             # It's a str, use as a key into available priors
             if benchname is not None:
-                assumed_path = cls._default_prior_dir / f"{benchname}-{prior}.yaml"
+                assumed_path = self._default_prior_dir / f"{benchname}-{prior}.yaml"
                 if assumed_path.exists():
                     return Config.from_file(assumed_path)
 
@@ -148,7 +199,7 @@ class Benchmark(Generic[C, R, F], ABC):
             return prior
 
         if isinstance(prior, Mapping):
-            return Config.from_dict(prior)
+            return Config.from_dict(prior, renames=self._config_renames)
 
         raise ValueError(f"Unknown prior type {type(prior)}")
 
@@ -196,20 +247,23 @@ class Benchmark(Generic[C, R, F], ABC):
     def query(
         self,
         config: C | Mapping[str, Any],
-        at: F | None = None,
         *,
-        argmax: str | None = None,
-        argmin: str | None = None,
+        at: F | None = None,
+        value_metric: str | None = None,
+        cost_metric: str | None = None,
     ) -> R:
         """Submit a query and get a result.
 
         Args:
             config: The query to use
             at: The fidelity at which to query, defaults to None which means *maximum*
-            argmax: Whether to return the argmax up to the point `at`. Will be slower as
-                it has to get the entire trajectory. Uses the key from the Results.
-            argmin: Whether to return the argmin up to the point `at`. Will be slower as
-                it has to get the entire trajectory. Uses the key from the Results.
+            value_metric: The metric to use for this result. Uses
+                the value metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None.
+            cost_metric: The metric to use for this result. Uses
+                the cost metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None.
+
 
         Returns:
             The result of the query
@@ -217,29 +271,27 @@ class Benchmark(Generic[C, R, F], ABC):
         at = at if at is not None else self.end
         assert self.start <= at <= self.end
 
-        if argmax is not None and argmin is not None:
-            raise ValueError("Can't have both argmax and argmin")
-
-        if argmax is not None:
-            _argmax = argmax
-            return max(
-                self.trajectory(config, frm=self.start, to=at),
-                key=lambda r: getattr(r, _argmax),
-            )
-
-        if argmin is not None:
-            _argmin = argmin
-            return min(
-                self.trajectory(config, frm=self.start, to=at),
-                key=lambda r: getattr(r, _argmin),
-            )
-
         if not isinstance(config, self.Config):
-            _config = self.Config.from_dict(config)
+            _config = self.Config.from_dict(config, renames=self._config_renames)
         else:
             _config = config
 
-        return self._objective_function(_config, at=at)
+        __config = dict(_config)
+        if self._config_renames is not None:
+            _reverse_renames = {v: k for k, v in self._config_renames.items()}
+            __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
+
+        value_metric = value_metric if value_metric is not None else self.value_metric
+        cost_metric = cost_metric if cost_metric is not None else self.cost_metric
+
+        return self.Result.from_dict(
+            config=config,
+            fidelity=at,
+            result=self._objective_function(__config, at=at),
+            value_metric=str(value_metric),
+            cost_metric=str(cost_metric),
+            renames=self._result_renames,
+        )
 
     def trajectory(
         self,
@@ -248,6 +300,8 @@ class Benchmark(Generic[C, R, F], ABC):
         frm: F | None = None,
         to: F | None = None,
         step: F | None = None,
+        value_metric: str | None = None,
+        cost_metric: str | None = None,
     ) -> list[R]:
         """Get the full trajectory of a configuration.
 
@@ -256,6 +310,12 @@ class Benchmark(Generic[C, R, F], ABC):
             frm: Start of the curve, should default to the start
             to: End of the curve, should default to the total
             step: Step size, defaults to ``cls.default_step``
+            value_metric: The metric to use for this result. Uses
+                the value metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None.
+            cost_metric: The metric to use for this result. Uses
+                the cost metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None.
 
         Returns:
             A list of the results for this config
@@ -264,15 +324,38 @@ class Benchmark(Generic[C, R, F], ABC):
         frm = frm if frm is not None else self.start
         step = step if step is not None else self.step
 
-        if not isinstance(config, self.Config):
-            _config = self.Config.from_dict(config)
-        else:
-            _config = config
+        __config = dict(config)
+        if self._config_renames is not None:
+            _reverse_renames = {v: k for k, v in self._config_renames.items()}
+            __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
-        return self._trajectory(_config, frm=frm, to=to, step=step)
+        value_metric = value_metric if value_metric is not None else self.value_metric
+        cost_metric = cost_metric if cost_metric is not None else self.cost_metric
+
+        return [
+            self.Result.from_dict(
+                config=config,
+                fidelity=fidelity,
+                result=result,
+                value_metric=str(value_metric),
+                cost_metric=str(cost_metric),
+                renames=self._result_renames,
+            )
+            for fidelity, result in self._trajectory(
+                __config,
+                frm=frm,
+                to=to,
+                step=step,
+            )
+        ]
 
     @abstractmethod
-    def _objective_function(self, config: C, *, at: F) -> R:
+    def _objective_function(
+        self,
+        config: Mapping[str, Any],
+        *,
+        at: F,
+    ) -> Mapping[str, float]:
         """Get the value of the benchmark for a config at a fidelity.
 
         Args:
@@ -280,11 +363,18 @@ class Benchmark(Generic[C, R, F], ABC):
             at: The fidelity to get the result at
 
         Returns:
-            The result of the config
+            The result of the config as key value pairs
         """
         ...
 
-    def _trajectory(self, config: C, *, frm: F, to: F, step: F) -> list[R]:
+    def _trajectory(
+        self,
+        config: Mapping[str, Any],
+        *,
+        frm: F,
+        to: F,
+        step: F,
+    ) -> Iterable[tuple[F, Mapping[str, float]]]:
         """Get the trajectory of a config.
 
         By default this will just call the
@@ -301,7 +391,7 @@ class Benchmark(Generic[C, R, F], ABC):
             A list of the results for this config
         """
         return [
-            self._objective_function(config, at=fidelity)
+            (fidelity, self._objective_function(config, at=fidelity))
             for fidelity in self.iter_fidelities(frm=frm, to=to, step=step)
         ]
 
@@ -347,23 +437,34 @@ class Benchmark(Generic[C, R, F], ABC):
         """
         space = copy.deepcopy(self.space)
         if isinstance(seed, np.random.RandomState):
-            rng = seed.randint(0, 2**32 - 1)
+            rng = seed.randint(0, 2**31 - 1)
         else:
             rng = (
                 seed
                 if seed is not None
-                else np.random.default_rng().integers(0, 2**32 - 1)
+                else np.random.default_rng().integers(0, 2**31 - 1)
             )
 
         space.seed(rng)
         if n is None:
-            return self.Config.from_dict(space.sample_configuration())
+            return self.Config.from_dict(
+                space.sample_configuration(),
+                renames=self._config_renames,
+            )
 
         # Just because of how configspace works
         if n == 1:
-            return [self.Config.from_dict(space.sample_configuration())]
+            return [
+                self.Config.from_dict(
+                    space.sample_configuration(),
+                    renames=self._config_renames,
+                ),
+            ]
 
-        return [self.Config.from_dict(c) for c in space.sample_configuration(n)]
+        return [
+            self.Config.from_dict(c, renames=self._config_renames)
+            for c in space.sample_configuration(n)
+        ]
 
     def frame(self) -> ResultFrame[C, F, R]:
         """Get an empty frame to record with."""

@@ -263,7 +263,7 @@ def download_status(source: str, datadir: Path | None = None) -> bool:
     _source = BenchmarkSetup.source(source)
     source_path = datadir / _source.name
     return source_path.exists() and bool(
-        next(source_path.iterdir(), False),  # noqa: FBT003
+        next(source_path.iterdir(), False),
     )
 
 
@@ -366,7 +366,6 @@ def setup(
             print(f"Finished downloading to {source_path}")
         else:
             print(f"Already found something at {source_path}")
-            pass
 
     if install is not False:
         if install is True:

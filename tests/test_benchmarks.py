@@ -3,8 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import product
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar, Mapping
 
+import numpy as np
 import pandas as pd
 import pytest
 from pytest_cases import (
@@ -18,9 +19,10 @@ from pytest_cases import (
 import mfpbench
 from mfpbench import (
     Benchmark,
-    GenericTabularBenchmark,
-    MFHartmannBenchmark,
+    Metric,
+    Result,
     TabularBenchmark,
+    TabularConfig,
     YAHPOBenchmark,
 )
 from mfpbench.setup_benchmark import download_status
@@ -85,7 +87,7 @@ def case_pd1() -> BenchmarkTest:
     download_status("lcbench-tabular") is False,
     reason="lcbench-tabular is not downloaded",
 )
-@case
+@case(tags="tabular")
 def case_lcbench_tabular() -> BenchmarkTest:
     return BenchmarkTest("lcbench_tabular", kwargs={"task_id": "adult"})
 
@@ -95,7 +97,7 @@ def case_mfh() -> BenchmarkTest:
     return BenchmarkTest("mfh3_good", prior="good")
 
 
-@case(tags="generic_tabular")
+@case(tags="tabular")
 def case_generic_tabular() -> BenchmarkTest:
     ids = "abcdefghijklmnopqrstuvwxyz"
     colors = ["red", "green", "blue"]
@@ -108,12 +110,12 @@ def case_generic_tabular() -> BenchmarkTest:
         pd.DataFrame(
             [
                 {
-                    "config": k,
+                    "id": k,
                     "color": c,
                     "shape": s,
                     "animal": a,
                     "number": n,
-                    "float": f,
+                    "ffloat": f,
                     "balanced_accuracy": v,
                     "fidelity": fid,
                 }
@@ -123,23 +125,35 @@ def case_generic_tabular() -> BenchmarkTest:
         for k, (c, s, a, n, f) in zip(ids, config_values)
     ]
     df = pd.concat(values, ignore_index=True)
-    benchmark = GenericTabularBenchmark(
-        df,
+
+    @dataclass(frozen=True)
+    class MyResult(Result):
+        default_value_metric: ClassVar[str] = "balanced_accuracy"
+        default_cost_metric: ClassVar[str] = "ffloat"
+        metric_defs: ClassVar[Mapping[str, Metric]] = {
+            "balanced_accuracy": Metric(minimize=False, bounds=(0, 1)),
+            "ffloat": Metric(minimize=True, bounds=(0, np.inf)),
+        }
+
+        balanced_accuracy: Metric.Value
+        ffloat: Metric.Value
+
+    @dataclass(frozen=True, eq=False, unsafe_hash=True)
+    class MyConfig(TabularConfig):
+        id: str | None
+        color: str
+        shape: str
+        animal: str
+        number: int
+
+    benchmark = TabularBenchmark(
         name="testdata",
-        id_key="config",
+        table=df,
+        id_key="id",
         fidelity_key="fidelity",
-        config_keys=["color", "shape"],
-        result_keys=["balanced_accuracy"],
-        result_mapping={
-            "error": lambda df: 1 - df["balanced_accuracy"],
-            "val_error": lambda df: 1 - df["balanced_accuracy"],
-            "test_error": lambda df: 1 - df["balanced_accuracy"],
-            "score": lambda df: df["balanced_accuracy"],
-            "val_score": lambda df: df["balanced_accuracy"],
-            "test_score": lambda df: df["balanced_accuracy"],
-            "cost": lambda df: df["float"],
-        },
-        remove_constants=True,
+        config_type=MyConfig,
+        result_type=MyResult,
+        seed=1,
     )
     return BenchmarkTest(benchmark.name, benchmark=benchmark)
 
@@ -159,18 +173,17 @@ def benchmark(item: BenchmarkTest) -> Benchmark:
 
 
 @parametrize("n_samples", [1, 2, 3])
-def test_benchmark_sampling(benchmark: Benchmark, n_samples: int) -> None:
+def test_benchmark_sampling(
+    benchmark: Benchmark,
+    n_samples: int,
+) -> None:
     config = benchmark.sample()
     assert isinstance(config, benchmark.Config)
-    config.validate()
 
     configs = benchmark.sample(n_samples)
     assert len(configs) == n_samples
     for config in configs:
         assert isinstance(config, benchmark.Config)
-
-    for config in configs:
-        config.validate()
 
 
 def test_query_api_validity(benchmark: Benchmark) -> None:
@@ -179,7 +192,7 @@ def test_query_api_validity(benchmark: Benchmark) -> None:
 
     assert result.config == sample
 
-    sample_dict = sample.dict()
+    sample_dict = sample.as_dict()
     result = benchmark.query(sample_dict)
     assert result.config == sample_dict
 
@@ -188,20 +201,14 @@ def test_result_api_validity(benchmark: Benchmark) -> None:
     sample = benchmark.sample()
     result = benchmark.query(sample)
 
-    # MFHartmanns don't have scores
-    if not isinstance(benchmark, MFHartmannBenchmark):
-        assert result.score is not None
-        assert result.test_score is not None
-        assert result.val_score is not None
-
     assert result.error is not None
-    assert result.test_error is not None
-    assert result.val_error is not None
     assert result.fidelity is not None
     assert result.cost is not None
 
 
-def test_query_through_entire_fidelity_range(benchmark: Benchmark) -> None:
+def test_query_through_entire_fidelity_range(
+    benchmark: Benchmark,
+) -> None:
     config = benchmark.sample()
 
     results = [benchmark.query(config, at=x) for x in benchmark.iter_fidelities()]
@@ -221,6 +228,50 @@ def test_repeated_query(benchmark: Benchmark) -> None:
             assert r1 == r2, f"{r1}\n{r2}"
 
 
+def test_metric_optimums(benchmark: Benchmark) -> None:
+    configs = benchmark.sample(20)
+
+    for config in configs:
+        result = benchmark.query(config, at=benchmark.end)
+        for k in benchmark.Result.metric_defs:
+            assert result[k].score <= benchmark.metric_optimums[k].score
+            assert result[k].error >= benchmark.metric_optimums[k].error
+
+
+@parametrize_with_cases("item", cases=case_generic_tabular)
+def test_table_optimums(item: BenchmarkTest) -> None:
+    bench: TabularBenchmark = item.benchmark  # type: ignore
+    assert bench is not None
+    table = bench.table
+    for k, metric in bench.metrics.items():
+        values = [metric.as_value(v) for v in table[k]]
+        scores = np.array([v.score for v in values])
+        errors = np.array([v.error for v in values])
+        optimum_score = bench.metric_optimums[k].score
+        optimum_error = bench.metric_optimums[k].error
+        assert np.all(scores <= optimum_score)
+        assert np.all(errors >= optimum_error)
+
+
+def test_with_different_value_metric(
+    benchmark: Benchmark,
+) -> None:
+    result_type = benchmark.Result
+
+    value_choices = list(result_type.metric_defs.keys())
+    cost_choices = list(result_type.metric_defs.keys())
+
+    for value_metric, cost_metric in product(value_choices, cost_choices):
+        config = benchmark.sample()
+        result = benchmark.query(
+            config,
+            value_metric=value_metric,
+            cost_metric=cost_metric,
+        )
+        assert result.value_metric == value_metric
+        assert result.cost_metric == cost_metric
+
+
 def test_repeated_trajectory(benchmark: Benchmark) -> None:
     configs = benchmark.sample(10)
 
@@ -231,7 +282,9 @@ def test_repeated_trajectory(benchmark: Benchmark) -> None:
             assert r1 == r2, f"{r1}\n{r2}"
 
 
-def test_query_default_is_max_fidelity(benchmark: Benchmark) -> None:
+def test_query_default_is_max_fidelity(
+    benchmark: Benchmark,
+) -> None:
     config = benchmark.sample()
     r1 = benchmark.query(config, at=benchmark.end)
     r2 = benchmark.query(config)
@@ -239,7 +292,9 @@ def test_query_default_is_max_fidelity(benchmark: Benchmark) -> None:
     assert r1 == r2
 
 
-def test_query_same_as_trajectory(benchmark: Benchmark) -> None:
+def test_query_same_as_trajectory(
+    benchmark: Benchmark,
+) -> None:
     config = benchmark.sample()
     if isinstance(benchmark, YAHPOBenchmark):
         pytest.skip(
@@ -254,7 +309,9 @@ def test_query_same_as_trajectory(benchmark: Benchmark) -> None:
         assert qr == tr, f"{qr}\n{tr}"
 
 
-def test_trajectory_is_over_full_range_by_default(benchmark: Benchmark) -> None:
+def test_trajectory_is_over_full_range_by_default(
+    benchmark: Benchmark,
+) -> None:
     config = benchmark.sample()
     results = benchmark.trajectory(config)
 
@@ -262,14 +319,18 @@ def test_trajectory_is_over_full_range_by_default(benchmark: Benchmark) -> None:
         assert r.fidelity == fidelity
 
 
-def test_configs_hashable_and_unique(benchmark: Benchmark) -> None:
+def test_configs_hashable_and_unique(
+    benchmark: Benchmark,
+) -> None:
     configs = benchmark.sample(10)
 
     s = set(configs)
     assert len(s) == len(configs)
 
 
-def test_results_hashable_and_unique(benchmark: Benchmark) -> None:
+def test_results_hashable_and_unique(
+    benchmark: Benchmark,
+) -> None:
     configs = benchmark.sample(10)
     results = [benchmark.query(c) for c in configs]
 
@@ -277,27 +338,16 @@ def test_results_hashable_and_unique(benchmark: Benchmark) -> None:
     assert len(s) == len(results)
 
 
-def test_argmin_query(benchmark: Benchmark) -> None:
-    # Get a random configuration
-    random_config = benchmark.sample()
-
-    # Get the argmax
-    argmin_config = benchmark.query(random_config, argmin="error")
-
-    # Get the trajectory
-    trajectory = benchmark.trajectory(random_config)
-    best_in_trajectory = min(trajectory, key=lambda x: x.error)
-
-    assert argmin_config == best_in_trajectory
-
-
-def test_config_with_same_content_hashes_correctly(benchmark: Benchmark) -> None:
+def test_config_with_same_content_hashes_correctly(
+    benchmark: Benchmark,
+) -> None:
     config = benchmark.sample()
 
     if isinstance(benchmark, TabularBenchmark):
-        config_dict = config.dict(with_id=True)
+        assert isinstance(config, TabularConfig)
+        config_dict = config.as_dict(with_id=True)
     else:
-        config_dict = config.dict()
+        config_dict = config.as_dict()
 
     # Turn it into a dict and back again
     new_config = benchmark.Config.from_dict(config_dict)
@@ -305,7 +355,9 @@ def test_config_with_same_content_hashes_correctly(benchmark: Benchmark) -> None
     assert hash(config) == hash(new_config)
 
 
-def test_result_with_same_content_hashes_correctly(benchmark: Benchmark) -> None:
+def test_result_with_same_content_hashes_correctly(
+    benchmark: Benchmark,
+) -> None:
     config = benchmark.sample()
     result = benchmark.query(config)
 
@@ -313,7 +365,7 @@ def test_result_with_same_content_hashes_correctly(benchmark: Benchmark) -> None
     new_result = benchmark.Result.from_dict(
         config=config,
         fidelity=result.fidelity,
-        result=result.dict(),
+        result=result.as_dict(),
     )
 
     assert hash(result) == hash(new_result)
@@ -324,18 +376,21 @@ def test_result_same_value_but_different_fidelity_has_different_hash(
 ) -> None:
     config = benchmark.sample()
     result = benchmark.query(config)
+    result_dict = result.as_dict()
 
     # Turn it into a dict and back again
     new_result = benchmark.Result.from_dict(
         config=config,
         fidelity=result.fidelity - 1,
-        result=result.dict(),
+        result=result_dict,
+        value_metric=result.value_metric,
+        cost_metric=result.cost_metric,
     )
 
     assert hash(result) != hash(new_result)
 
 
-@parametrize_with_cases("item", cases=".", has_tag=~ft.has_tag("generic_tabular"))
+@parametrize_with_cases("item", cases=".", has_tag=~ft.has_tag("tabular"))
 def test_prior_from_yaml_file(item: BenchmarkTest, tmp_path: Path) -> None:
     params = item.unpack()
     bench = mfpbench.get(**params)
@@ -355,7 +410,7 @@ def test_prior_from_yaml_file(item: BenchmarkTest, tmp_path: Path) -> None:
     assert default == random_config, f"{random_config}, {default}"
 
 
-@parametrize_with_cases("item", cases=".", has_tag=~ft.has_tag("generic_tabular"))
+@parametrize_with_cases("item", cases=".", has_tag=~ft.has_tag("tabular"))
 def test_prior_from_json_file(item: BenchmarkTest, tmp_path: Path) -> None:
     params = item.unpack()
     bench = mfpbench.get(**params)
@@ -375,7 +430,7 @@ def test_prior_from_json_file(item: BenchmarkTest, tmp_path: Path) -> None:
     assert default == random_config, f"{random_config}, {default}"
 
 
-@parametrize_with_cases("item", cases=".", has_tag=~ft.has_tag("generic_tabular"))
+@parametrize_with_cases("item", cases=".", has_tag=~ft.has_tag("tabular"))
 def test_prior_from_config(item: BenchmarkTest) -> None:
     params = item.unpack()
     bench = mfpbench.get(**params)
@@ -392,7 +447,7 @@ def test_prior_from_config(item: BenchmarkTest) -> None:
     assert default == random_config, f"{random_config}, {default}"
 
 
-@parametrize_with_cases("item", cases=".", has_tag=~ft.has_tag("generic_tabular"))
+@parametrize_with_cases("item", cases=".", has_tag=~ft.has_tag("tabular"))
 def test_prior_from_dict(item: BenchmarkTest) -> None:
     params = item.unpack()
     bench = mfpbench.get(**params)
@@ -400,7 +455,7 @@ def test_prior_from_dict(item: BenchmarkTest) -> None:
     # Get a random config
     random_config = bench.sample()
     # Use the path of the saved config as the prior config
-    prior_config = random_config.dict()
+    prior_config = random_config.as_dict()
 
     params["prior"] = prior_config
 
@@ -412,3 +467,37 @@ def test_prior_from_dict(item: BenchmarkTest) -> None:
     # The default configuration for the benchmark should be the same as the prior
     default = bench.space.get_default_configuration()
     assert default == random_config, f"{random_config}, {default}"
+
+
+@pytest.mark.skipif(
+    download_status("lcbench-tabular") is False,
+    reason="lcbench-tabular is not downloaded",
+)
+def explicit_test_with_different_value_metric() -> None:
+    lcbench_tabular_1 = mfpbench.get(
+        "lcbench_tabular",
+        task_id="adult",
+        cost_metric="time",
+        value_metric="val_accuracy",
+    )
+    lcbench_tabular_2 = mfpbench.get(
+        "lcbench_tabular",
+        task_id="adult",
+        cost_metric="time",
+        value_metric="val_balanced_accuracy",
+    )
+
+    config_1 = lcbench_tabular_1.sample()
+    config_2 = lcbench_tabular_2.sample()
+
+    result_1 = lcbench_tabular_1.query(config_1)
+    result_2 = lcbench_tabular_2.query(config_2)
+
+    assert result_1.value_metric == "val_accuracy"
+    assert result_2.value_metric == "val_balanced_accuracy"
+
+    assert result_1.error != result_2.error
+    assert result_1.score != result_2.score
+
+    # Same cost metric, only has one
+    assert result_1.cost == result_2.cost

@@ -10,12 +10,12 @@ dependencies = [
   "more_itertools",
   "pyarrow"
 ]
-version = "1.7.3"
+version = "1.7.4"
 description = "A wrapper for multi-fidelity benchmarks with priors"
 authors = [{name = "Eddie Bergman", email="eddiebergmanhs@gmail.com"}]
 readme = "README.md"
 license = { file = "LICENSE.txt" }
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers = [
   'Intended Audience :: Science/Research',
   'Intended Audience :: Developers',
@@ -61,7 +61,7 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"] # path to the test directory
-minversion = "3.7"
+minversion = "3.8"
 # addopts = "--cov=mfpbench" # Should be package name
 
 [tool.coverage.run]

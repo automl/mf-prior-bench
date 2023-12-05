@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import no_type_check
 from typing_extensions import Literal
 
-from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
+from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
@@ -14,28 +13,10 @@ class RBV2glmnetConfig(RBV2Config):
     alpha: float  # (0.0, 1.0)
     s: float  # (0.0009118819655545162, 1096.6331584284585), log
 
-    @no_type_check
-    def validate(self) -> None:
-        """Validate this config."""
-        assert self.num__impute__selected__cpo in [
-            "impute.mean",
-            "impute.median",
-            "impute.hist",
-        ]
-        assert 0.0 <= self.alpha <= 1.0
-        assert 0.0009118819655545162 <= self.s <= 1096.6331584284585
 
-
-@dataclass(frozen=True)
-class RBV2glmnetResult(RBV2Result):
-    config: RBV2glmnetConfig
-
-
-class RBV2glmnetBenchmark(RBV2Benchmark):
-    Result = RBV2glmnetResult
-    Config = RBV2glmnetConfig
-    has_conditionals = False
-
+class RBV2glmnetBenchmark(RBV2Benchmark[RBV2glmnetConfig]):
+    yahpo_config_type = RBV2glmnetConfig
+    yahpo_has_conditionals = False
     yahpo_base_benchmark_name = "rbv2_glmnet"
     yahpo_instances = (
         "41138",

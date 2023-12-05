@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar, Mapping
 
+import numpy as np
 import pandas as pd
 from ConfigSpace import ConfigurationSpace
 from ConfigSpace.hyperparameters import (
@@ -13,6 +14,7 @@ from ConfigSpace.hyperparameters import (
 )
 
 from mfpbench.config import TabularConfig
+from mfpbench.metric import Metric
 from mfpbench.result import Result
 from mfpbench.setup_benchmark import LCBenchTabularSource
 from mfpbench.tabular import TabularBenchmark
@@ -136,55 +138,28 @@ class LCBenchTabularConfig(TabularConfig):
 
 @dataclass(frozen=True)  # type: ignore[misc]
 class LCBenchTabularResult(Result[LCBenchTabularConfig, int]):
-    time: float
-    val_accuracy: float
-    val_cross_entropy: float
-    val_balanced_accuracy: float
-    test_accuracy: float
-    test_cross_entropy: float
-    test_balanced_accuracy: float
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "val_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "val_balanced_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "val_cross_entropy": Metric(minimize=True, bounds=(0, np.inf)),
+        "test_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "test_balanced_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "test_cross_entropy": Metric(minimize=True, bounds=(0, np.inf)),
+        "time": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+    default_value_metric: ClassVar[str] = "val_balanced_accuracy"
+    default_cost_metric: ClassVar[str] = "time"
 
-    @property
-    def score(self) -> float:
-        """The score of interest."""
-        return self.val_score
-
-    @property
-    def error(self) -> float:
-        """The error of interest."""
-        return self.val_error
-
-    @property
-    def val_score(self) -> float:
-        """The score on the validation set."""
-        return self.val_accuracy / 100
-
-    @property
-    def val_error(self) -> float:
-        """The error on the validation set."""
-        return (100 - self.val_accuracy) / 100
-
-    @property
-    def test_score(self) -> float:
-        """The score on the test set."""
-        return self.test_accuracy / 100
-
-    @property
-    def test_error(self) -> float:
-        """The error on the test set."""
-        return (100 - self.test_accuracy) / 100
-
-    @property
-    def cost(self) -> float:
-        """The time to train the configuration (assumed to be seconds)."""
-        return self.time
+    time: Metric.Value
+    val_accuracy: Metric.Value
+    test_accuracy: Metric.Value
+    val_balanced_accuracy: Metric.Value
+    test_balanced_accuracy: Metric.Value
+    val_cross_entropy: Metric.Value
+    test_cross_entropy: Metric.Value
 
 
 class LCBenchTabularBenchmark(TabularBenchmark):
-    Config = LCBenchTabularConfig
-    Result = LCBenchTabularResult
-    fidelity_name: str = "epoch"
-
     task_ids: ClassVar[tuple[str, ...]] = (
         "adult",
         "airlines",
@@ -238,6 +213,8 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         seed: int | None = None,
         prior: str | Path | LCBenchTabularConfig | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
+        value_metric: str | None = None,
+        cost_metric: str | None = None,
     ) -> None:
         """Initialize the benchmark.
 
@@ -257,6 +234,10 @@ class LCBenchTabularBenchmark(TabularBenchmark):
                 For numericals, this is interpreted as the standard deviation of a
                 normal distribution while for categoricals, this is interpreted
                 as the probability of swapping the value for a random one.
+            value_metric: The metric to use for this benchmark. Uses
+                the default metric from the Result if None.
+            cost_metric: The cost to use for this benchmark. Uses
+                the default cost from the Result if None.
         """
         cls = self.__class__
         if task_id not in cls.task_ids:
@@ -297,10 +278,11 @@ class LCBenchTabularBenchmark(TabularBenchmark):
             table=table,  # type: ignore
             name=benchmark_task_name,
             id_key="id",
-            fidelity_key=cls.fidelity_name,
-            result_keys=LCBenchTabularResult.names(),
-            config_keys=LCBenchTabularConfig.names(),
-            remove_constants=remove_constants,
+            fidelity_key="epoch",
+            result_type=LCBenchTabularResult,
+            config_type=LCBenchTabularConfig,
+            value_metric=value_metric,
+            cost_metric=cost_metric,
             space=space,
             seed=seed,
             prior=prior,

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass, field, fields
-from typing import Any, Generic, Mapping, TypeVar
-from typing_extensions import Self, override
+from abc import ABC
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Mapping, TypeVar
+from typing_extensions import Self
 
 from mfpbench.config import Config
+
+if TYPE_CHECKING:
+    from mfpbench.metric import Metric
 
 # The Config kind
 C = TypeVar("C", bound=Config)
@@ -18,194 +21,97 @@ F = TypeVar("F", int, float)
 class Result(ABC, Generic[C, F]):
     """Collect all results in a class for clarity."""
 
+    metric_defs: ClassVar[Mapping[str, Metric]]
+    """The metric definitions of this result."""
+
+    default_value_metric: ClassVar[str]
+    """The default metric to use for this result."""
+
+    default_cost_metric: ClassVar[str]
+    """The default cost to use for this result."""
+
     fidelity: F
     """The fidelity of this result."""
 
-    config: C = field(repr=False)
+    config: C
     """The config used to generate this result."""
+
+    value_metric: str
+    """The metric to use for this result."""
+
+    cost_metric: str
+    """The cost to use for this result."""
 
     @classmethod
     def from_dict(
         cls,
         config: C,
-        result: Mapping[str, Any],
         fidelity: F,
+        result: Mapping[str, float],
+        *,
+        value_metric: str | None = None,
+        cost_metric: str | None = None,
+        renames: Mapping[str, str] | None = None,
     ) -> Self:
         """Create from a dict or mapping object."""
-        fieldnames = set(cls.names())
-        if not fieldnames.issubset(result.keys()):
-            raise ValueError(
-                f"Result dict is missing fields: {fieldnames - result.keys()}",
+        values = {
+            k: (
+                metric.as_value(v)
+                if (metric := cls.metric_defs.get(k)) is not None
+                else v
             )
-        # To help with serialization, we need to convert floats to... ehh floats
-        # This is due to some things returning an np.float -_-
-        result = {
-            k: float(v) if isinstance(v, float) else v
             for k, v in result.items()
-            if k in fieldnames
         }
-        return cls(config=config, fidelity=fidelity, **result)
+        if renames is not None:
+            values = {renames.get(k, k): v for k, v in values.items()}
+        if value_metric is None:
+            value_metric = cls.default_value_metric
+        if cost_metric is None:
+            cost_metric = cls.default_cost_metric
 
-    @classmethod
-    def names(cls) -> tuple[str, ...]:
-        """The names of the fields in this result."""
-        return tuple(
-            f.name for f in fields(cls) if f.name not in ("config", "fidelity")
+        return cls(
+            config=config,
+            fidelity=fidelity,
+            value_metric=value_metric,
+            cost_metric=cost_metric,
+            **values,  # type: ignore
         )
 
-    @classmethod
-    def from_row(
-        cls,
-        config: C,
-        row: Mapping[str, Any],
-        fidelity: F,
-    ) -> Self:
-        """Create from a row of a dataframe."""
-        return cls.from_dict(config, dict(row), fidelity)
-
-    @property
-    @abstractmethod
-    def score(self) -> float:
-        """The score of interest."""
-        ...
-
-    @property
-    @abstractmethod
-    def error(self) -> float:
-        """The error of interest."""
-        ...
-
-    @property
-    @abstractmethod
-    def test_score(self) -> float:
-        """The score on the test set."""
-        ...
-
-    @property
-    @abstractmethod
-    def test_error(self) -> float:
-        """The error on the test set."""
-        ...
-
-    @property
-    @abstractmethod
-    def val_score(self) -> float:
-        """The score on the validation set."""
-        ...
-
-    @property
-    @abstractmethod
-    def val_error(self) -> float:
-        """The score on the validation set."""
-        ...
-
-    @property
-    @abstractmethod
-    def cost(self) -> float:
-        """The time cost for evaluting this config."""
-        ...
-
-    def dict(self) -> dict[str, Any]:
-        """Create a dict from this result."""
-        d = asdict(self)
-        del d["config"]
-        del d["fidelity"]
-        return d
-
-
-@dataclass(frozen=True, eq=False)  # type: ignore[misc]
-class GenericTabularResult(Result[C, F], Generic[C, F]):
-    """A generic tabular result.
-
-    This is useful for adhoc tabular benchmarks.
-    """
-
-    _values: dict[str, Any]
-
-    def __hash__(self) -> int:
-        """Hash based on the dictionary repr."""
-        return (
-            hash(self.config) ^ hash(self.fidelity) ^ hash(tuple(self._values.items()))
-        )
-
-    def dict(self) -> Any:
+    def as_dict(self) -> dict[str, Any]:
         """As a raw dictionary."""
-        return dict(self._values)
+        return self.values
 
-    def __getitem__(self, key: str) -> Any:
-        return self._values[key]
-
-    # Make .property acces work
-    def __getattr__(self, __name: str) -> Any:
-        return self._values[__name]
-
-    @override
-    @classmethod
-    def from_dict(cls, config: C, result: Mapping[str, Any], fidelity: F) -> Self:
-        """Create from a dict or mapping object."""
-        return cls(config=config, _values=dict(result), fidelity=fidelity)
-
-    @property
-    def score(self) -> float:
-        """The score of interest."""
-        if "score" in self._values:
-            return float(self._values["score"])
-
-        raise KeyError("GenericTabularResult does not have a score")
-
-    @property
-    def error(self) -> float:
-        """The error of interest."""
-        if "error" in self._values:
-            return float(self._values["error"])
-
-        raise KeyError("GenericTabularResult does not have an error")
-
-    @property
-    def test_score(self) -> float:
-        """The score on the test set."""
-        if "test_score" in self._values:
-            return float(self._values["test_score"])
-
-        raise KeyError("GenericTabularResult does not have a test_score")
-
-    @property
-    def test_error(self) -> float:
-        """The error on the test set."""
-        if "test_error" in self._values:
-            return float(self._values["test_error"])
-
-        raise KeyError("GenericTabularResult does not have a test_error")
-
-    @property
-    def val_score(self) -> float:
-        """The score on the validation set."""
-        if "val_score" in self._values:
-            return float(self._values["val_score"])
-
-        raise KeyError("GenericTabularResult does not have a val_score")
-
-    @property
-    def val_error(self) -> float:
-        """The score on the validation set."""
-        if "val_error" in self._values:
-            return float(self._values["val_error"])
-
-        raise KeyError("GenericTabularResult does not have a val_error")
+    def __getitem__(self, key: str) -> Metric.Value:
+        if key not in self.metric_defs:
+            raise KeyError(f"Metric {key} not in {self.metric_defs.keys()}")
+        return getattr(self, key)
 
     @property
     def cost(self) -> float:
         """The time cost for evaluting this config."""
-        if "cost" in self._values:
-            return float(self._values["cost"])
+        return self[self.cost_metric].error
 
-        raise KeyError("GenericTabularResult does not have a cost")
+    @property
+    def error(self) -> float:
+        """The error of interest."""
+        return self[self.value_metric].error
 
-    @classmethod
-    def names(cls) -> tuple[str, ...]:
-        """The names of the fields in this result."""
-        return tuple(
-            f.name
-            for f in fields(cls)
-            if f.name not in ("config", "fidelity", "__values")
-        )
+    @property
+    def score(self) -> float:
+        """The score of interest."""
+        return self[self.value_metric].score
+
+    @property
+    def values(self) -> dict[str, Any]:
+        """Create a dict from this result with the raw values."""
+        return {k: getattr(self, k).value for k in self.metric_defs}
+
+    @property
+    def errors(self) -> dict[str, float]:
+        """Create a dict from this result with the error values."""
+        return {k: getattr(self, k).error for k in self.metric_defs}
+
+    @property
+    def scores(self) -> dict[str, float]:
+        """Create a dict from this result with the score values."""
+        return {k: getattr(self, k).score for k in self.metric_defs}

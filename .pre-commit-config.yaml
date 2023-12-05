@@ -7,7 +7,7 @@ files: |
   )/.*\.py$
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-added-large-files
         files: ".*"
@@ -26,7 +26,7 @@ repos:
       - id: debug-statements
         files: '^src/.*\.py$'
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.23.3
+    rev: 0.27.1
     hooks:
       - id: check-github-workflows
         files: '^github/workflows/.*\.ya?ml$'
@@ -34,7 +34,7 @@ repos:
       - id: check-dependabot
         files: '^\.github/dependabot\.ya?ml$'
   - repo: https://github.com/ambv/black
-    rev: 23.7.0
+    rev: 23.11.0
     hooks:
       - id: black
         name: black formatter mfpbench
@@ -43,7 +43,7 @@ repos:
         name: black formatter tests
         args: ["--config=pyproject.toml"]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
+    rev: v1.7.1
     hooks:
       - id: mypy
         name: mypy
@@ -55,7 +55,7 @@ repos:
           - "--show-traceback"
           - "--allow-untyped-decorators" # Test decorators are not properly typed
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.278
+    rev: v0.1.6
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --no-cache]

@@ -90,6 +90,8 @@ _mapping: dict[str, type[Benchmark]] = {
 def get(
     name: str,
     *,
+    value_metric: str | None = None,
+    cost_metric: str | None = None,
     prior: str | Path | Config | None = None,
     preload: bool = False,
     **kwargs: Any,
@@ -98,6 +100,10 @@ def get(
 
     Args:
         name: The name of the benchmark
+        value_metric: The value metric to use for the benchmark. If not specified,
+            the default value metric is used.
+        cost_metric: The cost metric to use for the benchmark. If not specified,
+            the default cost metric is used.
         prior: The prior to use for the benchmark.
             * str -
                 If it ends in {.json} or {.yaml, .yml}, it will convert it to a path and
@@ -190,7 +196,7 @@ def get(
     ):
         prior = Path(prior)
 
-    bench = b(prior=prior, **kwargs)
+    bench = b(prior=prior, cost_metric=cost_metric, value_metric=value_metric, **kwargs)
 
     if preload:
         bench.load()

@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Mapping
+from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Literal, Mapping
 from typing_extensions import override
 
 import numpy as np
@@ -16,9 +16,9 @@ from ConfigSpace import (
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.config import Config
+from mfpbench.metric import Metric
 from mfpbench.result import Result
 from mfpbench.setup_benchmark import JAHSBenchSource
-from mfpbench.util import rename
 
 if TYPE_CHECKING:
     import jahs_bench
@@ -51,81 +51,40 @@ class JAHSConfig(Config):
     LearningRate: float
     WeightDecay: float
 
-    def validate(self) -> None:
-        """Validate this config incase required."""
-        # Just being explicit to catch bugs easily, we can remove later
-        assert self.N in [1, 3, 5]
-        assert self.W in [4, 8, 16]
-        assert self.Op1 in [0, 1, 2, 3, 4, 5]
-        assert self.Op2 in [0, 1, 2, 3, 4, 5]
-        assert self.Op3 in [0, 1, 2, 3, 4, 5]
-        assert self.Op4 in [0, 1, 2, 3, 4, 5]
-        assert self.Op5 in [0, 1, 2, 3, 4, 5]
-        assert self.Op6 in [0, 1, 2, 3, 4, 5]
-        assert self.Resolution in [0.25, 0.5, 1.0]
-        assert isinstance(self.TrivialAugment, bool)
-        assert self.Activation in ["ReLU", "Hardswish", "Mish"]
-        assert self.Optimizer in ["SGD"]
-        assert 1e-3 <= self.LearningRate <= 1e0
-        assert 1e-5 <= self.WeightDecay <= 1e-2
-
 
 @dataclass(frozen=True)  # type: ignore[misc]
 class JAHSResult(Result[JAHSConfig, int]):
+    default_value_metric: ClassVar[str] = "valid_acc"
+    default_cost_metric: ClassVar[str] = "runtime"
+
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "runtime": Metric(minimize=True, bounds=(0, np.inf)),
+        "valid_acc": Metric(minimize=False, bounds=(0, 100)),
+        "test_acc": Metric(minimize=False, bounds=(0, 100)),
+    }
+
     # Info
     # size: float  # remove
     # flops: float # remove
     # latency: float  # unit? remove
-    runtime: float  # unit?
+    runtime: Metric.Value  # unit?
 
     # Scores (0 - 100)
-    valid_acc: float
-    test_acc: float
+    valid_acc: Metric.Value
+    test_acc: Metric.Value
     # train_acc: float # remove
-
-    @property
-    def score(self) -> float:
-        """The score of interest."""
-        return self.valid_acc
-
-    @property
-    def error(self) -> float:
-        """The error of interest."""
-        return 100 - self.valid_acc
-
-    @property
-    def test_score(self) -> float:
-        """The score on the test set."""
-        return self.test_acc
-
-    @property
-    def test_error(self) -> float:
-        """The error on the test set."""
-        return 100 - self.test_acc
-
-    @property
-    def val_score(self) -> float:
-        """The score on the validation set."""
-        return self.valid_acc
-
-    @property
-    def val_error(self) -> float:
-        """The error on the validation set."""
-        return 100 - self.valid_acc
-
-    @property
-    def cost(self) -> float:
-        """The time taken (assumed to be seconds)."""
-        return self.runtime
 
 
 class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
-    Config = JAHSConfig
-    Result = JAHSResult
-    fidelity_name = "epoch"
-    fidelity_range = (3, 200, 1)  # TODO: min budget plays a huge role in SH/HB algos
+    JAHS_FIDELITY_NAME: ClassVar[str] = "epoch"
+    JAHS_FIDELITY_RANGE: ClassVar[tuple[int, int, int]] = (3, 200, 1)
+    JAHS_METRICS_TO_ACTIVATE: ClassVar[tuple[str, ...]] = (
+        "valid-acc",
+        "test-acc",
+        "runtime",
+    )
 
-    task_ids: tuple[str, ...] = (
+    task_ids: ClassVar[tuple[str, str, str]] = (
         "CIFAR10",
         "ColorectalHistology",
         "FashionMNIST",
@@ -137,14 +96,13 @@ class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
     ```
     """
 
-    _result_renames: Mapping[str, str] = {
+    _result_renames: ClassVar[Mapping[str, str]] = {
         "size_MB": "size",
         "FLOPS": "flops",
         "valid-acc": "valid_acc",
         "test-acc": "test_acc",
         "train-acc": "train_acc",
     }
-    _result_metrics_active: tuple[str, ...] = ("valid-acc", "test-acc", "runtime")
 
     def __init__(
         self,
@@ -154,6 +112,8 @@ class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
         seed: int | None = None,
         prior: str | Path | JAHSConfig | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
+        value_metric: str | None = None,
+        cost_metric: str | None = None,
     ):
         """Initialize the benchmark.
 
@@ -171,6 +131,10 @@ class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
 
             perturb_prior: If given, will perturb the prior by this amount.
                 Only used if `prior=` is given as a config.
+            value_metric: The metric to use for this benchmark. Uses
+                the default metric from the Result if None.
+            cost_metric: The cost to use for this benchmark. Uses
+                the default cost from the Result if None.
         """
         cls = self.__class__
         if datadir is None:
@@ -193,9 +157,15 @@ class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
         super().__init__(
             seed=seed,
             name=name,
+            config_type=JAHSConfig,
+            result_type=JAHSResult,
+            fidelity_name=self.JAHS_FIDELITY_NAME,
+            fidelity_range=self.JAHS_FIDELITY_RANGE,
             space=cls._jahs_configspace(name=name, seed=seed),
             prior=prior,
             perturb_prior=perturb_prior,
+            value_metric=value_metric,
+            cost_metric=cost_metric,
         )
 
     # explicit overwrite
@@ -231,52 +201,38 @@ class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
                 task=self.task_id,
                 save_dir=self.datadir,
                 download=False,
-                metrics=self._result_metrics_active,
+                metrics=self.JAHS_METRICS_TO_ACTIVATE,
             )
 
         return self._bench
 
     @override
-    def _objective_function(self, config: JAHSConfig, at: int) -> JAHSResult:
-        query = config.dict()
-
+    def _objective_function(
+        self,
+        config: Mapping[str, Any],
+        at: int,
+    ) -> dict[str, float]:
+        query = dict(config)
         results = self.bench.__call__(query, nepochs=at)
-        result = results[at]
-
-        return self.Result.from_dict(
-            config=config,
-            result=rename(result, keys=self._result_renames),
-            fidelity=at,
-        )
+        return results[at]
 
     @override
     def _trajectory(
         self,
-        config: JAHSConfig,
+        config: Mapping[str, Any],
         *,
         frm: int,
         to: int,
         step: int,
-    ) -> list[JAHSResult]:
-        query = config.dict()
+    ) -> Iterable[tuple[int, Mapping[str, float]]]:
+        query = dict(config)
 
         try:
-            results = self.bench.__call__(query, nepochs=to, full_trajectory=True)
+            return self.bench.__call__(query, nepochs=to, full_trajectory=True).items()
         except TypeError:
             # See: https://github.com/automl/jahs_bench_201/issues/5
-            results = {
-                f: self.bench.__call__(query, nepochs=f)[f]
-                for f in self.iter_fidelities(frm=frm, to=to, step=step)
-            }
-
-        return [
-            self.Result.from_dict(
-                config=config,
-                fidelity=i,
-                result=rename(results[i], keys=self._result_renames),
-            )
-            for i in self.iter_fidelities(frm=frm, to=to, step=step)
-        ]
+            # Revert back to calling individually, default behaviour
+            return super()._trajectory(config, frm=frm, to=to, step=step)
 
     @classmethod
     def _jahs_configspace(

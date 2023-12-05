@@ -139,7 +139,7 @@ print("contains", "X_1" in config)
 
 print("len", len(config))
 
-print("dict", dict(config))
+print("dict", config.as_dict())
 ```
 
 ??? tip "How is that done?"
@@ -150,16 +150,16 @@ print("dict", dict(config))
     and other pythonic things!
 
 
-=== "`dict()`/`from_dict()`"
+=== "`as_dict()`/`from_dict()`"
 
-    [`Config.dict()`][mfpbench.Config.dict] returns a dictionary of the config. This is useful for
+    [`Config.as_dict()`][mfpbench.Config.as_dict] returns a dictionary of the config. This is useful for
     working with the config in other libraries.
 
     ```python exec="true" source="material-block" result="python" session="quickstart"
     config = benchmark.sample()
     print(config)
 
-    config_dict = config.dict()
+    config_dict = config.as_dict()
     print(config_dict)
 
     new_config = benchmark.Config.from_dict(config_dict)
@@ -246,7 +246,7 @@ print("cost", result.cost)
 print(result)
 ```
 
-These share the [`dict()`][mfpbench.Result.dict] and [`from_dict()`][mfpbench.Result.from_dict]
+These share the [`as_dict()`][mfpbench.Result.as_dict] and [`from_dict()`][mfpbench.Result.from_dict]
 methods as [`Config`][mfpbench.Config] objects but do not behave like dictionaries.
 
 The most notable property of [`Result`][mfpbench.Result] objects is that also have the
@@ -278,7 +278,7 @@ identify the config in the table. **This is what's used to retrieve results from
 If this is missing when doing a [`query()`][mfpbench.Benchmark.query], we'll do our best to match
 the config to the table and get the correct id, but this is not guaranteed.
 
-When using [`dict()`][mfpbench.TabularConfig.dict], this `id` is **not** included in the dictionary.
+When using [`as_dict()`][mfpbench.TabularConfig.as_dict], this `id` is **not** included in the dictionary.
 In general you should either store the `config` object itself or at least `config.id`, that you can
 include back in before calling [`query()`][mfpbench.Benchmark.query].
 

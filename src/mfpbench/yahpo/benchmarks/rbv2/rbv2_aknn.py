@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import no_type_check
 from typing_extensions import Literal
 
-from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
+from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
@@ -16,31 +15,10 @@ class RBV2aknnConfig(RBV2Config):
     ef_construction: int  # (7, 1097),  log
     k: int  # (1, 50)
 
-    @no_type_check
-    def validate(self) -> None:
-        """Validate this config."""
-        assert self.num__impute__selected__cpo in [
-            "impute.mean",
-            "impute.median",
-            "impute.hist",
-        ]
-        assert 18 <= self.M <= 50
-        assert self.distance in ["l2", "cosine", "ip"]
-        assert 7 <= self.ef <= 403
-        assert 7 <= self.ef_construction <= 1097
-        assert 1 <= self.k <= 50
 
-
-@dataclass(frozen=True)
-class RBV2aknnResult(RBV2Result):
-    config: RBV2aknnConfig
-
-
-class RBV2aknnBenchmark(RBV2Benchmark):
-    Result = RBV2aknnResult
-    Config = RBV2aknnConfig
-    has_conditionals = False
-
+class RBV2aknnBenchmark(RBV2Benchmark[RBV2aknnConfig]):
+    yahpo_config_type = RBV2aknnConfig
+    yahpo_has_conditionals = False
     yahpo_base_benchmark_name = "rbv2_aknn"
     yahpo_instances = (
         "41138",

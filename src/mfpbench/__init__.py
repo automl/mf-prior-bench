@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from mfpbench.benchmark import Benchmark
-from mfpbench.config import Config, GenericTabularConfig, TabularConfig
+from mfpbench.config import Config, TabularConfig
 from mfpbench.get import _mapping, get
 from mfpbench.jahs import JAHSBenchmark
 from mfpbench.lcbench_tabular import (
@@ -9,6 +9,7 @@ from mfpbench.lcbench_tabular import (
     LCBenchTabularConfig,
     LCBenchTabularResult,
 )
+from mfpbench.metric import Metric
 from mfpbench.pd1 import (
     PD1Benchmark,
     PD1cifar100_wideresnet_2048,
@@ -17,7 +18,7 @@ from mfpbench.pd1 import (
     PD1translatewmt_xformer_64,
     PD1uniref50_transformer_128,
 )
-from mfpbench.result import GenericTabularResult, Result
+from mfpbench.result import Result
 from mfpbench.synthetic.hartmann import (
     MFHartmann3Benchmark,
     MFHartmann3BenchmarkBad,
@@ -31,7 +32,7 @@ from mfpbench.synthetic.hartmann import (
     MFHartmann6BenchmarkTerrible,
     MFHartmannBenchmark,
 )
-from mfpbench.tabular import GenericTabularBenchmark, TabularBenchmark
+from mfpbench.tabular import TabularBenchmark
 from mfpbench.yahpo import (
     IAMLglmnetBenchmark,
     IAMLrangerBenchmark,
@@ -58,11 +59,8 @@ __all__ = [
     "YAHPOBenchmark",
     "PD1Benchmark",
     "TabularBenchmark",
-    "GenericTabularBenchmark",
     "Config",
     "TabularConfig",
-    "GenericTabularConfig",
-    "GenericTabularResult",
     "MFHartmannBenchmark",
     "MFHartmann3Benchmark",
     "MFHartmann6Benchmark",
@@ -97,5 +95,6 @@ __all__ = [
     "PD1lm1b_transformer_2048",
     "PD1translatewmt_xformer_64",
     "PD1uniref50_transformer_128",
+    "Metric",
     "_mapping",
 ]

@@ -1,91 +1,77 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Mapping, Sequence, TypeVar
+from typing import Any, ClassVar, Mapping, TypeVar
+from typing_extensions import Self
 
+import numpy as np
+
+from mfpbench.benchmark import Config, Result
+from mfpbench.metric import Metric
 from mfpbench.yahpo.benchmark import YAHPOBenchmark
-from mfpbench.yahpo.config import YAHPOConfig
-from mfpbench.yahpo.result import YAHPOResult
 
 C = TypeVar("C", bound="IAMLConfig")
 R = TypeVar("R", bound="IAMLResult")
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
-class IAMLConfig(YAHPOConfig):
+class IAMLConfig(Config):
     @classmethod
-    def from_dict(cls: type[C], d: Mapping[str, Any]) -> C:
+    def from_dict(
+        cls,
+        d: Mapping[str, Any],
+        renames: Mapping[str, str] | None = None,
+    ) -> Self:
         """Create from a dict or mapping object."""
         # We may have keys that are conditional and hence we need to flatten them
         config = {k.replace(".", "__"): v for k, v in d.items()}
-        return cls(**config)
+        return super().from_dict(config, renames)
 
-    def dict(self) -> dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         """Converts the config to a raw dictionary."""
         d = asdict(self)
         return {k.replace("__", "."): v for k, v in d.items() if v is not None}
 
 
 @dataclass(frozen=True)  # type: ignore[misc]
-class IAMLResult(YAHPOResult[C, float]):
-    fidelity: float
+class IAMLResult(Result[C, float]):
+    default_value_metric: ClassVar[str] = "f1"
+    default_cost_metric: ClassVar[str] = "timetrain"
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "mmce": Metric(minimize=True, bounds=(0, np.inf)),
+        "f1": Metric(minimize=False, bounds=(0, 1)),
+        "auc": Metric(minimize=False, bounds=(0, 1)),
+        "logloss": Metric(minimize=True, bounds=(0, np.inf)),
+        "timetrain": Metric(minimize=True, bounds=(0, np.inf)),
+        "timepredict": Metric(minimize=True, bounds=(0, np.inf)),
+        "ramtrain": Metric(minimize=True, bounds=(0, np.inf)),
+        "rammodel": Metric(minimize=True, bounds=(0, np.inf)),
+        "rampredict": Metric(minimize=True, bounds=(0, np.inf)),
+    }
 
-    mmce: float
-    f1: float
-    auc: float
-    logloss: float
+    mmce: Metric.Value
+    f1: Metric.Value
+    auc: Metric.Value
+    logloss: Metric.Value
 
-    timetrain: float
-    timepredict: float
+    timetrain: Metric.Value
+    timepredict: Metric.Value
 
-    ramtrain: float
-    rammodel: float
-    rampredict: float
+    ramtrain: Metric.Value
+    rammodel: Metric.Value
+    rampredict: Metric.Value
 
-    mec: float
-    ias: float
-    nf: float
-
-    @property
-    def score(self) -> float:
-        """The score of interest."""
-        return self.f1
-
-    @property
-    def error(self) -> float:
-        """The error of interest."""
-        return 1 - self.f1
-
-    @property
-    def test_score(self) -> float:
-        """The score on the test set."""
-        return self.f1
-
-    @property
-    def test_error(self) -> float:
-        """The error on the test set."""
-        return 1 - self.f1
-
-    @property
-    def val_score(self) -> float:
-        """The score on the validation set."""
-        return self.score
-
-    @property
-    def val_error(self) -> float:
-        """The error on the validation set."""
-        return self.error
-
-    @property
-    def cost(self) -> float:
-        """The time taken in seconds to train the config."""
-        return self.timetrain
+    # Definitions taken from YAHPO-gym paper appendix
+    # Whether to minimize is not really fully relevant
+    # so these are not given a real Metric definition.
+    mec: float  # main effect complexity of features
+    ias: float  # Iteration stregth of features
+    nf: float  # Number of features used
 
 
-class IAMLBenchmark(YAHPOBenchmark):
+class IAMLBenchmark(YAHPOBenchmark[C, IAMLResult, float]):
+    yahpo_result_type = IAMLResult
     # IAML class of benchmarks share train size as fidelity
-    fidelity_range = (0.03, 1.0, 0.05)
-    fidelity_name = "trainsize"
+    yahpo_fidelity_range = (0.03, 1.0, 0.05)
+    yahpo_fidelity_name = "trainsize"
     yahpo_task_id_name = "task_id"
-    yahpo_replacements_hps: Sequence[tuple[str, str]] | None = None
-    yahpo_forced_remove_hps = None

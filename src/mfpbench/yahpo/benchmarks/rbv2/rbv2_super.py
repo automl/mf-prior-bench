@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import no_type_check
 from typing_extensions import Literal
 
-from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
+from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
@@ -65,172 +64,10 @@ class RBV2SuperConfig(RBV2Config):
     xgboost__skip_drop: float | None = None  # (0.0, 1.0)
     xgboost__subsample: float | None = None  # (0.1, 1.0)
 
-    @no_type_check
-    def validate(self) -> None:  # noqa: C901, PLR0915, PLR0912
-        """Validate this config."""
-        assert self.learner_id in [
-            "aknn",
-            "glmnet",
-            "ranger",
-            "rpart",
-            "svm",
-            "xgboost",
-        ]
 
-        assert self.num__impute__selected__cpo in [
-            "impute.mean",
-            "impute.median",
-            "impute.hist",
-        ]
-
-        # We do some conditional checking here
-        learner = self.learner_id
-
-        # We filter out all attributes except for those that must always be contained
-        # or are the selected learner, ...
-        attrs = [
-            attr
-            for attr in dir(self)
-            if not attr.startswith("__")
-            or not attr.startswith(learner)
-            or attr in ["learner_id", "num__impute__selected__cpo"]
-        ]
-
-        # ... the remaining must always have None set then
-        for attr in attrs:
-            assert attr is None
-
-        if learner == "aknn":
-            assert self.aknn__M is not None
-            assert self.aknn__ef is not None
-            assert self.aknn__ef_construction is not None
-            assert self.aknn__k is not None
-            assert 18 <= self.aknn__M <= 50
-            assert self.aknn__distance in ["l2", "cosine", "ip"]
-            assert 7 <= self.aknn__ef <= 403
-            assert 7 <= self.aknn__ef_construction <= 1097
-            assert 1 <= self.aknn__k <= 50
-
-        elif learner == "glmnet":
-            assert self.glmnet__alpha is not None
-            assert self.glmnet__s is not None
-            assert 0.0 <= self.glmnet__alpha <= 1.0
-            assert 0.0009118819655545162 <= self.glmnet__s <= 1096.6331584284585
-
-        elif learner == "rpart":
-            assert self.rpart__cp is not None
-            assert self.rpart__maxdepth is not None
-            assert self.rpart__minbucket is not None
-            assert self.rpart__minsplit is not None
-            assert 0.0009118819655545162 <= self.rpart__cp <= 1.0
-            assert 1 <= self.rpart__maxdepth <= 30
-            assert 1 <= self.rpart__minbucket <= 100
-            assert 1 <= self.rpart__minsplit <= 100
-
-        elif learner == "ranger":
-            assert self.ranger__min__node__size is not None
-            assert self.ranger__mtry__power is not None
-            assert self.ranger__num__trees is not None
-            assert self.ranger__respect__unordered__factors is not None
-            assert self.ranger__sample__fraction is not None
-            assert 1 <= self.ranger__min__node__size <= 100
-            assert 0 <= self.ranger__mtry__power <= 1
-            assert 1 <= self.ranger__num__trees <= 2000
-            assert self.ranger__respect__unordered__factors in [
-                "ignore",
-                "order",
-                "partition",
-            ]
-            assert 0.1 <= self.ranger__sample__fraction <= 1.0
-            assert self.ranger__splitrule in ["gini", "extratrees"]
-
-            if self.ranger__num__random__splits is not None:
-                assert self.ranger__splitrule == "extratrees"
-                assert 1 <= self.ranger__num__random__splits <= 100
-
-        elif learner == "svm":
-            assert self.svm__cost is not None
-            assert self.svm__gamma is not None
-            assert self.svm__kernel is not None
-            assert self.svm__tolerance is not None
-
-            assert 4.5399929762484854e-05 <= self.svm__cost <= 22026.465794806718
-            assert 4.5399929762484854e-05 <= self.svm__gamma <= 22026.465794806718
-            assert self.svm__kernel in ["linear", "polynomial", "radial"]
-            assert 4.5399929762484854e-05 <= self.svm__tolerance <= 2.0
-
-            if self.svm__degree is not None:
-                assert 2 <= self.svm__degree <= 5
-                assert self.svm__kernel == "polynomial"
-
-            if self.svm__gamma is not None:
-                assert 4.5399929762484854e-05 <= self.svm__gamma <= 22026.465794806718
-                assert self.svm__kernel == "radial"
-
-        elif learner == "xgboost":
-            assert self.xgboost__alpha is not None
-            assert self.xgboost__booster is not None
-            assert self.xgboost__lambda is not None
-            assert self.xgboost__nrounds is not None
-            assert self.xgboost__subsample is not None
-
-            assert self.xgboost__booster in ["gblinear", "gbtree", "dart"]
-            assert 0.0009118819655545162 <= self.xgboost__alpha <= 1096.6331584284585
-            assert 0.0009118819655545162 <= self.xgboost__lambda <= 1096.6331584284585
-            assert 7 <= self.xgboost__nrounds <= 2981
-            assert 0.1 <= self.xgboost__subsample <= 1.0
-
-            if self.xgboost__colsample_bylevel is not None:
-                assert self.xgboost__booster in ["dart", "gbtree"]
-                assert 0.01 <= self.xgboost__colsample_bylevel <= 1.0
-
-            if self.xgboost__colsample_bytree is not None:
-                assert self.xgboost__booster in ["dart", "gbtree"]
-                assert 0.01 <= self.xgboost__colsample_bytree <= 1.0
-
-            if self.xgboost__eta is not None:
-                assert self.xgboost__booster in ["dart", "gbtree"]
-                assert 0.0009118819655545162 <= self.xgboost__eta <= 1.0
-
-            if self.xgboost__gamma is not None:
-                assert self.xgboost__booster in ["dart", "gbtree"]
-                assert 4.5399929762484854e-05 <= self.xgboost__gamma <= 7.38905609893065
-
-            if self.xgboost__max_depth is not None:
-                assert self.xgboost__booster in ["dart", "gbtree"]
-                assert 1 <= self.xgboost__max_depth <= 15
-
-            if self.xgboost__min_child_weight is not None:
-                assert self.xgboost__booster in ["dart", "gbtree"]
-                assert (
-                    2.718281828459045
-                    <= self.xgboost__min_child_weight
-                    <= 148.4131591025766
-                )
-
-            if self.xgboost__rate_drop is not None:
-                assert self.xgboost__booster in ["dart"]
-                assert 0.0 <= self.xgboost__rate_drop <= 1.0
-
-            if self.xgboost__skip_drop is not None:
-                assert self.xgboost__booster in ["dart"]
-                assert 0.0 <= self.xgboost__skip_drop <= 1.0
-
-        else:
-            raise NotImplementedError()
-
-
-@dataclass(frozen=True)
-class RBV2SuperResult(RBV2Result):
-    config: RBV2SuperConfig
-
-
-class RBV2SuperBenchmark(RBV2Benchmark):
-    Result = RBV2SuperResult
-    Config = RBV2SuperConfig
-
-    has_conditionals = True
-
+class RBV2SuperBenchmark(RBV2Benchmark[RBV2SuperConfig]):
+    yahpo_config_type = RBV2SuperConfig
+    yapho_has_conditionals = True
     yahpo_base_benchmark_name = "rbv2_super"
     yahpo_instances = (
         "41138",

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import no_type_check
 from typing_extensions import Literal
 
-from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config, RBV2Result
+from mfpbench.yahpo.benchmarks.rbv2.rbv2 import RBV2Benchmark, RBV2Config
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)
@@ -16,30 +15,10 @@ class RBV2rpartConfig(RBV2Config):
     minbucket: int  # (1, 100)
     minsplit: int  # (1, 100)
 
-    @no_type_check
-    def validate(self) -> None:
-        """Validate this config."""
-        assert self.num__impute__selected__cpo in [
-            "impute.mean",
-            "impute.median",
-            "impute.hist",
-        ]
-        assert 0.0009118819655545162 <= self.cp <= 1.0
-        assert 1 <= self.maxdepth <= 30
-        assert 1 <= self.minbucket <= 100
-        assert 1 <= self.minsplit <= 100
 
-
-@dataclass(frozen=True)
-class RBV2rpartResult(RBV2Result):
-    config: RBV2rpartConfig
-
-
-class RBV2rpartBenchmark(RBV2Benchmark):
-    Result = RBV2rpartResult
-    Config = RBV2rpartConfig
-    has_conditionals = False
-
+class RBV2rpartBenchmark(RBV2Benchmark[RBV2rpartConfig]):
+    yahpo_config_type = RBV2rpartConfig
+    yahpo_has_conditionals = False
     yahpo_base_benchmark_name = "rbv2_rpart"
     yahpo_instances = (
         "41138",

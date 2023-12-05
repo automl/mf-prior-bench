@@ -55,7 +55,7 @@ def train_xgboost(
 if __name__ == "__main__":
     import argparse
 
-    from xgboost import XGBRegressor  # noqa: F811
+    from xgboost import XGBRegressor
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", required=True, type=str)

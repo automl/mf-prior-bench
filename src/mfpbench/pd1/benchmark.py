@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import warnings
 from abc import abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,12 +11,15 @@ import pandas as pd
 
 from mfpbench.benchmark import Benchmark
 from mfpbench.config import Config
+from mfpbench.metric import Metric
 from mfpbench.result import Result
 from mfpbench.setup_benchmark import PD1Source
 
 if TYPE_CHECKING:
     from ConfigSpace import ConfigurationSpace
     from xgboost import XGBRegressor
+
+PD1_FIDELITY_NAME = "epoch"
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
@@ -30,116 +32,60 @@ class PD1Config(Config):
     opt_momentum: float
 
 
-C = TypeVar("C", bound=PD1Config)
-
-
 @dataclass(frozen=True)  # type: ignore[misc]
-class PD1Result(Result[PD1Config, int]):
-    valid_error_rate: float  # (0, 1)
-    train_cost: float  #
-
-    @property
-    def score(self) -> float:
-        """The score of interest."""
-        return 1 - self.valid_error_rate
-
-    @property
-    def error(self) -> float:
-        """The error of interest."""
-        return self.valid_error_rate
-
-    @property
-    def val_score(self) -> float:
-        """The score on the validation set."""
-        return 1 - self.valid_error_rate
-
-    @property
-    def val_error(self) -> float:
-        """The error on the validation set."""
-        return self.valid_error_rate
-
-    @property
-    def cost(self) -> float:
-        """The train cost of the model (asssumed to be seconds).
-
-        Please double check with YAHPO.
-        """
-        return self.train_cost
-
-
-@dataclass(frozen=True)  # type: ignore[misc]
-class PD1ResultSimple(PD1Result):
+class PD1ResultSimple(Result[PD1Config, int]):
     """Used for all PD1 benchmarks, except imagenet, lm1b, translate_wmt, uniref50."""
 
-    test_error_rate: float = np.inf
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "valid_error_rate": Metric(minimize=True, bounds=(0, np.inf)),
+        "test_error_rate": Metric(minimize=True, bounds=(0, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+    default_value_metric: ClassVar[str] = "valid_error_rate"
+    default_cost_metric: ClassVar[str] = "train_cost"
 
-    @property
-    def test_score(self) -> float:
-        """The score on the test set."""
-        return 1 - self.test_error_rate
-
-    @property
-    def test_error(self) -> float:
-        """The error on the test set."""
-        return self.test_error_rate
+    valid_error_rate: Metric.Value
+    test_error_rate: Metric.Value
+    train_cost: Metric.Value
 
 
 @dataclass(frozen=True)
-class PD1ResultTransformer(PD1Result):
+class PD1ResultTransformer(Result[PD1Config, int]):
     """Imagenet, lm1b, translate_wmt, uniref50, cifar100 contains no test error."""
 
-    @property
-    def test_score(self) -> float:
-        """The score on the test set."""
-        warnings.warn(
-            "Using valid error rate as there is no test error rate",
-            UserWarning,
-            stacklevel=2,
-        )
-        return 1 - self.valid_error_rate
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "valid_error_rate": Metric(minimize=True, bounds=(0, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+    default_value_metric: ClassVar[str] = "valid_error_rate"
+    default_cost_metric: ClassVar[str] = "train_cost"
 
-    @property
-    def test_error(self) -> float:
-        """The error on the test set."""
-        warnings.warn(
-            "Using valid error rate as there is no test error rate",
-            UserWarning,
-            stacklevel=2,
-        )
-        return self.valid_error_rate
+    valid_error_rate: Metric.Value
+    train_cost: Metric.Value
 
 
-R = TypeVar("R", PD1ResultTransformer, PD1ResultSimple)
+R = TypeVar("R", bound=Result)
 
 
-class PD1Benchmark(Benchmark[C, R, int]):
-    pd1_dataset: ClassVar[str]
-    """The dataset that this benchmark uses."""
+class PD1Benchmark(Benchmark[PD1Config, R, int]):
+    pd1_fidelity_range: ClassVar[tuple[int, int, int]]
+    """The fidelity range for this benchmark."""
 
-    pd1_model: ClassVar[str]
-    """The model that this benchmark uses."""
+    pd1_name: ClassVar[str]
+    """The name to access surrogates from."""
 
-    pd1_batchsize: ClassVar[int]
-    """The batchsize that this benchmark uses."""
-
-    pd1_metrics: ClassVar[tuple[str, ...]]
-    """The metrics that are available for this benchmark."""
-
-    Config: type[C]
-    """The config type for this benchmark."""
-
-    Result: type[R]
+    pd1_result_type: type[R]
     """The result type for this benchmark."""
-
-    has_conditionals = False
 
     def __init__(
         self,
         *,
         datadir: str | Path | None = None,
         seed: int | None = None,
-        prior: str | Path | C | Mapping[str, Any] | None = None,
+        prior: str | Path | PD1Config | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
+        value_metric: str | None = None,
+        cost_metric: str | None = None,
     ):
         """Create a PD1 Benchmark.
 
@@ -151,10 +97,13 @@ class PD1Benchmark(Benchmark[C, R, int]):
                 is interpreted as the std of a normal from which to perturb
                 numerical hyperparameters of the prior, and the raw probability
                 of swapping a categorical value.
+            value_metric: The metric to use for this benchmark. Uses
+                the default metric from the Result if None.
+            cost_metric: The cost to use for this benchmark. Uses
+                the default cost from the Result if None.
         """
         cls = self.__class__
         space = cls._create_space(seed=seed)
-        name = f"{cls.pd1_dataset}-{cls.pd1_model}-{cls.pd1_batchsize}"
         if datadir is None:
             datadir = PD1Source.default_location()
 
@@ -169,10 +118,16 @@ class PD1Benchmark(Benchmark[C, R, int]):
 
         super().__init__(
             seed=seed,
-            name=name,
+            name=self.pd1_name,
+            config_type=PD1Config,
+            fidelity_name=PD1_FIDELITY_NAME,
+            fidelity_range=cls.pd1_fidelity_range,
+            result_type=cls.pd1_result_type,
             prior=prior,
             perturb_prior=perturb_prior,
             space=space,
+            value_metric=value_metric,
+            cost_metric=cost_metric,
         )
 
     def load(self) -> None:
@@ -209,38 +164,47 @@ class PD1Benchmark(Benchmark[C, R, int]):
         """The paths to the surrogates."""
         return {
             metric: self.surrogate_dir / f"{self.name}-{metric}.json"
-            for metric in self.pd1_metrics
+            for metric in self.Result.metric_defs
         }
 
     @override
-    def _objective_function(self, config: C, at: int) -> R:
+    def _objective_function(
+        self,
+        config: Mapping[str, Any],
+        at: int,
+    ) -> dict[str, float]:
         return self._results_for(config, fidelities=[at])[0]
 
     @override
-    def _trajectory(self, config: C, *, frm: int, to: int, step: int) -> list[R]:
-        return self._results_for(config, fidelities=self.iter_fidelities(frm, to, step))
+    def _trajectory(
+        self,
+        config: Mapping[str, Any],
+        *,
+        frm: int,
+        to: int,
+        step: int,
+    ) -> Iterable[tuple[int, Mapping[str, float]]]:
+        fidelities = list(self.iter_fidelities(frm, to, step))
+        return zip(fidelities, self._results_for(config, fidelities))
 
-    def _results_for(self, config: C, fidelities: Iterable[int]) -> list[R]:
+    def _results_for(
+        self,
+        config: Mapping[str, Any],
+        fidelities: Iterable[int],
+    ) -> list[dict[str, float]]:
         # Add the fidelities into the query and make a dataframe
-        c = config.dict()
+        c = dict(config)
         queries = [{**c, self.fidelity_name: f} for f in fidelities]
         xs = pd.DataFrame(queries)
 
         # Predict the metric for everything in the dataframe
         features = xs.columns
         for metric, surrogate in self.surrogates.items():
-            xs[metric] = surrogate.predict(xs[features])
+            # We clip as sometimes the surrogate produces negative values
+            xs[metric] = surrogate.predict(xs[features]).clip(min=0)
 
         metrics = list(self.surrogates.keys())
-
-        return [
-            self.Result.from_dict(
-                config=config,  # Our original config
-                fidelity=r[self.fidelity_name],  # fidelity  # type: ignore
-                result=r[metrics],  # Grab the metrics  # type: ignore
-            )
-            for _, r in xs.iterrows()
-        ]
+        return [dict(r[metrics]) for _, r in xs.iterrows()]
 
     @classmethod
     @abstractmethod
