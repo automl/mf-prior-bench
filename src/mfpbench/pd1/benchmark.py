@@ -37,8 +37,8 @@ class PD1ResultSimple(Result[PD1Config, int]):
     """Used for all PD1 benchmarks, except imagenet, lm1b, translate_wmt, uniref50."""
 
     metric_defs: ClassVar[Mapping[str, Metric]] = {
-        "valid_error_rate": Metric(minimize=True, bounds=(0, np.inf)),
-        "test_error_rate": Metric(minimize=True, bounds=(0, np.inf)),
+        "valid_error_rate": Metric(minimize=True, bounds=(0, 1)),
+        "test_error_rate": Metric(minimize=True, bounds=(0, 1)),
         "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
     }
     default_value_metric: ClassVar[str] = "valid_error_rate"
@@ -54,7 +54,7 @@ class PD1ResultTransformer(Result[PD1Config, int]):
     """Imagenet, lm1b, translate_wmt, uniref50, cifar100 contains no test error."""
 
     metric_defs: ClassVar[Mapping[str, Metric]] = {
-        "valid_error_rate": Metric(minimize=True, bounds=(0, np.inf)),
+        "valid_error_rate": Metric(minimize=True, bounds=(0, 1)),
         "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
     }
     default_value_metric: ClassVar[str] = "valid_error_rate"
