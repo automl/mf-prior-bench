@@ -148,7 +148,16 @@ class LCBenchTabularResult(Result[LCBenchTabularConfig, int]):
         "time": Metric(minimize=True, bounds=(0, np.inf)),
     }
     default_value_metric: ClassVar[str] = "val_balanced_accuracy"
+    default_value_metric_test: ClassVar[str] = "test_balanced_accuracy"
     default_cost_metric: ClassVar[str] = "time"
+
+    def get_test_for_val_metric(val: str) -> str:
+        dict_map = {
+            "val_accuracy": "test_accuracy",
+            "val_balanced_accuracy": "test_balanced_accuracy",
+            "val_cross_entropy": "test_cross_entropy"
+        }
+        return dict_map[val]
 
     time: Metric.Value
     val_accuracy: Metric.Value

@@ -102,6 +102,9 @@ class Benchmark(Generic[C, R, F], ABC):
         """
         if value_metric is None:
             value_metric = result_type.default_value_metric
+            value_metric_test = result_type.default_value_metric_test
+        else:
+            value_metric_test = result_type.get_test_for_val_metric(value_metric)
 
         if cost_metric is None:
             cost_metric = result_type.default_cost_metric
@@ -110,6 +113,7 @@ class Benchmark(Generic[C, R, F], ABC):
         self.seed = seed
         self.space = space
         self.value_metric = value_metric
+        self.value_metric_test = value_metric_test
         self.cost_metric = cost_metric
         self.fidelity_range: tuple[F, F, F] = fidelity_range
         self.fidelity_name = fidelity_name
@@ -282,6 +286,7 @@ class Benchmark(Generic[C, R, F], ABC):
             __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
         value_metric = value_metric if value_metric is not None else self.value_metric
+        value_metric_test = value_metric_test if value_metric is not None else self.value_metric_test
         cost_metric = cost_metric if cost_metric is not None else self.cost_metric
 
         return self.Result.from_dict(
@@ -289,6 +294,7 @@ class Benchmark(Generic[C, R, F], ABC):
             fidelity=at,
             result=self._objective_function(__config, at=at),
             value_metric=str(value_metric),
+            value_metric_test=value_metric_test,
             cost_metric=str(cost_metric),
             renames=self._result_renames,
         )
@@ -329,6 +335,7 @@ class Benchmark(Generic[C, R, F], ABC):
             _reverse_renames = {v: k for k, v in self._config_renames.items()}
             __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
+        value_metric_test = value_metric_test if value_metric is not None else self.value_metric_test
         value_metric = value_metric if value_metric is not None else self.value_metric
         cost_metric = cost_metric if cost_metric is not None else self.cost_metric
 
@@ -338,6 +345,7 @@ class Benchmark(Generic[C, R, F], ABC):
                 fidelity=fidelity,
                 result=result,
                 value_metric=str(value_metric),
+                value_metric_test=value_metric_test,
                 cost_metric=str(cost_metric),
                 renames=self._result_renames,
             )

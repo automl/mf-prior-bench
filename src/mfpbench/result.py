@@ -27,6 +27,9 @@ class Result(ABC, Generic[C, F]):
     default_value_metric: ClassVar[str]
     """The default metric to use for this result."""
 
+    default_value_metric_test: ClassVar[str]
+    """The default test metric to use for this result."""
+
     default_cost_metric: ClassVar[str]
     """The default cost to use for this result."""
 
@@ -37,6 +40,9 @@ class Result(ABC, Generic[C, F]):
     """The config used to generate this result."""
 
     value_metric: str
+    """The metric to use for this result."""
+
+    value_metric_test: str
     """The metric to use for this result."""
 
     cost_metric: str
@@ -50,6 +56,7 @@ class Result(ABC, Generic[C, F]):
         result: Mapping[str, float],
         *,
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
         renames: Mapping[str, str] | None = None,
     ) -> Self:
@@ -64,8 +71,11 @@ class Result(ABC, Generic[C, F]):
         }
         if renames is not None:
             values = {renames.get(k, k): v for k, v in values.items()}
+        
         if value_metric is None:
             value_metric = cls.default_value_metric
+            value_metric_test = cls.default_value_metric_test
+        
         if cost_metric is None:
             cost_metric = cls.default_cost_metric
 
@@ -73,6 +83,7 @@ class Result(ABC, Generic[C, F]):
             config=config,
             fidelity=fidelity,
             value_metric=value_metric,
+            value_metric_test=value_metric_test,
             cost_metric=cost_metric,
             **values,  # type: ignore
         )
@@ -97,9 +108,19 @@ class Result(ABC, Generic[C, F]):
         return self[self.value_metric].error
 
     @property
+    def test_error(self) -> float:
+        """The error of interest."""
+        return self[self.value_metric_test].error
+
+    @property
     def score(self) -> float:
         """The score of interest."""
         return self[self.value_metric].score
+
+    @property
+    def test_score(self) -> float:
+        """The score of interest."""
+        return self[self.value_metric_test].score
 
     @property
     def values(self) -> dict[str, Any]:
