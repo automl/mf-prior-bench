@@ -73,6 +73,7 @@ class Benchmark(Generic[C, R, F], ABC):
         prior: str | Path | C | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
     ):
         """Initialize the benchmark.
@@ -102,9 +103,8 @@ class Benchmark(Generic[C, R, F], ABC):
         """
         if value_metric is None:
             value_metric = result_type.default_value_metric
+        if value_metric_test is None:
             value_metric_test = result_type.default_value_metric_test
-        else:
-            value_metric_test = result_type.get_test_for_val_metric(value_metric)
 
         if cost_metric is None:
             cost_metric = result_type.default_cost_metric
@@ -254,6 +254,7 @@ class Benchmark(Generic[C, R, F], ABC):
         *,
         at: F | None = None,
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
     ) -> R:
         """Submit a query and get a result.
@@ -286,7 +287,7 @@ class Benchmark(Generic[C, R, F], ABC):
             __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
         value_metric = value_metric if value_metric is not None else self.value_metric
-        value_metric_test = value_metric_test if value_metric is not None else self.value_metric_test
+        value_metric_test = value_metric_test if value_metric_test is not None else self.value_metric_test
         cost_metric = cost_metric if cost_metric is not None else self.cost_metric
 
         return self.Result.from_dict(
@@ -307,6 +308,7 @@ class Benchmark(Generic[C, R, F], ABC):
         to: F | None = None,
         step: F | None = None,
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
     ) -> list[R]:
         """Get the full trajectory of a configuration.
@@ -335,8 +337,8 @@ class Benchmark(Generic[C, R, F], ABC):
             _reverse_renames = {v: k for k, v in self._config_renames.items()}
             __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
-        value_metric_test = value_metric_test if value_metric is not None else self.value_metric_test
         value_metric = value_metric if value_metric is not None else self.value_metric
+        value_metric_test = value_metric_test if value_metric_test is not None else self.value_metric_test
         cost_metric = cost_metric if cost_metric is not None else self.cost_metric
 
         return [

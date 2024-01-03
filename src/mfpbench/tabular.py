@@ -38,6 +38,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         result_type: type[R],
         config_type: type[CTabular],
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
         space: ConfigurationSpace | None = None,
         seed: int | None = None,
@@ -171,6 +172,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             prior=prior,
             perturb_prior=perturb_prior,
             value_metric=value_metric,
+            value_metric_test=value_metric_test,
             cost_metric=cost_metric,
         )
 
@@ -196,6 +198,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         *,
         at: F | None = None,
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
     ) -> R:
         """Submit a query and get a result.
@@ -241,6 +244,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
         value_metric = value_metric if value_metric is not None else self.value_metric
+        value_metric_test = value_metric_test if value_metric_test is not None else self.value_metric_test
         cost_metric = cost_metric if cost_metric is not None else self.cost_metric
 
         return self.Result.from_dict(
@@ -248,6 +252,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             fidelity=at,
             result=self._objective_function(__config, at=at),
             value_metric=str(value_metric),
+            value_metric_test=value_metric_test,
             cost_metric=str(cost_metric),
             renames=self._result_renames,
         )
@@ -261,6 +266,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         to: F | None = None,
         step: F | None = None,
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
     ) -> list[R]:
         """Submit a query and get a result.
@@ -309,6 +315,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
         value_metric = value_metric if value_metric is not None else self.value_metric
+        value_metric_test = value_metric_test if value_metric_test is not None else self.value_metric_test
         cost_metric = cost_metric if cost_metric is not None else self.cost_metric
 
         return [
@@ -317,6 +324,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
                 fidelity=fidelity,
                 result=result,
                 value_metric=str(value_metric),
+                value_metric_test=value_metric_test,
                 cost_metric=str(cost_metric),
                 renames=self._result_renames,
             )

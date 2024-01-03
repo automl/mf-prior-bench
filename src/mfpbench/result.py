@@ -118,6 +118,12 @@ class Result(ABC, Generic[C, F]):
         return self[self.value_metric].score
 
     @property
+    def val_score(self) -> float:
+        """The score of interest."""
+        # to maintain backward compatibility
+        return self.score
+
+    @property
     def test_score(self) -> float:
         """The score of interest."""
         return self[self.value_metric_test].score
