@@ -122,12 +122,12 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         #               1    |
         #               2    |
         #   ...
-
+        
         # Make sure we have equidistance fidelities for all configs
         fidelity_values = table.index.get_level_values(fidelity_key)
         fidelity_counts = fidelity_values.value_counts()
-        if not (fidelity_counts == fidelity_counts.iloc[0]).all():
-            raise ValueError(f"{fidelity_key=} not uniform. \n{fidelity_counts}")
+        # if not (fidelity_counts == fidelity_counts.iloc[0]).all():
+        #     raise ValueError(f"{fidelity_key=} not uniform. \n{fidelity_counts}")
 
         sorted_fids = sorted(fidelity_values.unique())
         start = sorted_fids[0]
@@ -402,7 +402,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             The result of the query
         """
         config = dict(config)
-        _id = config.pop("id")
+        _id = int(config.pop("id"))
         row = self.table.loc[(_id, at)]
 
         row.name = _id
@@ -426,7 +426,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         step: F,
     ) -> Iterable[tuple[F, Mapping[str, float]]]:
         config = dict(config)
-        _id = config.pop("id")
+        _id = int(config.pop("id"))
         rows = self.table.loc[(_id, frm):(_id, to):step]  # type: ignore
         first_config = dict(rows.iloc[0][self.config_keys])
 

@@ -42,6 +42,7 @@ class PD1ResultSimple(Result[PD1Config, int]):
         "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
     }
     default_value_metric: ClassVar[str] = "valid_error_rate"
+    default_value_metric_test: ClassVar[str] = "test_error_rate"
     default_cost_metric: ClassVar[str] = "train_cost"
 
     valid_error_rate: Metric.Value
@@ -58,6 +59,7 @@ class PD1ResultTransformer(Result[PD1Config, int]):
         "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
     }
     default_value_metric: ClassVar[str] = "valid_error_rate"
+    default_value_metric_test: ClassVar[str] = None
     default_cost_metric: ClassVar[str] = "train_cost"
 
     valid_error_rate: Metric.Value

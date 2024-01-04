@@ -257,6 +257,10 @@ class LCBenchTabularSource(BenchmarkSetup):
             logger.info(f"Processed {dataset_name} to {table_path}")
 
 
+class PD1TabularSource(PD1Source):
+    # TODO
+    pass
+
 def download_status(source: str, datadir: Path | None = None) -> bool:
     """Check whether the data is downloaded for some source."""
     datadir = datadir if datadir is not None else DATAROOT

@@ -115,7 +115,7 @@ class Datapack:
         return self.dir / f"{self._rawname}_unpacked.csv"
 
 
-def process_pd1(tarball: Path) -> None:  # noqa: PLR0912, PLR0915, C901
+def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: PLR0912, PLR0915, C901
     """Process the pd1 dataset.
 
     !!! note
@@ -213,13 +213,13 @@ def process_pd1(tarball: Path) -> None:  # noqa: PLR0912, PLR0915, C901
             for r in dataset["train_cost"]  # type: ignore
         ]
 
-        # Explode out the lists in the entires of the datamframe to be a single long
+        # Explode out the lists in the entries of the datamframe to be a single long
         # dataframe with each element of that list on its own row
         dataset = dataset.explode(explode_columns, ignore_index=True)
         logger.info(f"{len(dataset)} rows")
         assert isinstance(dataset, pd.DataFrame)
 
-        # Remove any rows that have a nan in the exploded columns
+        # Remove any rows that have a nan as cost in the exploded columns
         nan_rows = dataset["train_cost"].isna()
         logger.info(f" - len(nan_rows) {sum(nan_rows)}")
 
@@ -230,11 +230,11 @@ def process_pd1(tarball: Path) -> None:  # noqa: PLR0912, PLR0915, C901
         logger.info(f"{len(dataset)} rows (after nan removal)")
 
         if fname == "lm1b-transformer-2048":
-            # Some train costs go obsenly high for no reason, we drop these rows
+            # Some train costs go obscenely high for no reason, we drop these rows
             dataset = dataset[dataset["train_cost"] < 10_000]  # type: ignore
 
         elif fname == "uniref50-transformer-128":
-            # Some train costs go obsenly high for no reason, we drop these rows
+            # Some train costs go obscenely high for no reason, we drop these rows
             # Almost all are below 400 but we add a buffer
             dataset = dataset[dataset["train_cost"] < 4_000]  # type: ignore
 
@@ -292,34 +292,83 @@ def process_pd1(tarball: Path) -> None:  # noqa: PLR0912, PLR0915, C901
             "mnist-max_pooling_cnn-2048",
         ]
         drop_columns = ["dataset", "model", "batch_size"]
-        if fname not in has_activation_fn:
+        if process_tabular:
             drop_columns += ["activation_fn"]
+        else:
+            if fname not in has_activation_fn:
+                drop_columns += ["activation_fn"]
 
         dataset = dataset.drop(columns=drop_columns)  # type: ignore
 
         # Select only the tabular part (matched and phase1)
-        """
-        tabular_path = datadir / f"{fname}_tabular.csv"
-        tabular_mask = dataset["matched"] & (dataset["phase"] == 1)
-        df_tabular = dataset[tabular_mask]
-        df_tabular = df_tabular.drop(columns=["matched", "phase"])
+        if process_tabular:
+            tabular_path = datadir / f"{fname}_tabular.csv"
+            if fname == "imagenet-resnet-1024":
+                tabular_mask = ~dataset["matched"] & (dataset["phase"] == 0)
+            else:
+                tabular_mask = dataset["matched"] & (dataset["phase"] == 1)
+            df_tabular = dataset[tabular_mask]
+            df_tabular = df_tabular.drop(columns=["matched", "phase"])
 
-        print(f"Writing tabular data to {tabular_path}")
-        df_tabular.to_csv(tabular_path, index=False)
-        """
+            print(f"Writing tabular data to {tabular_path}")
+            df_tabular.to_csv(tabular_path, index=False)
+            preprocess_csv_for_tabular_benchmark_dfs(datadir)
+        else:
+            # There are some entries which seem to appear twice. This is due to the same
+            # config in {phase0,phase1} x {matched, unmatched}
+            # To prevent issues, we simply drop duplicates
+            hps = ["lr_decay_factor", "lr_initial", "lr_power", "opt_momentum"]
+            hps = [*hps, "activation_fn"] if fname in has_activation_fn else list(hps)
 
-        # There are some entries which seem to appear twice. This is due to the same
-        # config in {phase0,phase1} x {matched, unmatched}
-        # To prevent issues, we simply drop duplicates
-        hps = ["lr_decay_factor", "lr_initial", "lr_power", "opt_momentum"]
-        hps = [*hps, "activation_fn"] if fname in has_activation_fn else list(hps)
+            dataset = dataset.drop_duplicates([*hps, "epoch"], keep="last")  # type: ignore
 
-        dataset = dataset.drop_duplicates([*hps, "epoch"], keep="last")  # type: ignore
+            # The rest can be used for surrogate training
+            surrogate_path = datadir / f"{fname}_surrogate.csv"
+            df_surrogate = dataset.drop(columns=["matched", "phase"])
+            df_surrogate.to_csv(surrogate_path, index=False)
 
-        # The rest can be used for surrogate training
-        surrogate_path = datadir / f"{fname}_surrogate.csv"
-        df_surrogate = dataset.drop(columns=["matched", "phase"])
-        df_surrogate.to_csv(surrogate_path, index=False)
+
+def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
+
+    for _file in path.iterdir():
+        if not _file.name.endswith("_tabular.csv"):
+            continue
+        df = pd.read_csv(_file)
+
+        unique_df = df.loc[
+            df.loc[
+                :,('lr_decay_factor', 'lr_initial', 'lr_power', 'opt_momentum')
+            ].drop_duplicates().index
+        ]
+        df["id"] = pd.Series(unique_df.index.values, index=unique_df.index)
+        df.id = df["id"].ffill()
+        df.set_index(["id", "epoch"], inplace=True)
+        # Assuming `df` is your DataFrame
+
+        # Create a mapping from the old primary index to the new primary index
+        mapping = {value: i for i, value in enumerate(df.index.get_level_values(0).unique())}
+
+        # Reset the primary index
+        df.index = df.index.set_levels(df.index.levels[0].map(mapping), level=0)
+
+        # Updating epoch intervals to be one-step
+        try:
+            df["original_epoch"] = np.array([list(_x) for _x in df.index.values])[:,1]  # backup
+        except IndexError:
+            logger.info(f"\nCannot process {_file}!!\n")
+            continue
+        except Exception as e:
+            raise(e)
+
+        mapping = {
+            value: i for i, value in enumerate(df.index.get_level_values(1).unique(), start=1)
+        }
+        df.index = df.index.set_levels(df.index.levels[1].map(mapping), level=1)
+
+        # Save to disk
+        df.to_parquet(path / f"{_file.name.split('.csv')[0]}.parquet")
+
+    return
 
 
 if __name__ == "__main__":
@@ -335,10 +384,15 @@ if __name__ == "__main__":
         default=DATADIR,
         help="Where the data directory is",
     )
+    parser.add_argument(
+        "--process_for_tabular",
+        action="store_true",
+        help="Preprocesses into MultiIndex DataFrame for tabular querying",
+    )
     args = parser.parse_args()
 
     # Print class names
-    for f in args.datadir.iterdir():
+    for f in args.data_dir.iterdir():
         if (
             f.suffix == ".csv"
             and "_matched" in str(f)
@@ -351,4 +405,6 @@ if __name__ == "__main__":
             model = model.replace("_", " ").title().replace(" ", "")
 
     tarball = args.data_dir / "data.tar.gz"
-    process_pd1(tarball)
+    process_pd1(tarball, args.process_for_tabular)
+
+    print("Processed benchmarks!")

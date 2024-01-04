@@ -7,6 +7,9 @@ from mfpbench.jahs import JAHSBenchmark
 from mfpbench.lcbench_tabular import (
     LCBenchTabularBenchmark,
 )
+from mfpbench.pd1_tabular import (
+    PD1TabularBenchmark,
+)
 from mfpbench.pd1 import (
     PD1cifar100_wideresnet_2048,
     PD1imagenet_resnet_512,
@@ -84,6 +87,8 @@ _mapping: dict[str, type[Benchmark]] = {
     "imagenet_resnet_512": PD1imagenet_resnet_512,
     # LCBenchTabular
     "lcbench_tabular": LCBenchTabularBenchmark,
+    # PD1Tabular
+    "pd1_tabular": PD1TabularBenchmark,
 }
 
 
