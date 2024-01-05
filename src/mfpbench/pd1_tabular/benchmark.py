@@ -67,6 +67,8 @@ class PD1TabularConfig(TabularConfig):
     lr_initial: float
     lr_power: float
     opt_momentum: float
+    # not part of actual config space
+    original_epoch: int
 
 
 @dataclass(frozen=True)  # type: ignore[misc]
