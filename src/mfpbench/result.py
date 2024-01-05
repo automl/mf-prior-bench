@@ -110,6 +110,12 @@ class Result(ABC, Generic[C, F]):
     @property
     def test_error(self) -> float:
         """The error of interest."""
+        if self.value_metric_test is None:
+            if self[self.value_metric].definition.minimize:
+                # returning worst value, i.e., upper bound of a minimizing metric
+                return self[self.value_metric].definition.bounds[1]
+            # returning worst value, i.e., lower bound of a maximizing metric
+            return self[self.value_metric].definition.bounds[0]
         return self[self.value_metric_test].error
 
     @property
@@ -126,6 +132,12 @@ class Result(ABC, Generic[C, F]):
     @property
     def test_score(self) -> float:
         """The score of interest."""
+        if self.value_metric_test is None:
+            if self[self.value_metric].definition.minimize:
+                # returning worst value, i.e., upper bound of a minimizing metric
+                return self[self.value_metric].definition.bounds[1]
+            # returning worst value, i.e., lower bound of a maximizing metric
+            return self[self.value_metric].definition.bounds[0]
         return self[self.value_metric_test].score
 
     @property

@@ -24,7 +24,7 @@ from mfpbench.pd1.benchmark import (
 )
 
 
-def _get_raw_lcbench_space(
+def _get_raw_pd1_space(
     name: str,
     seed: int | None = None,
     *,
@@ -157,7 +157,7 @@ class PD1TabularBenchmark(TabularBenchmark):
         # Reading table
         table = pd.read_parquet(table_path)
 
-        space = _get_raw_lcbench_space(
+        space = _get_raw_pd1_space(
             name=bench_name,
             seed=seed,
             with_constants=not remove_constants,
