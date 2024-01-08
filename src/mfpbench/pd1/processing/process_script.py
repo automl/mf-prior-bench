@@ -18,6 +18,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+HPS = ['lr_decay_factor', 'lr_initial', 'lr_power', 'opt_momentum']
+
+
 def safe_accumulate(
     x: Iterator[float | None] | float,
     fill: float = np.nan,
@@ -29,6 +32,8 @@ def safe_accumulate(
     itr = iter(f if f is not None else fill for f in x)
     return accumulate(itr)
 
+def sub_epoch_convert():
+    pass
 
 def uniref50_epoch_convert(x: float | list[float]) -> float | list[float]:
     """Converts the epochs of uniref50 to some usable form.
@@ -186,6 +191,7 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
     transformer_datasets = ["uniref50", "translate_wmt", "imagenet", "lm1b"]
     dataset_columns = ["dataset", "model", "batch_size"]
 
+    plot_data = []
     groups = full_df.groupby(dataset_columns)
     for (name, model, batchsize), _dataset in groups:  # type: ignore
         fname = f"{name}-{model}-{batchsize}"
@@ -198,7 +204,7 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
             explode_columns = list_columns
             dataset = _dataset
 
-        if name == "uniref50":
+        if name == "uniref50" and not process_tabular:
             # For some reason the epochs of this datasets are basically [0, 0, 0, 1]
             # We just turn this into an incremental thing
             epochs = dataset["epoch"]
@@ -220,7 +226,7 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
         assert isinstance(dataset, pd.DataFrame)
 
         # Remove any rows that have a nan as cost in the exploded columns
-        nan_rows = dataset["train_cost"].isna()
+        nan_rows = dataset["train_cost"].isna()  # for PD1 if cost is NaN so is `epoch`
         logger.info(f" - len(nan_rows) {sum(nan_rows)}")
 
         logger.debug(f"Removing rows with nan in {explode_columns}")
@@ -229,16 +235,16 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
 
         logger.info(f"{len(dataset)} rows (after nan removal)")
 
-        if fname == "lm1b-transformer-2048":
+        if fname == "lm1b-transformer-2048" and not process_tabular:
             # Some train costs go obscenely high for no reason, we drop these rows
             dataset = dataset[dataset["train_cost"] < 10_000]  # type: ignore
 
-        elif fname == "uniref50-transformer-128":
+        elif fname == "uniref50-transformer-128" and not process_tabular:
             # Some train costs go obscenely high for no reason, we drop these rows
             # Almost all are below 400 but we add a buffer
             dataset = dataset[dataset["train_cost"] < 4_000]  # type: ignore
 
-        elif fname == "imagenet-resnet-512":
+        elif fname == "imagenet-resnet-512" and not process_tabular:
             # We drop all configs that exceed the 0.95 quantile in their max train_cost
             # as we consider this to be a diverging config. The surrogate will smooth
             # out these configs as it is not aware of divergence
@@ -246,7 +252,7 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
             # configs but remove configs which would create massive gaps in "train_cost"
             # which would cause optimization of the surrogate to focus too much on
             # minimizing it's loss for outliers
-            hp_names = ["lr_decay_factor", "lr_initial", "lr_power", "opt_momentum"]
+            hp_names = HPS
             maxes = [
                 v["train_cost"].max()  # type: ignore
                 for _, v in dataset.groupby(hp_names)
@@ -259,7 +265,7 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
             )
             dataset = pd.concat(configs_who_dont_exceed_q95, axis=0)
 
-        elif fname == "cifar100-wide_resnet-2048":
+        elif fname == "cifar100-wide_resnet-2048" and not process_tabular:
             # We drop all configs that exceed the 0.95 quantile in their max train_cost
             # as we consider this to be a diverging config. The surrogate will smooth
             # out these configs as it is not aware of divergence
@@ -267,7 +273,7 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
             # configs but remove configs which would create massive gaps in
             # "train_cost" which would cause optimization of the surrogate to
             # focus too much on minimizing it's loss for outliers
-            hp_names = ["lr_decay_factor", "lr_initial", "lr_power", "opt_momentum"]
+            hp_names = HPS
             maxes = [
                 v["train_cost"].max()  # type: ignore
                 for _, v in dataset.groupby(hp_names)
@@ -312,12 +318,13 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
 
             print(f"Writing tabular data to {tabular_path}")
             df_tabular.to_csv(tabular_path, index=False)
-            preprocess_csv_for_tabular_benchmark_dfs(datadir)
+            _data = preprocess_csv_for_tabular_benchmark_dfs(tabular_path)
+            plot_data.append(_data)
         else:
             # There are some entries which seem to appear twice. This is due to the same
             # config in {phase0,phase1} x {matched, unmatched}
             # To prevent issues, we simply drop duplicates
-            hps = ["lr_decay_factor", "lr_initial", "lr_power", "opt_momentum"]
+            hps = HPS
             hps = [*hps, "activation_fn"] if fname in has_activation_fn else list(hps)
 
             dataset = dataset.drop_duplicates([*hps, "epoch"], keep="last")  # type: ignore
@@ -326,48 +333,90 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
             surrogate_path = datadir / f"{fname}_surrogate.csv"
             df_surrogate = dataset.drop(columns=["matched", "phase"])
             df_surrogate.to_csv(surrogate_path, index=False)
+    # end of for
+# end of process_pd1()
 
 
 def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
 
-    for _file in path.iterdir():
-        if not _file.name.endswith("_tabular.csv"):
-            continue
-        df = pd.read_csv(_file)
+    assert path.is_file(), "Need a valid file path, not a directory!"
+    # for _file in path.iterdir():
+    _file = path
+    if not _file.name.endswith("_tabular.csv"):
+        return
+    df = pd.read_csv(_file)
 
-        unique_df = df.loc[
-            df.loc[
-                :,('lr_decay_factor', 'lr_initial', 'lr_power', 'opt_momentum')
-            ].drop_duplicates().index
-        ]
-        df["id"] = pd.Series(unique_df.index.values, index=unique_df.index)
-        df.id = df["id"].ffill()
-        df.set_index(["id", "epoch"], inplace=True)
-        # Assuming `df` is your DataFrame
+    unique_df = df.loc[df.loc[:,HPS].drop_duplicates().index]
+    # `idx_count` will store the number of epoch/steps recorded per unique HP config
+    idx_count = unique_df.index.diff().values
+    idx_count = idx_count[1:]
+    idx_count = np.insert(
+        idx_count, -1, df.index.values[-1] - unique_df.index.values[-1] + 1
+    )
+    # counting the frequency of `number of steps per config` across the benchmark
+    uniques, counts = np.unique(idx_count, return_counts = True)
+    # removing all rows that have recorded fewer fidelities than the max frequency seen
+    to_remove = np.where(idx_count != uniques[counts.argmax()])[0]
+    idx_to_remove = unique_df.index.values[to_remove]
+    all_rows_to_remove = [
+        np.arange(_idx, (_idx + idx_count[to_remove][i]))
+        for i, _idx in enumerate(idx_to_remove)
+    ]
+    all_rows_to_remove = [__x for _x in all_rows_to_remove for __x in _x]  # flattening
 
-        # Create a mapping from the old primary index to the new primary index
-        mapping = {value: i for i, value in enumerate(df.index.get_level_values(0).unique())}
+    df = df.drop(index=all_rows_to_remove)
+    unique_df = unique_df.drop(index=idx_to_remove)
+    # TODO: check that all retained configs have the same fidelities recorded ???
+    df["id"] = pd.Series(unique_df.index.values, index=unique_df.index)
+    df.id = df["id"].ffill()
+    df.id = df.id.astype(int)
+    df["original_steps"] = df.epoch
+    # Assuming `df` is your DataFrame
 
-        # Reset the primary index
-        df.index = df.index.set_levels(df.index.levels[0].map(mapping), level=0)
-
-        # Updating epoch intervals to be one-step
-        try:
-            df["original_epoch"] = np.array([list(_x) for _x in df.index.values])[:,1]  # backup
-        except IndexError:
-            logger.info(f"\nCannot process {_file}!!\n")
-            continue
-        except Exception as e:
-            raise(e)
-
+    if df.loc[0].epoch == df.loc[1].epoch:
+        # data recorded in a sub-epoch manner
+        handle_subepoch_fidelities(path, df)
+    else:
+        # assign integer steps to fidelities seen
         mapping = {
-            value: i for i, value in enumerate(df.index.get_level_values(1).unique(), start=1)
+            value: i for i, value in enumerate(
+                df.loc[df.id.where(df.id == 0).dropna().index].epoch, start=1
+            )
         }
-        df.index = df.index.set_levels(df.index.levels[1].map(mapping), level=1)
-
+        df["epoch"] = df['epoch'].map(mapping)
+        # making data multi-index
+        df.set_index(["id", "epoch"], inplace=True)
         # Save to disk
-        df.to_parquet(path / f"{_file.name.split('.csv')[0]}.parquet")
+        df.to_parquet(path.resolve().parent / f"{_file.name.split('.csv')[0]}.parquet")
 
+    return
+
+
+def handle_subepoch_fidelities(path: Path, df: pd.DataFrame):
+    # storing raw steps
+    unique_ids = df.id.unique()
+    # steps: [0, 0, 0, 1, 1, 1, ..., 99, 99] -> [1, 2, 3, 4, ..., 500, 501]
+    for _uid in unique_ids:
+        _idx_match = df.id.where(df.id == _uid).dropna().index
+        df.loc[_idx_match, "epoch"] = np.arange(
+            1, len(df.loc[_idx_match, "epoch"])+1
+        )
+    df_backup = df.copy()
+    for jump_step in [1, 2, 5, 10]:
+        df = df_backup.copy()
+        target_path = path.resolve().parent / f"{path.name.split('.csv')[0]}-{jump_step}.parquet"
+        # calculating the steps that will not be retained when subsampling
+        drop_steps = list(
+            set(np.insert(np.arange(len(_idx_match)+1, step=1, dtype=int), 0, 1)) - \
+            set(np.insert(np.arange(len(_idx_match)+1, step=jump_step, dtype=int), 0, 1))
+        )
+        # filling the steps excluded in the subsampling with NaNs for easy removal
+        df.loc[df["epoch"].isin(drop_steps), 'epoch'] = np.nan
+        df.dropna()
+        # creating a multi-index table
+        df.set_index(["id", "epoch"], inplace=True)
+        # saving to disk
+        df.to_parquet(target_path)
     return
 
 

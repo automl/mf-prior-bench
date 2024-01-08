@@ -91,13 +91,13 @@ class PD1TabularBenchmark(TabularBenchmark):
         "mnist",
         "svhn_no_extra",
         "translate_wmt",
-        "uniref50"
+        "uniref50",
     )
     non_test_datasets: ClassVar[tuple[str, ...]] = (
         "imagenet",
         "lm1b",
         "translate_wmt",
-        "uniref50"
+        "uniref50",
     )
 
     models: ClassVar[tuple[str, ...]] = (
@@ -106,7 +106,7 @@ class PD1TabularBenchmark(TabularBenchmark):
         "simple_cnn",
         "resnet",
         "transformer",
-        "xformer_translate"
+        "xformer_translate",
     )
 
     batch_sizes: ClassVar[tuple[str, ...]] = (
@@ -115,7 +115,7 @@ class PD1TabularBenchmark(TabularBenchmark):
         256,
         512,
         1024,
-        2048
+        2048,
     )
 
     def __init__(
@@ -175,7 +175,9 @@ class PD1TabularBenchmark(TabularBenchmark):
             ),
             config_type=PD1TabularConfig,
             value_metric=value_metric,
-            value_metric_test=value_metric_test,
+            value_metric_test=(
+                value_metric_test if dataset not in cls.non_test_datasets else None
+            ),
             cost_metric=cost_metric,
             space=space,
             seed=seed,
