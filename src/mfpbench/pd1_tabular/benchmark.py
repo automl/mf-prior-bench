@@ -67,8 +67,6 @@ class PD1TabularConfig(TabularConfig):
     lr_initial: float
     lr_power: float
     opt_momentum: float
-    # not part of actual config space
-    original_epoch: int
 
 
 @dataclass(frozen=True)  # type: ignore[misc]
@@ -109,7 +107,7 @@ class PD1TabularBenchmark(TabularBenchmark):
         "xformer_translate",
     )
 
-    batch_sizes: ClassVar[tuple[str, ...]] = (
+    batch_sizes: ClassVar[tuple[int, ...]] = (
         64,
         128,
         256,
@@ -118,11 +116,20 @@ class PD1TabularBenchmark(TabularBenchmark):
         2048,
     )
 
+    coarser_step_list: ClassVar[tuple[int, ...]] = (
+        "imagenet-resnet-256_tabular",
+        "imagenet-resnet-512_tabular",
+        "imagenet-resnet-1024_tabular",
+        "translate_wmt-xformer_translate-64_tabular",
+        "uniref50-transformer-128_tabular",
+    )
+
     def __init__(
         self,
         dataset: str,
         model: str,
         batch_size: int,
+        coarseness: int = 1,
         datadir: str | Path | None = None,
         *,
         remove_constants: bool = False,
@@ -142,12 +149,15 @@ class PD1TabularBenchmark(TabularBenchmark):
         if batch_size not in cls.batch_sizes:
             raise ValueError(f"Unknown task {batch_size}, must be one of {cls.batch_sizes}")
 
-        bench_name = f"{dataset}-{model}-{batch_size}"
+        bench_name = f"{dataset}-{model}-{batch_size}_tabular"
+        if bench_name in cls.coarser_step_list:
+            assert coarseness in [1, 2, 5, 10], "Not a recognized coarseness!"
+            bench_name += f"-{coarseness}"
 
         if datadir is None:
             datadir = PD1TabularSource.default_location()
         
-        table_path = Path(datadir) / f"{bench_name}_tabular.parquet"
+        table_path = Path(datadir) / f"{bench_name}.parquet"
         if not table_path.exists():
             raise FileNotFoundError(
                 f"Could not find table {table_path}."
@@ -174,6 +184,7 @@ class PD1TabularBenchmark(TabularBenchmark):
                 else PD1TabularResultSimple
             ),
             config_type=PD1TabularConfig,
+            info_keys=["original_steps"],
             value_metric=value_metric,
             value_metric_test=(
                 value_metric_test if dataset not in cls.non_test_datasets else None

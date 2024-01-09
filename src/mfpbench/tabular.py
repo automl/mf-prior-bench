@@ -37,6 +37,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         fidelity_key: str,
         result_type: type[R],
         config_type: type[CTabular],
+        info_keys: list[str] | None = None,
         value_metric: str | None = None,
         value_metric_test: str | None = None,
         cost_metric: str | None = None,
@@ -80,6 +81,9 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         if fidelity_key not in table.columns:
             raise ValueError(f"'{fidelity_key=}' not in columns {table.columns}")
 
+        if not all(c in table.columns for c in info_keys):
+            raise ValueError(f"'{info_keys=}' not in columns {table.columns}")
+
         result_keys: list[str] = list(result_type.metric_defs.keys())
         if not all(key in table.columns for key in result_keys):
             raise ValueError(
@@ -108,6 +112,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             *index_cols,
             *result_keys,
             *config_keys,
+            *info_keys,
         ]
         table = table[relevant_cols]  # type: ignore
         table = table.set_index(index_cols).sort_index()

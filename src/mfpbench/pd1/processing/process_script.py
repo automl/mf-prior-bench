@@ -345,7 +345,7 @@ def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
     if not _file.name.endswith("_tabular.csv"):
         return
     df = pd.read_csv(_file)
-
+    
     unique_df = df.loc[df.loc[:,HPS].drop_duplicates().index]
     # `idx_count` will store the number of epoch/steps recorded per unique HP config
     idx_count = unique_df.index.diff().values
@@ -373,7 +373,15 @@ def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
     df["original_steps"] = df.epoch
     # Assuming `df` is your DataFrame
 
-    if df.loc[0].epoch == df.loc[1].epoch:
+    def fidelity_is_sub_epoch():
+        if "imagenet" in str(path.name) or \
+            "uniref" in str(path.name) or \
+            "xformer" in str(path.name):
+            return True
+        return False
+    print(path.name, "sub_epoch=", fidelity_is_sub_epoch())
+
+    if fidelity_is_sub_epoch():  #
         # data recorded in a sub-epoch manner
         handle_subepoch_fidelities(path, df)
     else:
@@ -398,23 +406,30 @@ def handle_subepoch_fidelities(path: Path, df: pd.DataFrame):
     # steps: [0, 0, 0, 1, 1, 1, ..., 99, 99] -> [1, 2, 3, 4, ..., 500, 501]
     for _uid in unique_ids:
         _idx_match = df.id.where(df.id == _uid).dropna().index
+        # for each unique config ID enumerates all steps seen
         df.loc[_idx_match, "epoch"] = np.arange(
             1, len(df.loc[_idx_match, "epoch"])+1
         )
     df_backup = df.copy()
+    # subsamples for different step sizes and saves a version of the benchmark
     for jump_step in [1, 2, 5, 10]:
         df = df_backup.copy()
         target_path = path.resolve().parent / f"{path.name.split('.csv')[0]}-{jump_step}.parquet"
         # calculating the steps that will not be retained when subsampling
-        drop_steps = list(
-            set(np.insert(np.arange(len(_idx_match)+1, step=1, dtype=int), 0, 1)) - \
-            set(np.insert(np.arange(len(_idx_match)+1, step=jump_step, dtype=int), 0, 1))
-        )
+        _full_list = np.arange(len(_idx_match)+1, step=1, dtype=int)
+        _retain_list, _ = np.linspace(1, _full_list[-1], num=(len(_full_list)-1)//jump_step, retstep=jump_step, endpoint=True, dtype=int)
+        drop_list = list(set(_full_list) - set(_retain_list))
         # filling the steps excluded in the subsampling with NaNs for easy removal
-        df.loc[df["epoch"].isin(drop_steps), 'epoch'] = np.nan
-        df.dropna()
+        df.loc[df["epoch"].isin(drop_list), 'epoch'] = np.nan
+        df.dropna(inplace=True)
         # creating a multi-index table
         df.set_index(["id", "epoch"], inplace=True)
+        df.index = df.index.set_levels(
+            np.arange(1, len(unique_ids)+1, dtype=int).tolist(), level=0
+        )
+        df.index = df.index.set_levels(
+            np.arange(1, len(df.loc[1].index)+1, dtype=int).tolist(), level=1
+        )
         # saving to disk
         df.to_parquet(target_path)
     return
