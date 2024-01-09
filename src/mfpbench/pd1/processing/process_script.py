@@ -367,7 +367,7 @@ def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
     df = df.drop(index=all_rows_to_remove)
     unique_df = unique_df.drop(index=idx_to_remove)
     # TODO: check that all retained configs have the same fidelities recorded ???
-    df["id"] = pd.Series(unique_df.index.values, index=unique_df.index)
+    df["id"] = pd.Series(np.arange(1, len(unique_df.index)+1), index=unique_df.index)
     df.id = df["id"].ffill()
     df.id = df.id.astype(int)
     df["original_steps"] = df.epoch
