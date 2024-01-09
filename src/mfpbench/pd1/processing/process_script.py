@@ -32,29 +32,6 @@ def safe_accumulate(
     itr = iter(f if f is not None else fill for f in x)
     return accumulate(itr)
 
-def sub_epoch_convert():
-    pass
-
-def uniref50_epoch_convert(x: float | list[float]) -> float | list[float]:
-    """Converts the epochs of uniref50 to some usable form.
-
-    Converts:
-        0             NaN
-        1    [0, 0, 0, 1]
-        2           [nan]
-        3     [0, 0, nan].
-
-    to:
-        0             NaN
-        1    [0, 1, 2, 3]
-        2           [nan]
-        3     [0, 1, nan]
-    """
-    if isinstance(x, list):
-        return [i if not pd.isna(e) else e for i, e in enumerate(x, start=1)]
-
-    return x
-
 
 @dataclass(frozen=True)
 class Datapack:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import requests
 import shutil
 import subprocess
 import sys
@@ -257,9 +258,28 @@ class LCBenchTabularSource(BenchmarkSetup):
             logger.info(f"Processed {dataset_name} to {table_path}")
 
 
-class PD1TabularSource(PD1Source):
-    # TODO
-    pass
+class PD1TabularSource(BenchmarkSetup):
+    url: str = "http://storage.googleapis.com/gresearch/pint/pd1.tar.gz"
+    name = "pd1-tabular"
+
+    @override
+    @classmethod
+    def download(cls, path: Path) -> None:
+        zippath = path / "pd1.tar.gz"
+        if not zippath.exists():
+            response = requests.get(cls.url, stream=True)
+            with open(zippath, 'wb') as out_file:
+                # downloading file
+                out_file.write(response.content)
+        print(f"Downloaded {cls.name}")
+        cls._process(zippath)
+
+    @classmethod
+    def _process(cls, path: Path) -> None:
+        from mfpbench.pd1.processing.process_script import process_pd1
+
+        process_pd1(path, process_tabular=True)
+
 
 def download_status(source: str, datadir: Path | None = None) -> bool:
     """Check whether the data is downloaded for some source."""
