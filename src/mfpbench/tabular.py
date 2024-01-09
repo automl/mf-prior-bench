@@ -81,7 +81,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         if fidelity_key not in table.columns:
             raise ValueError(f"'{fidelity_key=}' not in columns {table.columns}")
 
-        if not all(c in table.columns for c in info_keys):
+        if info_keys is not None and not all(c in table.columns for c in info_keys):
             raise ValueError(f"'{info_keys=}' not in columns {table.columns}")
 
         result_keys: list[str] = list(result_type.metric_defs.keys())
@@ -112,10 +112,14 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             *index_cols,
             *result_keys,
             *config_keys,
-            *info_keys,
         ]
+        if info_keys is not None:
+            relevant_cols.extend(info_keys)
         table = table[relevant_cols]  # type: ignore
         table = table.set_index(index_cols).sort_index()
+        table.index = table.index.set_levels([
+            table.index.levels[0].astype(int), table.index.levels[1].astype(int)
+        ])
 
         # We now have the following table
         #
@@ -409,7 +413,6 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         config = dict(config)
         _id = int(config.pop("id"))
         row = self.table.loc[(_id, at)]
-
         row.name = _id
         _config = dict(row[self.config_keys])
         if config != _config:
