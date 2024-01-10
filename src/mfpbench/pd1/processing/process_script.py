@@ -365,7 +365,7 @@ def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
         # assign integer steps to fidelities seen
         mapping = {
             value: i for i, value in enumerate(
-                df.loc[df.id.where(df.id == 0).dropna().index].epoch, start=1
+                df.loc[df.id.where(df.id == df.id.values[0]).dropna().index].epoch, start=1
             )
         }
         df["epoch"] = df['epoch'].map(mapping)
