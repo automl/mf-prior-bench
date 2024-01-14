@@ -20,6 +20,17 @@ logger = logging.getLogger(__name__)
 
 HPS = ['lr_decay_factor', 'lr_initial', 'lr_power', 'opt_momentum']
 
+BAD_BENCHMARKS = [
+    "fashion_mnist-max_pooling_cnn-256_tabular.csv",
+    "fashion_mnist-max_pooling_cnn-2048_tabular.csv",
+    "mnist-max_pooling_cnn-256_tabular.csv",
+    "mnist-max_pooling_cnn-2048_tabular.csv",
+]
+
+NUM_FID_STEP_THRESHOLD_HIGH = 100  # maximum steps allowed to not subsample
+NUM_FID_STEP_THRESHOLD_LOW = 10  # minimum steps required to be a benchmark
+FID_SUBSAMPLING_STEP_JUMPS = [1, 2, 5, 10]
+
 
 def safe_accumulate(
     x: Iterator[float | None] | float,
@@ -314,7 +325,7 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
             df_tabular = dataset[tabular_mask]
             df_tabular = df_tabular.drop(columns=["matched", "phase"])
 
-            print(f"Writing tabular data to {tabular_path}")
+            # print(f"Writing tabular data to {tabular_path}")
             df_tabular.to_csv(tabular_path, index=False)
             _data = preprocess_csv_for_tabular_benchmark_dfs(tabular_path)
             plot_data.append(_data)
@@ -338,99 +349,143 @@ def process_pd1(tarball: Path, process_tabular: bool = False) -> None:  # noqa: 
 def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
 
     assert path.is_file(), "Need a valid file path, not a directory!"
-    # for _file in path.iterdir():
-    _file = path
-    if not _file.name.endswith("_tabular.csv"):
+    if not path.name.endswith("_tabular.csv"):
         return
-    df = pd.read_csv(_file)
+    if str(path.name) in BAD_BENCHMARKS:
+        print(f"\nDiscarding benchark: {path.name}\n")
+        return
     
-    unique_df = df.loc[df.loc[:,HPS].drop_duplicates().index]
-    # `idx_count` will store the number of epoch/steps recorded per unique HP config
-    idx_count = unique_df.index.diff().values
-    idx_count = idx_count[1:]
-    idx_count = np.insert(
-        idx_count, -1, df.index.values[-1] - unique_df.index.values[-1] + 1
-    )
-    # counting the frequency of `number of steps per config` across the benchmark
-    uniques, counts = np.unique(idx_count, return_counts = True)
-    # removing all rows that have recorded fewer fidelities than the max frequency seen
-    to_remove = np.where(idx_count != uniques[counts.argmax()])[0]
-    idx_to_remove = unique_df.index.values[to_remove]
-    all_rows_to_remove = [
-        np.arange(_idx, (_idx + idx_count[to_remove][i]))
-        for i, _idx in enumerate(idx_to_remove)
-    ]
-    all_rows_to_remove = [__x for _x in all_rows_to_remove for __x in _x]  # flattening
+    df = pd.read_csv(path)
+    
+    # find the unique set of hyperparameters/configs
+    # unique_df = df.loc[df.loc[:,HPS].drop_duplicates().index]
+    unique_df = df.loc[:,HPS].drop_duplicates(keep="first").sort_index()
+    # _x = df.loc[unique_df.index.values[-1]+1:,HPS].drop_duplicates(keep="first").shape[0]
 
-    df = df.drop(index=all_rows_to_remove)
-    unique_df = unique_df.drop(index=idx_to_remove)
-    # TODO: check that all retained configs have the same fidelities recorded ???
+    # assigning index to unique configurations
     df["id"] = pd.Series(np.arange(1, len(unique_df.index)+1), index=unique_df.index)
     df.id = df["id"].ffill()
     df.id = df.id.astype(int)
+
+    # calculating total number of steps per unique config
+    fid_steps = (
+        df.id.drop_duplicates(keep="last").index.values -
+        df.id.drop_duplicates(keep="first").index.values
+    )
+    # # removing all rows that have recorded fewer fidelities than the max frequency seen
+    # 
+    # to_remove = np.where(fid_steps != uniques[counts.argmax()])[0]
+    # idx_to_remove = unique_df.index.values[to_remove]
+
+    # removing all rows that have recorded fewer fidelities than the max frequency seen
+    uniques, counts = np.unique(fid_steps, return_counts = True)
+    to_remove = np.where(fid_steps != uniques[counts.argmax()])[0]  # returns list indices
+    idx_to_remove = df.id[unique_df.index.values[to_remove]].values
+    df.index = df.id
+    df = df.drop(index=idx_to_remove)
+
+    # retaining original table's epochs
     df["original_steps"] = df.epoch
-    # Assuming `df` is your DataFrame
 
-    def fidelity_is_sub_epoch():
-        if "imagenet" in str(path.name) or \
-            "uniref" in str(path.name) or \
-            "xformer" in str(path.name):
-            return True
-        return False
-    print(path.name, "sub_epoch=", fidelity_is_sub_epoch())
+    # enumerating all fidelities seen
+    fid_len = len(df.loc[df.index.values[0]].epoch.values)
+    enumerated_fidelities = np.arange(1, fid_len + 1)
+    enumerated_fid_col = enumerated_fidelities.tolist() * len(df.index.unique())
+    df["epoch"] = enumerated_fid_col
 
-    if fidelity_is_sub_epoch():  #
-        # data recorded in a sub-epoch manner
-        handle_subepoch_fidelities(path, df)
+    def is_sub_epoch():
+        return len(df.loc[1].original_steps) != len(df.loc[1].original_steps.unique())
+    
+    def is_large_num_steps():
+        return len(df.loc[1].epoch) > NUM_FID_STEP_THRESHOLD_HIGH
+    
+    logger.info(
+        f"{path.name}; sub_epoch={is_sub_epoch()}; large_steps={is_large_num_steps()}"
+    )
+    
+    if is_large_num_steps():
+        subsample_steps(df, path)
     else:
-        # assign integer steps to fidelities seen
-        mapping = {
-            value: i for i, value in enumerate(
-                df.loc[df.id.where(df.id == df.id.values[0]).dropna().index].epoch, start=1
-            )
-        }
-        df["epoch"] = df['epoch'].map(mapping)
-        # making data multi-index
         df.set_index(["id", "epoch"], inplace=True)
         # Save to disk
-        df.to_parquet(path.resolve().parent / f"{_file.name.split('.csv')[0]}.parquet")
-
+        df.to_parquet(path.resolve().parent / f"{path.name.split('.csv')[0]}.parquet")
+    
     return
 
 
-def handle_subepoch_fidelities(path: Path, df: pd.DataFrame):
-    # storing raw steps
-    unique_ids = df.id.unique()
-    # steps: [0, 0, 0, 1, 1, 1, ..., 99, 99] -> [1, 2, 3, 4, ..., 500, 501]
-    for _uid in unique_ids:
-        _idx_match = df.id.where(df.id == _uid).dropna().index
-        # for each unique config ID enumerates all steps seen
-        df.loc[_idx_match, "epoch"] = np.arange(
-            1, len(df.loc[_idx_match, "epoch"])+1
-        )
+def subsample_steps(df: pd.DataFrame, path: Path) -> None:
     df_backup = df.copy()
     # subsamples for different step sizes and saves a version of the benchmark
-    for jump_step in [1, 2, 5, 10]:
+    for jump_step in FID_SUBSAMPLING_STEP_JUMPS:
         df = df_backup.copy()
         target_path = path.resolve().parent / f"{path.name.split('.csv')[0]}-{jump_step}.parquet"
-        # calculating the steps that will not be retained when subsampling
-        _full_list = np.arange(len(_idx_match)+1, step=1, dtype=int)
-        _retain_list, _ = np.linspace(1, _full_list[-1], num=(len(_full_list)-1)//jump_step, retstep=jump_step, endpoint=True, dtype=int)
-        drop_list = list(set(_full_list) - set(_retain_list))
-        # filling the steps excluded in the subsampling with NaNs for easy removal
-        df.loc[df["epoch"].isin(drop_list), 'epoch'] = np.nan
+        if jump_step == 1:
+            df.set_index(["id", "epoch"], inplace=True)
+            # Save to disk
+            df.to_parquet(target_path)
+            continue
+        
+        _unique_fids = df.loc[1].epoch.values
+        _retain_list, _ = np.linspace(
+            start=1,
+            stop=_unique_fids[-1],
+            num=(len(_unique_fids)-1) // jump_step,
+            retstep=jump_step,
+            endpoint=True,
+            dtype=int,
+        )
+        if len(_retain_list) < NUM_FID_STEP_THRESHOLD_LOW:
+            print(f"\nNot subsampling {path.name} for jump_step={jump_step}\n‚")
+            continue
+        drop_list = list(set(_unique_fids) - set(_retain_list))
+        df.loc[df["epoch"].isin(drop_list), "epoch"] = np.nan
         df.dropna(inplace=True)
-        # creating a multi-index table
+
+        # reindexing
         df.set_index(["id", "epoch"], inplace=True)
+        # enumerating fidelities again
         df.index = df.index.set_levels(
-            np.arange(1, len(unique_ids)+1, dtype=int).tolist(), level=0
+            np.arange(1, len(df.index.get_level_values(1))+1, dtype=int).tolist(), level=1
         )
-        df.index = df.index.set_levels(
-            np.arange(1, len(df.loc[1].index)+1, dtype=int).tolist(), level=1
-        )
-        # saving to disk
+        # Save to disk
         df.to_parquet(target_path)
+
     return
+
+
+# def handle_subepoch_fidelities(path: Path, df: pd.DataFrame):
+#     # storing raw steps
+#     unique_ids = df.id.unique()
+#     # steps: [0, 0, 0, 1, 1, 1, ..., 99, 99] -> [1, 2, 3, 4, ..., 500, 501]
+#     for _uid in unique_ids:
+#         _idx_match = df.id.where(df.id == _uid).dropna().index
+#         # for each unique config ID enumerates all steps seen
+#         df.loc[_idx_match, "epoch"] = np.arange(
+#             1, len(df.loc[_idx_match, "epoch"])+1
+#         )
+#     df_backup = df.copy()
+#     # subsamples for different step sizes and saves a version of the benchmark
+#     for jump_step in [1, 2, 5, 10]:
+#         df = df_backup.copy()
+#         target_path = path.resolve().parent / f"{path.name.split('.csv')[0]}-{jump_step}.parquet"
+#         # calculating the steps that will not be retained when subsampling
+#         _full_list = np.arange(len(_idx_match)+1, step=1, dtype=int)
+#         _retain_list, _ = np.linspace(1, _full_list[-1], num=(len(_full_list)-1)//jump_step, retstep=jump_step, endpoint=True, dtype=int)
+#         drop_list = list(set(_full_list) - set(_retain_list))
+#         # filling the steps excluded in the subsampling with NaNs for easy removal
+#         df.loc[df["epoch"].isin(drop_list), 'epoch'] = np.nan
+#         df.dropna(inplace=True)
+#         # creating a multi-index table
+#         df.set_index(["id", "epoch"], inplace=True)
+#         df.index = df.index.set_levels(
+#             np.arange(1, len(unique_ids)+1, dtype=int).tolist(), level=0
+#         )
+#         df.index = df.index.set_levels(
+#             np.arange(1, len(df.loc[1].index)+1, dtype=int).tolist(), level=1
+#         )
+#         # saving to disk
+#         df.to_parquet(target_path)
+#     return
 
 
 if __name__ == "__main__":
