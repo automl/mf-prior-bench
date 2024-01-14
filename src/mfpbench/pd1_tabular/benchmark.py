@@ -121,7 +121,6 @@ class PD1TabularBenchmark(TabularBenchmark):
         "imagenet-resnet-512_tabular",
         "imagenet-resnet-1024_tabular",
         "translate_wmt-xformer_translate-64_tabular",
-        "uniref50-transformer-128_tabular",
     )
 
     def __init__(
@@ -129,7 +128,7 @@ class PD1TabularBenchmark(TabularBenchmark):
         dataset: str,
         model: str,
         batch_size: int,
-        coarseness: int = 1,
+        coarseness: int | None = None,
         datadir: str | Path | None = None,
         *,
         remove_constants: bool = False,
@@ -153,6 +152,8 @@ class PD1TabularBenchmark(TabularBenchmark):
         if bench_name in cls.coarser_step_list:
             assert coarseness in [1, 2, 5, 10], "Not a recognized coarseness!"
             bench_name += f"-{coarseness}"
+        else:
+            assert coarseness is None, "Not a sub-sampled benchmark. Set `coarseness=None`!"
 
         if datadir is None:
             datadir = PD1TabularSource.default_location()
