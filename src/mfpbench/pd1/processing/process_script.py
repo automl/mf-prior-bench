@@ -356,11 +356,9 @@ def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
         return
     
     df = pd.read_csv(path)
-    
+   
     # find the unique set of hyperparameters/configs
-    # unique_df = df.loc[df.loc[:,HPS].drop_duplicates().index]
     unique_df = df.loc[:,HPS].drop_duplicates(keep="first").sort_index()
-    # _x = df.loc[unique_df.index.values[-1]+1:,HPS].drop_duplicates(keep="first").shape[0]
 
     # assigning index to unique configurations
     df["id"] = pd.Series(np.arange(1, len(unique_df.index)+1), index=unique_df.index)
@@ -372,10 +370,6 @@ def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
         df.id.drop_duplicates(keep="last").index.values -
         df.id.drop_duplicates(keep="first").index.values
     )
-    # # removing all rows that have recorded fewer fidelities than the max frequency seen
-    # 
-    # to_remove = np.where(fid_steps != uniques[counts.argmax()])[0]
-    # idx_to_remove = unique_df.index.values[to_remove]
 
     # removing all rows that have recorded fewer fidelities than the max frequency seen
     uniques, counts = np.unique(fid_steps, return_counts = True)
@@ -383,6 +377,12 @@ def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
     idx_to_remove = df.id[unique_df.index.values[to_remove]].values
     df.index = df.id
     df = df.drop(index=idx_to_remove)
+    
+    # re-enumerate indexes for unique configs
+    unique_df = df.loc[:,HPS].drop_duplicates(keep="first").sort_index()
+    df["id"] = pd.Series(np.arange(1, len(unique_df.index)+1), index=unique_df.index)
+    df.id = df["id"].ffill()
+    df.id = df.id.astype(int)
 
     # retaining original table's epochs
     df["original_steps"] = df.epoch
@@ -451,41 +451,6 @@ def subsample_steps(df: pd.DataFrame, path: Path) -> None:
         df.to_parquet(target_path)
 
     return
-
-
-# def handle_subepoch_fidelities(path: Path, df: pd.DataFrame):
-#     # storing raw steps
-#     unique_ids = df.id.unique()
-#     # steps: [0, 0, 0, 1, 1, 1, ..., 99, 99] -> [1, 2, 3, 4, ..., 500, 501]
-#     for _uid in unique_ids:
-#         _idx_match = df.id.where(df.id == _uid).dropna().index
-#         # for each unique config ID enumerates all steps seen
-#         df.loc[_idx_match, "epoch"] = np.arange(
-#             1, len(df.loc[_idx_match, "epoch"])+1
-#         )
-#     df_backup = df.copy()
-#     # subsamples for different step sizes and saves a version of the benchmark
-#     for jump_step in [1, 2, 5, 10]:
-#         df = df_backup.copy()
-#         target_path = path.resolve().parent / f"{path.name.split('.csv')[0]}-{jump_step}.parquet"
-#         # calculating the steps that will not be retained when subsampling
-#         _full_list = np.arange(len(_idx_match)+1, step=1, dtype=int)
-#         _retain_list, _ = np.linspace(1, _full_list[-1], num=(len(_full_list)-1)//jump_step, retstep=jump_step, endpoint=True, dtype=int)
-#         drop_list = list(set(_full_list) - set(_retain_list))
-#         # filling the steps excluded in the subsampling with NaNs for easy removal
-#         df.loc[df["epoch"].isin(drop_list), 'epoch'] = np.nan
-#         df.dropna(inplace=True)
-#         # creating a multi-index table
-#         df.set_index(["id", "epoch"], inplace=True)
-#         df.index = df.index.set_levels(
-#             np.arange(1, len(unique_ids)+1, dtype=int).tolist(), level=0
-#         )
-#         df.index = df.index.set_levels(
-#             np.arange(1, len(df.loc[1].index)+1, dtype=int).tolist(), level=1
-#         )
-#         # saving to disk
-#         df.to_parquet(target_path)
-#     return
 
 
 if __name__ == "__main__":
