@@ -4,12 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from mfpbench.jahs import JAHSBenchmark
-from mfpbench.lcbench_tabular import (
-    LCBenchTabularBenchmark,
-)
-from mfpbench.pd1_tabular import (
-    PD1TabularBenchmark,
-)
+from mfpbench.lcbench_tabular import LCBenchTabularBenchmark
 from mfpbench.pd1 import (
     PD1cifar100_wideresnet_2048,
     PD1imagenet_resnet_512,
@@ -17,6 +12,7 @@ from mfpbench.pd1 import (
     PD1translatewmt_xformer_64,
     PD1uniref50_transformer_128,
 )
+from mfpbench.pd1_tabular import PD1TabularBenchmark
 from mfpbench.synthetic.hartmann import (
     MFHartmann3Benchmark,
     MFHartmann3BenchmarkBad,

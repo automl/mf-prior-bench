@@ -27,7 +27,7 @@ class Result(ABC, Generic[C, F]):
     default_value_metric: ClassVar[str]
     """The default metric to use for this result."""
 
-    default_value_metric_test: ClassVar[str]
+    default_value_metric_test: ClassVar[str] | None
     """The default test metric to use for this result."""
 
     default_cost_metric: ClassVar[str]
@@ -42,8 +42,15 @@ class Result(ABC, Generic[C, F]):
     value_metric: str
     """The metric to use for this result."""
 
-    value_metric_test: str
-    """The metric to use for this result."""
+    value_metric_test: str | None
+    """The test metric to use for this result.
+
+    !!! warning
+
+        Some benchmarks do not have a test metric and so this may be
+        None. You will likely want to check for this case if using the
+        `value_metric_test`. A good approach is to replace with nan values.
+    """
 
     cost_metric: str
     """The cost to use for this result."""
@@ -71,11 +78,13 @@ class Result(ABC, Generic[C, F]):
         }
         if renames is not None:
             values = {renames.get(k, k): v for k, v in values.items()}
-        
+
         if value_metric is None:
             value_metric = cls.default_value_metric
+
+        if value_metric_test is None:
             value_metric_test = cls.default_value_metric_test
-        
+
         if cost_metric is None:
             cost_metric = cls.default_cost_metric
 
@@ -108,14 +117,14 @@ class Result(ABC, Generic[C, F]):
         return self[self.value_metric].error
 
     @property
-    def test_error(self) -> float:
-        """The error of interest."""
+    def test_error(self) -> float | None:
+        """The test error of interest."""
+        # TODO: This should just return None
         if self.value_metric_test is None:
-            if self[self.value_metric].definition.minimize:
-                # returning worst value, i.e., upper bound of a minimizing metric
-                return self[self.value_metric].definition.bounds[1]
-            # returning worst value, i.e., lower bound of a maximizing metric
-            return self[self.value_metric].definition.bounds[0]
+            metric = self[self.value_metric].definition
+            worst = metric.bounds[1] if metric.minimize else metric.bounds[0]
+            return metric.as_value(worst).error
+
         return self[self.value_metric_test].error
 
     @property
@@ -126,19 +135,20 @@ class Result(ABC, Generic[C, F]):
     @property
     def val_score(self) -> float:
         """The score of interest."""
-        # to maintain backward compatibility
+        # Maintain backwards compatibility for a project
+        # TODO: This should be removed!
         return self.score
 
     @property
-    def test_score(self) -> float:
-        """The score of interest."""
+    def test_score(self) -> float | None:
+        """The test score of interest."""
+        # TODO: This should just return None
         if self.value_metric_test is None:
-            if self[self.value_metric].definition.minimize:
-                # returning worst value, i.e., upper bound of a minimizing metric
-                return self[self.value_metric].definition.bounds[1]
-            # returning worst value, i.e., lower bound of a maximizing metric
-            return self[self.value_metric].definition.bounds[0]
-        return self[self.value_metric_test].score
+            metric = self[self.value_metric].definition
+            worst = metric.bounds[1] if metric.minimize else metric.bounds[0]
+            return metric.as_value(worst).score
+
+        return self[self.value_metric_test].error
 
     @property
     def values(self) -> dict[str, Any]:

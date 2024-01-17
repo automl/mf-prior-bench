@@ -98,6 +98,9 @@ class Benchmark(Generic[C, R, F], ABC):
                 as the probability of swapping the value for a random one.
             value_metric: The metric to use for this benchmark. Uses
                 the default metric from the Result if None.
+            value_metric_test: The metric to use as a test metric for this benchmark.
+                Uses the default test metric from the Result if left as None, and
+                if there is no default test metric, will return None.
             cost_metric: The cost to use for this benchmark. Uses
                 the default cost from the Result if None.
         """
@@ -109,11 +112,16 @@ class Benchmark(Generic[C, R, F], ABC):
         if cost_metric is None:
             cost_metric = result_type.default_cost_metric
 
+        # Ensure that the result type actually has an atrribute called value_metric
+        if value_metric is None:
+            assert getattr(self.Result, "value_metric", None) is not None
+            value_metric = self.Result.value_metric
+
         self.name = name
         self.seed = seed
         self.space = space
         self.value_metric = value_metric
-        self.value_metric_test = value_metric_test
+        self.value_metric_test: str | None = value_metric_test
         self.cost_metric = cost_metric
         self.fidelity_range: tuple[F, F, F] = fidelity_range
         self.fidelity_name = fidelity_name
@@ -124,10 +132,6 @@ class Benchmark(Generic[C, R, F], ABC):
             metric_name: metric.optimum_value
             for metric_name, metric in self.Result.metric_defs.items()
         }
-
-        if value_metric is None:
-            assert getattr(self.Result, "value_metric", None) is not None
-            value_metric = self.Result.value_metric
 
         self._prior_arg = prior
 
@@ -265,10 +269,16 @@ class Benchmark(Generic[C, R, F], ABC):
             value_metric: The metric to use for this result. Uses
                 the value metric passed in to the constructor if not specified,
                 otherwise the default metric from the Result if None.
+            value_metric: The metric to use for this result. Uses
+                the value metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None.
+            value_metric_test: The metric to use for this result. Uses
+                the value metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None. If that
+                is still None, then the `value_metric_test` will be None as well.
             cost_metric: The metric to use for this result. Uses
                 the cost metric passed in to the constructor if not specified,
                 otherwise the default metric from the Result if None.
-
 
         Returns:
             The result of the query
@@ -287,7 +297,11 @@ class Benchmark(Generic[C, R, F], ABC):
             __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
         value_metric = value_metric if value_metric is not None else self.value_metric
-        value_metric_test = value_metric_test if value_metric_test is not None else self.value_metric_test
+        value_metric_test = (
+            value_metric_test
+            if value_metric_test is not None
+            else self.value_metric_test
+        )
         cost_metric = cost_metric if cost_metric is not None else self.cost_metric
 
         return self.Result.from_dict(
@@ -321,6 +335,10 @@ class Benchmark(Generic[C, R, F], ABC):
             value_metric: The metric to use for this result. Uses
                 the value metric passed in to the constructor if not specified,
                 otherwise the default metric from the Result if None.
+            value_metric_test: The metric to use for this result. Uses
+                the value metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None. If that
+                is still None, then the `value_metric_test` will be None as well.
             cost_metric: The metric to use for this result. Uses
                 the cost metric passed in to the constructor if not specified,
                 otherwise the default metric from the Result if None.
@@ -338,7 +356,11 @@ class Benchmark(Generic[C, R, F], ABC):
             __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
         value_metric = value_metric if value_metric is not None else self.value_metric
-        value_metric_test = value_metric_test if value_metric_test is not None else self.value_metric_test
+        value_metric_test = (
+            value_metric_test
+            if value_metric_test is not None
+            else self.value_metric_test
+        )
         cost_metric = cost_metric if cost_metric is not None else self.cost_metric
 
         return [

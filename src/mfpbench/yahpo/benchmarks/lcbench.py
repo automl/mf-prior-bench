@@ -31,6 +31,7 @@ class LCBenchConfig(Config):
 @dataclass(frozen=True)  # type: ignore[misc]
 class LCBenchResult(Result[LCBenchConfig, int]):
     default_value_metric: ClassVar[str] = "val_balanced_accuracy"
+    default_value_metric_test: ClassVar[str] = "test_balanced_accuracy"
     default_cost_metric: ClassVar[str] = "time"
     metric_defs: ClassVar[Mapping[str, Metric]] = {
         "val_accuracy": Metric(minimize=False, bounds=(0, 100)),

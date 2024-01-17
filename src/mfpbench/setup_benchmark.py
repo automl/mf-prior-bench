@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import requests
 import shutil
 import subprocess
 import sys
@@ -267,10 +266,10 @@ class PD1TabularSource(BenchmarkSetup):
     def download(cls, path: Path) -> None:
         zippath = path / "pd1.tar.gz"
         if not zippath.exists():
-            response = requests.get(cls.url, stream=True)
-            with open(zippath, 'wb') as out_file:
-                # downloading file
-                out_file.write(response.content)
+            _urlopen = urllib.request.urlopen
+            print(f"Downloading from {cls.url}")
+            with _urlopen(cls.url) as response, zippath.open("wb") as f:
+                shutil.copyfileobj(response, f)
         print(f"Downloaded {cls.name}")
         cls._process(zippath)
 
