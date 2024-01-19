@@ -132,8 +132,6 @@ class TaskSetTabularConfig_8p(TaskSetTabularConfig):
     exponential_decay: float
     l1: float
     l2: float
-    linear_decay: float
-    exponential_decay: float
 
 
 C = TypeVar("C", bound=TaskSetTabularConfig)
@@ -158,6 +156,496 @@ class TaskSetTabularResult(Result[C, int]):
     valid2_loss: Metric.Value
     test_loss: Metric.Value
     train_cost: Metric.Value
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedMAF_mnist_2layer_bs64_adam1p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1737, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1702, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1707, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1707, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedMAF_mnist_2layer_bs64_adam4p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1802, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1767, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1770, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1770, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedMAF_mnist_2layer_bs64_adam6p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-3515, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-3480, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-3469, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-3469, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedMAF_mnist_2layer_bs64_adam8p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-3084, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-3057, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-3073, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-3073, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedMAF_mnist_2layer_bs64_nadamw_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1829, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1787, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1796, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1796, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedMAF_mnist_3layer_thin_bs64_adam1p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-759, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-751, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-761, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-761, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedMAF_mnist_3layer_thin_bs64_adam4p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-758, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-754, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-760, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-760, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedMAF_mnist_3layer_thin_bs64_adam6p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-759, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-752, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-760, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-760, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedMAF_mnist_3layer_thin_bs64_adam8p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-758, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-751, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-761, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-761, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedMAF_mnist_3layer_thin_bs64_nadamw_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-759, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-752, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-761, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-761, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_2layer_bs64_adam1p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-985, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-951, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-959, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-959, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_2layer_bs64_adam4p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-999, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-942, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-961, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-961, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_2layer_bs64_adam6p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-994, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-939, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-953, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-953, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_2layer_bs64_adam8p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1008, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-959, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-966, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-966, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_2layer_bs64_nadamw_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1035, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-983, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-989, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-989, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_3layer_thin_bs64_adam1p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1111, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1099, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1107, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1107, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_3layer_thin_bs64_adam4p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1088, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1069, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1081, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1081, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_3layer_thin_bs64_adam6p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1068, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1010, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1057, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1057, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_3layer_thin_bs64_adam8p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1048, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1032, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1043, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1043, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_3layer_thin_bs64_nadamw_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1140, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1122, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1133, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1133, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_5layer_bs64_adam1p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1339, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1256, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1326, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1326, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_5layer_bs64_adam4p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1306, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1080, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1292, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1292, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_5layer_bs64_adam6p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1304, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1053, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1289, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1289, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_5layer_bs64_adam8p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1247, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1148, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1231, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1231, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_5layer_bs64_nadamw_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1268, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1249, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1260, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1260, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_5layer_thin_bs64_adam1p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1286, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1274, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1285, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1285, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_5layer_thin_bs64_adam4p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1196, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1185, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1193, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1193, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_5layer_thin_bs64_adam6p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1180, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1167, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1174, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1174, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_5layer_thin_bs64_adam8p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1231, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1224, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1232, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1232, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_5layer_thin_bs64_nadamw_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1293, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1287, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1293, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1293, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_9layer_thin_bs16_adam1p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1515, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1506, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1516, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1516, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_9layer_thin_bs16_adam4p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1529, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1516, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1525, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1525, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_9layer_thin_bs16_adam6p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1335, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1323, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1330, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1330, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_9layer_thin_bs16_adam8p_wide_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1454, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1446, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1454, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1454, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
+
+
+@dataclass(frozen=True)  # type: ignore[misc]
+class TaskSetTabularResult_FixedNVP_mnist_9layer_thin_bs16_nadamw_grid_1k(
+    TaskSetTabularResult,
+):
+    metric_defs: ClassVar[Mapping[str, Metric]] = {
+        "train_loss": Metric(minimize=True, bounds=(-1383, np.inf)),
+        # Not sure why they have 2 valid losses...
+        "valid1_loss": Metric(minimize=True, bounds=(-1374, np.inf)),
+        "valid2_loss": Metric(minimize=True, bounds=(-1380, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(-1380, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
+    }
 
 
 class TaskSetTabularBenchmark(
@@ -371,6 +859,148 @@ class TaskSetTabularBenchmark(
         "adam8p_wide_grid_1k": TaskSetTabularConfig_8p,
         "nadamw_grid_1k": TaskSetTabularConfig_1p,
     }
+    _result_map: ClassVar[Mapping[tuple[str, str], type[TaskSetTabularResult]]] = {
+        (
+            "FixedMAF_mnist_2layer_bs64",
+            "adam1p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedMAF_mnist_2layer_bs64_adam1p_wide_grid_1k,
+        (
+            "FixedMAF_mnist_2layer_bs64",
+            "adam4p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedMAF_mnist_2layer_bs64_adam4p_wide_grid_1k,
+        (
+            "FixedMAF_mnist_2layer_bs64",
+            "adam6p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedMAF_mnist_2layer_bs64_adam6p_wide_grid_1k,
+        (
+            "FixedMAF_mnist_2layer_bs64",
+            "adam8p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedMAF_mnist_2layer_bs64_adam8p_wide_grid_1k,
+        (
+            "FixedMAF_mnist_2layer_bs64",
+            "nadamw_grid_1k",
+        ): TaskSetTabularResult_FixedMAF_mnist_2layer_bs64_nadamw_grid_1k,
+        (
+            "FixedMAF_mnist_3layer_thin_bs64",
+            "adam1p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedMAF_mnist_3layer_thin_bs64_adam1p_wide_grid_1k,
+        (
+            "FixedMAF_mnist_3layer_thin_bs64",
+            "adam4p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedMAF_mnist_3layer_thin_bs64_adam4p_wide_grid_1k,
+        (
+            "FixedMAF_mnist_3layer_thin_bs64",
+            "adam6p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedMAF_mnist_3layer_thin_bs64_adam6p_wide_grid_1k,
+        (
+            "FixedMAF_mnist_3layer_thin_bs64",
+            "adam8p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedMAF_mnist_3layer_thin_bs64_adam8p_wide_grid_1k,
+        (
+            "FixedMAF_mnist_3layer_thin_bs64",
+            "nadamw_grid_1k",
+        ): TaskSetTabularResult_FixedMAF_mnist_3layer_thin_bs64_nadamw_grid_1k,
+        (
+            "FixedNVP_mnist_2layer_bs64",
+            "adam1p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_2layer_bs64_adam1p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_2layer_bs64",
+            "adam4p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_2layer_bs64_adam4p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_2layer_bs64",
+            "adam6p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_2layer_bs64_adam6p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_2layer_bs64",
+            "adam8p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_2layer_bs64_adam8p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_2layer_bs64",
+            "nadamw_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_2layer_bs64_nadamw_grid_1k,
+        (
+            "FixedNVP_mnist_3layer_thin_bs64",
+            "adam1p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_3layer_thin_bs64_adam1p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_3layer_thin_bs64",
+            "adam4p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_3layer_thin_bs64_adam4p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_3layer_thin_bs64",
+            "adam6p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_3layer_thin_bs64_adam6p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_3layer_thin_bs64",
+            "adam8p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_3layer_thin_bs64_adam8p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_3layer_thin_bs64",
+            "nadamw_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_3layer_thin_bs64_nadamw_grid_1k,
+        (
+            "FixedNVP_mnist_5layer_bs64",
+            "adam1p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_5layer_bs64_adam1p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_5layer_bs64",
+            "adam4p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_5layer_bs64_adam4p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_5layer_bs64",
+            "adam6p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_5layer_bs64_adam6p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_5layer_bs64",
+            "adam8p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_5layer_bs64_adam8p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_5layer_bs64",
+            "nadamw_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_5layer_bs64_nadamw_grid_1k,
+        (
+            "FixedNVP_mnist_5layer_thin_bs64",
+            "adam1p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_5layer_thin_bs64_adam1p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_5layer_thin_bs64",
+            "adam4p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_5layer_thin_bs64_adam4p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_5layer_thin_bs64",
+            "adam6p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_5layer_thin_bs64_adam6p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_5layer_thin_bs64",
+            "adam8p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_5layer_thin_bs64_adam8p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_5layer_thin_bs64",
+            "nadamw_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_5layer_thin_bs64_nadamw_grid_1k,
+        (
+            "FixedNVP_mnist_9layer_thin_bs16",
+            "adam1p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_9layer_thin_bs16_adam1p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_9layer_thin_bs16",
+            "adam4p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_9layer_thin_bs16_adam4p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_9layer_thin_bs16",
+            "adam6p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_9layer_thin_bs16_adam6p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_9layer_thin_bs16",
+            "adam8p_wide_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_9layer_thin_bs16_adam8p_wide_grid_1k,
+        (
+            "FixedNVP_mnist_9layer_thin_bs16",
+            "nadamw_grid_1k",
+        ): TaskSetTabularResult_FixedNVP_mnist_9layer_thin_bs16_nadamw_grid_1k,
+    }
 
     def __init__(
         self,
@@ -438,13 +1068,14 @@ class TaskSetTabularBenchmark(
         )
 
         config_type = cls._optimizer_config_map[optimizer]
+        result_type = cls._result_map.get((task_id, optimizer), TaskSetTabularResult)
 
         super().__init__(
             table=table,  # type: ignore
             name=name,
             id_key="config_id",
             fidelity_key="epoch",
-            result_type=TaskSetTabularResult,
+            result_type=result_type,
             config_type=config_type,  # type: ignore
             info_keys=["step"],
             value_metric=value_metric,
