@@ -141,17 +141,19 @@ class TaskSetTabularResults(Result[
     int
 ]):
     metric_defs: ClassVar[Mapping[str, Metric]] = {
-        "valid": Metric(minimize=True, bounds=(0, np.inf)),
-        "test": Metric(minimize=True, bounds=(0, np.inf)),
-        "cost": Metric(minimize=True, bounds=(0, np.inf)),
+        "train_loss": Metric(minimize=True, bounds=(0, np.inf)),
+        "valid_loss": Metric(minimize=True, bounds=(0, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(0, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
     }
-    default_value_metric: ClassVar[str] = "valid"
-    default_value_metric_test: ClassVar[str] = "test"
-    default_cost_metric: ClassVar[str] = "cost"
+    default_value_metric: ClassVar[str] = "valid_loss"
+    default_value_metric_test: ClassVar[str] = "test_loss"
+    default_cost_metric: ClassVar[str] = "train_cost"
 
-    valid_error_rate: Metric.Value
-    test_error_rate: Metric.Value
-    cost: Metric.Value
+    train_loss: Metric.Value
+    valid_loss: Metric.Value
+    test_loss: Metric.Value
+    train_cost: Metric.Value
 
 
 @dataclass(frozen=True)  # type: ignore[misc]

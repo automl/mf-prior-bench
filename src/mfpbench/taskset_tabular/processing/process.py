@@ -173,11 +173,14 @@ def collate_data_to_table(
         assert len(test_curves[hp_index]) == len(val_curves[hp_index]), "Num. steps do not match!"
         hp_config_result = {
             "id": [hp_config] * len(train_curves[hp_index]),
-            "train": train_curves[hp_index],
-            "valid": val_curves[hp_index],
-            "test": test_curves[hp_index],
+            # `loss`, `error`, `cost` are mfpbench Result attributes, names cannot be same
+            "train_loss": train_curves[hp_index],
+            "valid_loss": val_curves[hp_index],
+            "test_loss": test_curves[hp_index],
             "epoch": np.arange(1, len(val_curves[hp_index]) + 1),
-            "cost": np.arange(1, len(val_curves[hp_index]) + 1)
+            # TODO: be more elegant with cost?
+            # Right now, placeholder mainly for mfpbench API as TaskSet has no cost info
+            "train_cost": np.arange(1, len(val_curves[hp_index]) + 1)
         }
         _df = pd.DataFrame.from_dict(hp_config_result)
         df = pd.concat((df, _df))
@@ -215,6 +218,7 @@ def process_taskset(task_family: str, output_dir: Path) -> None:
 
     time_taken = 0
     for idx in df.index.values:
+        start = time.time()
         if task_family == "dpl":
             task_name = df.loc[idx]
         else:
@@ -225,7 +229,6 @@ def process_taskset(task_family: str, output_dir: Path) -> None:
         ]
         results = load_tasks([task_name])
         for optimizer_name in optimizer_families:
-            start = time.time()
             _optimizer_names, x, y = results[task_name][optimizer_name]
             hp_df = get_hyperparameter_list(optimizer_name, _optimizer_names)
             if hp_df is None:
@@ -239,10 +242,10 @@ def process_taskset(task_family: str, output_dir: Path) -> None:
                 )
             filename = f"{task_name}_{optimizer_name.split('_')[0]}.parquet"
             table.to_parquet(output_dir / filename)
-            end = time.time()
-            print(f"Time taken for {filename}: {(end-start):.2f}s")
+        end = time.time()
+        print(f"Time taken for {task_name}: {(end-start):.2f}s")
         time_taken += (end - start)
-    print(f"Total time taken for {task_name}: {(time_taken):.2f}s")
+    print(f"Total time taken: {(time_taken):.2f}s")
     return
 
 
