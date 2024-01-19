@@ -214,8 +214,10 @@ class DataPack:
         # NOTE: This is not really an epoch and is just a proxy
         joint_table["epoch"] = [np.arange(1, len(steps) + 1)] * len(joint_table)
 
+
         # There's also no cost information so we just use the step as the cost
-        joint_table["cost"] = joint_table["step"].copy()
+        joint_table["train_cost"] = joint_table["step"].copy()
+        # NOTE: Use train_cost as `cost` will conflict with the Result class
 
         # Now we explode everything out to get the following table. The HP columns
         # will repeat mostly but that's how we need in later in the benchmark.
@@ -237,9 +239,9 @@ class DataPack:
                     "valid1_loss",
                     "valid2_loss",
                     "test_loss",
+                    "train_cost",
                     "step",
                     "epoch",
-                    "cost",
                 ],
             )
             .reset_index()

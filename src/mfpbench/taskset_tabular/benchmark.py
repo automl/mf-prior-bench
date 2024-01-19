@@ -145,11 +145,11 @@ class TaskSetTabularResult(Result[C, int]):
         "valid1_loss": Metric(minimize=True, bounds=(0, np.inf)),
         "valid2_loss": Metric(minimize=True, bounds=(0, np.inf)),
         "test_loss": Metric(minimize=True, bounds=(0, np.inf)),
-        "cost": Metric(minimize=True, bounds=(0, np.inf)),
+        "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
     }
     default_value_metric: ClassVar[str] = "valid1_loss"
     default_value_metric_test: ClassVar[str] = "test_loss"
-    default_cost_metric: ClassVar[str] = "cost"
+    default_cost_metric: ClassVar[str] = "train_cost"
 
     train_loss: Metric.Value
     valid_loss: Metric.Value
@@ -447,7 +447,7 @@ class TaskSetTabularBenchmark(
             fidelity_key="epoch",
             result_type=TaskSetTabularResult,
             config_type=config_type,  # type: ignore
-            info_keys=[],
+            info_keys=["step"],
             value_metric=value_metric,
             value_metric_test=value_metric_test,
             cost_metric=cost_metric,
