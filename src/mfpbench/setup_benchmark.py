@@ -280,6 +280,21 @@ class PD1TabularSource(BenchmarkSetup):
         process_pd1(path, process_tabular=True)
 
 
+class TaskSetabularSource(BenchmarkSetup):
+    name = "taskset-tabular"
+
+    @override
+    @classmethod
+    def download(cls, path: Path) -> None:
+        cls._process(path)
+
+    @classmethod
+    def _process(cls, path: Path) -> None:
+        from mfpbench.taskset_tabular.processing.process import process_taskset
+
+        process_taskset(task_family="dpl", output_dir=path)
+
+
 def download_status(source: str, datadir: Path | None = None) -> bool:
     """Check whether the data is downloaded for some source."""
     datadir = datadir if datadir is not None else DATAROOT
