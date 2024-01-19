@@ -118,8 +118,8 @@ class TaskSetTabularConfig_6p(TaskSetTabularConfig):
     beta1: float
     beta2: float
     epsilon: float
-    l1: float
-    l2: float
+    linear_decay: float
+    exponential_decay: float
 
 
 @dataclass(frozen=True, eq=False, unsafe_hash=True)  # type: ignore[misc]
@@ -128,6 +128,8 @@ class TaskSetTabularConfig_8p(TaskSetTabularConfig):
     beta1: float
     beta2: float
     epsilon: float
+    linear_decay: float
+    exponential_decay: float
     l1: float
     l2: float
     linear_decay: float
@@ -152,7 +154,7 @@ class TaskSetTabularResult(Result[C, int]):
     default_cost_metric: ClassVar[str] = "train_cost"
 
     train_loss: Metric.Value
-    valid_loss: Metric.Value
+    valid1_loss: Metric.Value
     valid2_loss: Metric.Value
     test_loss: Metric.Value
     train_cost: Metric.Value
@@ -362,6 +364,13 @@ class TaskSetTabularBenchmark(
         ("word_rnn_language_model_family", "adam8p_wide_grid_1k"),
         ("word_rnn_language_model_family", "nadamw_grid_1k"),
     }
+    _optimizer_config_map: ClassVar[Mapping[str, type[TaskSetTabularConfig]]] = {
+        "adam1p_wide_grid_1k": TaskSetTabularConfig_1p,
+        "adam4p_wide_grid_1k": TaskSetTabularConfig_4p,
+        "adam6p_wide_grid_1k": TaskSetTabularConfig_6p,
+        "adam8p_wide_grid_1k": TaskSetTabularConfig_8p,
+        "nadamw_grid_1k": TaskSetTabularConfig_1p,
+    }
 
     def __init__(
         self,
@@ -412,7 +421,8 @@ class TaskSetTabularBenchmark(
 
             datadir = TaskSetabularSource.default_location()
 
-        filename = f"{task_id}-{optimizer}_10000_replica5.parquet"
+        name = f"{task_id}-{optimizer}"
+        filename = f"{name}_10000_replica5.parquet"
         table_path = Path(datadir) / filename
         if not table_path.exists():
             raise FileNotFoundError(
@@ -420,29 +430,18 @@ class TaskSetTabularBenchmark(
                 f"`python -m mfpbench download --status --data-dir {datadir}",
             )
 
-        # Reading table
         table = pd.read_parquet(table_path)
-
         space = _get_raw_taskset_space(
-            name=task_id,
+            name=name,
             seed=seed,
             optimizer=optimizer,
         )
 
-        if "1p" in optimizer:
-            config_type = TaskSetTabularConfig_1p
-        elif "4p" in optimizer:
-            config_type = TaskSetTabularConfig_4p
-        elif "6p" in optimizer:
-            config_type = TaskSetTabularConfig_6p
-        elif "8p" in optimizer:
-            config_type = TaskSetTabularConfig_8p
-        else:
-            raise ValueError("Cannot recognize optimizer!")
+        config_type = cls._optimizer_config_map[optimizer]
 
         super().__init__(
             table=table,  # type: ignore
-            name=task_id,
+            name=name,
             id_key="config_id",
             fidelity_key="epoch",
             result_type=TaskSetTabularResult,
