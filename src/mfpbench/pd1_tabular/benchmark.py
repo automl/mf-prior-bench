@@ -4,24 +4,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar, Mapping
 
-import numpy as np
 import pandas as pd
 from ConfigSpace import ConfigurationSpace
 from ConfigSpace.hyperparameters import (
-    Constant,
     UniformFloatHyperparameter,
-    UniformIntegerHyperparameter,
 )
 
 from mfpbench.config import TabularConfig
-from mfpbench.metric import Metric
-from mfpbench.result import Result
+from mfpbench.pd1.benchmark import (
+    PD1ResultSimple,
+    PD1ResultTransformer,
+)
 from mfpbench.setup_benchmark import PD1TabularSource  # TODO
 from mfpbench.tabular import TabularBenchmark
-
-from mfpbench.pd1.benchmark import (
-    PD1Config, PD1ResultSimple, PD1ResultTransformer, PD1Benchmark
-)
 
 
 def _get_raw_pd1_space(
@@ -30,7 +25,6 @@ def _get_raw_pd1_space(
     *,
     with_constants: bool | None = None,
 ) -> ConfigurationSpace:
-
     cs = ConfigurationSpace(name=name, seed=seed)
     cs.add_hyperparameters(
         [
@@ -146,18 +140,22 @@ class PD1TabularBenchmark(TabularBenchmark):
         if model not in cls.models:
             raise ValueError(f"Unknown task {model}, must be one of {cls.models}")
         if batch_size not in cls.batch_sizes:
-            raise ValueError(f"Unknown task {batch_size}, must be one of {cls.batch_sizes}")
+            raise ValueError(
+                f"Unknown task {batch_size}, must be one of {cls.batch_sizes}",
+            )
 
         bench_name = f"{dataset}-{model}-{batch_size}_tabular"
         if bench_name in cls.coarser_step_list:
             assert coarseness in [1, 2, 5, 10], "Not a recognized coarseness!"
             bench_name += f"-{coarseness}"
         else:
-            assert coarseness is None, "Not a sub-sampled benchmark. Set `coarseness=None`!"
+            assert (
+                coarseness is None
+            ), "Not a sub-sampled benchmark. Set `coarseness=None`!"
 
         if datadir is None:
             datadir = PD1TabularSource.default_location()
-        
+
         table_path = Path(datadir) / f"{bench_name}.parquet"
         if not table_path.exists():
             raise FileNotFoundError(

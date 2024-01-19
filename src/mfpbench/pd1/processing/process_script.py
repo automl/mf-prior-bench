@@ -449,7 +449,7 @@ def preprocess_csv_for_tabular_benchmark_dfs(path: Path) -> None:
     if is_large_num_steps():
         subsample_steps(df, path)
     else:
-        df.set_index(["id", "epoch"], inplace=True)
+        df = df.set_index(["id", "epoch"])
         # Save to disk
         df.to_parquet(path.resolve().parent / f"{path.name.split('.csv')[0]}.parquet")
 
@@ -465,7 +465,7 @@ def subsample_steps(df: pd.DataFrame, path: Path) -> None:
             path.resolve().parent / f"{path.name.split('.csv')[0]}-{jump_step}.parquet"
         )
         if jump_step == 1:
-            df.set_index(["id", "epoch"], inplace=True)
+            df = df.set_index(["id", "epoch"])
             # Save to disk
             df.to_parquet(target_path)
             continue
@@ -484,10 +484,10 @@ def subsample_steps(df: pd.DataFrame, path: Path) -> None:
             continue
         drop_list = list(set(_unique_fids) - set(_retain_list))
         df.loc[df["epoch"].isin(drop_list), "epoch"] = np.nan
-        df.dropna(inplace=True)
+        df = df.dropna()
 
         # reindexing
-        df.set_index(["id", "epoch"], inplace=True)
+        df = df.set_index(["id", "epoch"])
         # enumerating fidelities again
         df.index = df.index.set_levels(
             np.arange(1, len(df.index.get_level_values(1)) + 1, dtype=int).tolist(),
