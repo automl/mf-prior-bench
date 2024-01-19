@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import numpy as np
+import pandas as pd
 
 
 class OutOfBoundsError(ValueError):
@@ -38,6 +39,8 @@ class Metric:
         Returns:
             The metric value.
         """
+        if pd.isna(value):
+            value = np.inf
         return Metric.Value(value=value, definition=self)
 
     @property
