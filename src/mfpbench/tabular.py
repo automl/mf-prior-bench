@@ -125,9 +125,9 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         table = table[relevant_cols]  # type: ignore
         table = table.set_index(index_cols).sort_index()
         # MARK: put this back in after testing
-        #table.index = table.index.set_levels(
-            #[table.index.levels[0].astype(int), table.index.levels[1].astype(int)],
-        #)
+        # table.index = table.index.set_levels(
+        # [table.index.levels[0].astype(int), table.index.levels[1].astype(int)],
+        # )
 
         # We now have the following table
         #

@@ -25,6 +25,7 @@ from mfpbench.synthetic.hartmann import (
     MFHartmann6BenchmarkModerate,
     MFHartmann6BenchmarkTerrible,
 )
+from mfpbench.taskset_tabular import TaskSetTabularBenchmark
 from mfpbench.yahpo import (
     IAMLglmnetBenchmark,
     IAMLrangerBenchmark,
@@ -85,6 +86,8 @@ _mapping: dict[str, type[Benchmark]] = {
     "lcbench_tabular": LCBenchTabularBenchmark,
     # PD1Tabular
     "pd1_tabular": PD1TabularBenchmark,
+    # TaskSetTabular
+    "taskset_tabular": TaskSetTabularBenchmark,
 }
 
 
