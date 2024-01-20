@@ -790,6 +790,13 @@ class TaskSetTabularBenchmark(
         "adam8p_wide_grid_1k",
         "nadamw_grid_1k",
     )
+    _optimizer_map: ClassVar[Mapping[str, str]] = {
+        "adam1p": "adam1p_wide_grid_1k",
+        "adam4p": "adam4p_wide_grid_1k",
+        "adam6p": "adam6p_wide_grid_1k",
+        "adam8p": "adam8p_wide_grid_1k",
+        "nadamw": "nadamw_grid_1k",
+    }
     illegal_combinations: ClassVar[set[tuple[str, str]]] = {
         ("char_rnn_language_model_family", "adam1p_wide_grid_1k"),
         ("char_rnn_language_model_family", "adam4p_wide_grid_1k"),
@@ -1035,10 +1042,13 @@ class TaskSetTabularBenchmark(
             raise ValueError(
                 f"Unknown task {task_id}, must be one of {cls.task_ids}",
             )
-        if optimizer not in cls.optimizers:
+        if optimizer not in cls.optimizers and optimizer not in cls._optimizer_map:
             raise ValueError(
                 f"Unknown task {optimizer}, must be one of {cls.optimizers}",
+                f"Or {optimizer}, must be one of {list(cls._optimizer_map.keys())}",
             )
+        if optimizer in cls._optimizer_map:
+            optimizer = cls._optimizer_map[optimizer]
 
         if (task_id, optimizer) in cls.illegal_combinations:
             raise ValueError(
