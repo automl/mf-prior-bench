@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, ClassVar, Mapping, TypeVar
+from typing import Any, ClassVar, Mapping, TypeVar, List
 
 import numpy as np
 import pandas as pd
@@ -1021,6 +1021,8 @@ class TaskSetTabularBenchmark(
         value_metric: str | None = None,
         value_metric_test: str | None = None,
         cost_metric: str | None = None,
+        normalize_per_curve: bool = False,
+        drop_step_zero: bool = False,
     ) -> None:
         """Initialize a taskset tabular benchmark.
 
@@ -1036,6 +1038,8 @@ class TaskSetTabularBenchmark(
             value_metric: The value metric to use for the benchmark.
             value_metric_test: The test value metric to use for the benchmark.
             cost_metric: The cost metric to use for the benchmark.
+            normalize_per_curve: To remove NaNs and normalize curves to [0,1].
+            drop_step_zero: bool: Removes the loss at initialization.
         """
         cls = self.__class__
         if task_id not in cls.task_ids:
@@ -1069,21 +1073,22 @@ class TaskSetTabularBenchmark(
                 f"Could not find table {table_path}."
                 f"`python -m mfpbench download --status --data-dir {datadir}",
             )
-
         table = pd.read_parquet(table_path)
         space = _get_raw_taskset_space(
             name=name,
             seed=seed,
             optimizer=optimizer,
         )
-
         config_type = cls._optimizer_config_map[optimizer]
         result_type = cls._result_map.get((task_id, optimizer), TaskSetTabularResult)
+        
+        # renaming config_id for consistency across tabular benchmarks
+        table.index = table.index.set_names("id", level=0)
 
         super().__init__(
             table=table,  # type: ignore
             name=name,
-            id_key="config_id",
+            id_key="id",
             fidelity_key="epoch",
             result_type=result_type,
             config_type=config_type,  # type: ignore
@@ -1096,3 +1101,59 @@ class TaskSetTabularBenchmark(
             prior=prior,
             perturb_prior=perturb_prior,
         )
+        # post-processing table
+        if normalize_per_curve:
+            self.table = self._normalize_each_curve(
+                self.table,
+                [self.value_metric, self.value_metric_test]
+            )
+        if drop_step_zero:
+            self.table = self._remove_zero_step(self.table)
+
+    def _normalize_each_curve(self, df: pd.DataFrame, metrics: List[str]) -> pd.DataFrame:
+        """Normalizing each curve to [0, 1] and handling NaNs.
+
+        Section 3.3 from https://arxiv.org/abs/2002.11887
+        """
+        unique_ids = df.index.get_level_values(0).unique()
+        # setting the value of the loss at initialization per curve as max loss
+        max_loss_map = dict()
+        for _id in unique_ids:  # TODO: make efficient, avoid looping if possible
+            _df_max = df.loc[
+                _id,
+                df.loc[_id].step.where(df.loc[_id].step == 0).dropna().index.values[0]
+            ]
+            max_loss_map[_id] = {_metric: _df_max[_metric] for _metric in metrics}
+
+        # setting the min loss as the lowest loss seen for this problem
+        min_loss_map = {_metric: df[_metric].min() for _metric in metrics}
+
+        # normalizing per curve using the loss at initialization as max loss
+        for _id in unique_ids:  # TODO: make efficient, avoid looping if possible
+            _df = df.loc[_id, metrics]
+            # normalize as (x - min) / (max - min)
+            _df = _df.subtract(pd.Series(min_loss_map)).divide(
+                pd.Series(max_loss_map[_id]).subtract(pd.Series(min_loss_map))
+            )
+            df.loc[_id, metrics] = _df.values
+
+        # clip all losses that are above 0
+        df.loc[:, metrics] = df.loc[:, metrics].clip(0, 1).values
+
+        return df
+
+    def _remove_zero_step(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Drops the loss curve at step 0, that is, at initialization
+        """
+        unique_ids = df.index.get_level_values(0).unique()
+        # check if step=0 exists for all unique IDs
+        step_zero_exists = df.loc[df['step'] == 0].index.get_level_values(0).isin(unique_ids).all()
+        if step_zero_exists is False: 
+            return df
+        # dropping all rows with step as 0
+        df = df.drop(index=df.loc[df['step'] == 0].index)
+        # reindexing to enumerate fidelity steps
+        df = df.reset_index()
+        df.loc[:, "epoch"] -= 1
+        df = df.set_index(["id", "epoch"])
+        return df
