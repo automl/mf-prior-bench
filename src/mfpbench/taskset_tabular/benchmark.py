@@ -34,7 +34,7 @@ def _get_raw_taskset_space(
             ),
         ],
     )
-    if optimizer in ["adam4p", "adam6p", "adam8p"]:
+    if optimizer.split("_")[0] in ["adam4p", "adam6p", "adam8p"]:
         cs.add_hyperparameters(
             [
                 UniformFloatHyperparameter(
@@ -57,7 +57,7 @@ def _get_raw_taskset_space(
                 ),
             ],
         )
-    if optimizer in ["adam6p", "adam8p"]:
+    if optimizer.split("_")[0] in ["adam6p", "adam8p"]:
         cs.add_hyperparameters(
             [
                 UniformFloatHyperparameter(
@@ -74,7 +74,7 @@ def _get_raw_taskset_space(
                 ),
             ],
         )
-    if optimizer in ["adam8p"]:
+    if optimizer.split("_")[0] in ["adam8p"]:
         cs.add_hyperparameters(
             [
                 UniformFloatHyperparameter(
