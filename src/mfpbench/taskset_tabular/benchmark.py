@@ -1137,6 +1137,9 @@ class TaskSetTabularBenchmark(
             )
             df.loc[_id, metrics] = _df.values
 
+        # removing all NaNs from the concerned metrics
+        df.loc[:, metrics] = df.loc[:, metrics].fillna(np.inf).values
+
         # clip all losses that are above 0
         df.loc[:, metrics] = df.loc[:, metrics].clip(0, 1).values
 
