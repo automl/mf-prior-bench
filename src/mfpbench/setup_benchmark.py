@@ -184,6 +184,29 @@ class PD1Source(BenchmarkSetup):
 
 
 @dataclass(frozen=True)
+class NB201TabularSource(BenchmarkSetup):
+    url: str = "https://ml.informatik.uni-freiburg.de/research-artifacts/mfp-bench"
+    tabular_version: str = "v1"
+    name = "nb201-tabular"
+
+    @override
+    @classmethod
+    def download(cls, path: Path, workers: int = 1) -> None:
+        zippath = path / "nb201-tabular-data.zip"
+        url = f"{cls.url}/{cls.name}/{cls.tabular_version}/nb201-tabular-data.zip"
+        if not zippath.exists():
+            _urlopen = urllib.request.urlopen
+            print(f"Downloading from {url}")
+            with _urlopen(url) as response, zippath.open("wb") as f:
+                shutil.copyfileobj(response, f)
+
+        with zipfile.ZipFile(zippath, "r") as zip_ref:
+            zip_ref.extractall(path)
+
+        print(f"Downloaded {cls.name}")
+
+
+@dataclass(frozen=True)
 class LCBenchTabularSource(BenchmarkSetup):
     url: str = "https://figshare.com/ndownloader/files/21188607"
     name = "lcbench-tabular"

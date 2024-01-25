@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from mfpbench.jahs import JAHSBenchmark
 from mfpbench.lcbench_tabular import LCBenchTabularBenchmark
+from mfpbench.nb201_tabular.benchmark import NB201TabularBenchmark
 from mfpbench.pd1 import (
     PD1cifar100_wideresnet_2048,
     PD1imagenet_resnet_512,
@@ -88,6 +89,8 @@ _mapping: dict[str, type[Benchmark]] = {
     "pd1_tabular": PD1TabularBenchmark,
     # TaskSetTabular
     "taskset_tabular": TaskSetTabularBenchmark,
+    # nb201 tabular
+    "nb201_tabular": NB201TabularBenchmark,
 }
 
 
