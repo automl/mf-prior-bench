@@ -1021,8 +1021,7 @@ class TaskSetTabularBenchmark(
         value_metric: str | None = None,
         value_metric_test: str | None = None,
         cost_metric: str | None = None,
-        normalize_per_curve: bool = False,
-        drop_step_zero: bool = False,
+        na_with_inf: bool = True,
     ) -> None:
         """Initialize a taskset tabular benchmark.
 
@@ -1037,9 +1036,8 @@ class TaskSetTabularBenchmark(
             perturb_prior: The perturbation to use for the prior.
             value_metric: The value metric to use for the benchmark.
             value_metric_test: The test value metric to use for the benchmark.
+            na_with_inf: Whether or not to replace NaNs with inf.
             cost_metric: The cost metric to use for the benchmark.
-            normalize_per_curve: To remove NaNs and normalize curves to [0,1].
-            drop_step_zero: bool: Removes the loss at initialization.
         """
         cls = self.__class__
         if task_id not in cls.task_ids:
@@ -1085,14 +1083,8 @@ class TaskSetTabularBenchmark(
         # renaming config_id for consistency across tabular benchmarks
         table.index = table.index.set_names("id", level=0)
 
-        # post-processing table
-        if normalize_per_curve:
-            table = self._normalize_each_curve(
-                table,
-                [k for k in result_type.metric_defs if "loss" in k],
-            )
-        if drop_step_zero:
-            table = self._remove_zero_step(table)
+        if na_with_inf:
+            table = table.fillna(np.inf)
 
         super().__init__(
             table=table,  # type: ignore
