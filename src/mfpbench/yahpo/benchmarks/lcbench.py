@@ -35,9 +35,9 @@ class LCBenchResult(Result[LCBenchConfig, int]):
     default_cost_metric: ClassVar[str] = "time"
     metric_defs: ClassVar[Mapping[str, Metric]] = {
         "val_accuracy": Metric(minimize=False, bounds=(0, 100)),
-        "val_balanced_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "val_balanced_accuracy": Metric(minimize=False, bounds=(0, 1)),
         "val_cross_entropy": Metric(minimize=True, bounds=(0, np.inf)),
-        "test_balanced_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "test_balanced_accuracy": Metric(minimize=False, bounds=(0, 1)),
         "test_cross_entropy": Metric(minimize=True, bounds=(0, np.inf)),
         "time": Metric(minimize=True, bounds=(0, np.inf)),
     }
