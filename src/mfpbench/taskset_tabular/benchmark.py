@@ -85,7 +85,7 @@ def _get_raw_taskset_space(
                 ),
                 UniformFloatHyperparameter(
                     "exponential_decay",
-                    lower=1e-6 - 1e-7,  # Seems to be rounding issues
+                    lower=1e-6,
                     upper=1e-4,
                     log=True,
                 ),
