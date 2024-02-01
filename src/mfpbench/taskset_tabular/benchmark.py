@@ -28,8 +28,8 @@ def _get_raw_taskset_space(
         [
             UniformFloatHyperparameter(
                 "learning_rate",
-                lower=1.026942e-08,
-                upper=9.682791,
+                lower=1e-9,
+                upper=10,
                 log=True,
             ),
         ],
@@ -39,20 +39,20 @@ def _get_raw_taskset_space(
             [
                 UniformFloatHyperparameter(
                     "beta1",
-                    lower=4.807830e-04,
-                    upper=0.9999,
-                    log=False,
+                    lower=1e-4,
+                    upper=1,
+                    log=True,
                 ),
                 UniformFloatHyperparameter(
                     "beta2",
-                    lower=1.831740e-03,
-                    upper=0.999999,
-                    log=False,
+                    lower=1e-3,
+                    upper=1,
+                    log=True,
                 ),
                 UniformFloatHyperparameter(
                     "epsilon",
-                    lower=1.046320e-10,
-                    upper=975.014812,
+                    lower=0,
+                    upper=1000,
                     log=True,
                 ),
             ],
@@ -62,14 +62,14 @@ def _get_raw_taskset_space(
             [
                 UniformFloatHyperparameter(
                     "l1",
-                    lower=1.007364e-08,
-                    upper=9.630265,
+                    lower=0,
+                    upper=10,
                     log=True,
                 ),
                 UniformFloatHyperparameter(
                     "l2",
-                    lower=1.006209e-08,
-                    upper=9.314683,
+                    lower=0,
+                    upper=10,
                     log=True,
                 ),
             ],
@@ -79,14 +79,14 @@ def _get_raw_taskset_space(
             [
                 UniformFloatHyperparameter(
                     "linear_decay",
-                    lower=1.002723e-07,
-                    upper=0.000100,
+                    lower=0,
+                    upper=0.0001,
                     log=True,
                 ),
                 UniformFloatHyperparameter(
                     "exponential_decay",
-                    lower=1.003401e-06,
-                    upper=0.000990,
+                    lower=1e-6,
+                    upper=1e-4,
                     log=True,
                 ),
             ],
