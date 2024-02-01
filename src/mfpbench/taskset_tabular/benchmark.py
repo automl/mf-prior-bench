@@ -62,13 +62,13 @@ def _get_raw_taskset_space(
             [
                 UniformFloatHyperparameter(
                     "l1",
-                    lower=0,
+                    lower=1e-9,
                     upper=10,
                     log=True,
                 ),
                 UniformFloatHyperparameter(
                     "l2",
-                    lower=0,
+                    lower=1e-9,
                     upper=10,
                     log=True,
                 ),
@@ -79,7 +79,7 @@ def _get_raw_taskset_space(
             [
                 UniformFloatHyperparameter(
                     "linear_decay",
-                    lower=0,
+                    lower=1e-8,
                     upper=0.0001,
                     log=True,
                 ),
