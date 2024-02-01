@@ -44,11 +44,11 @@ def _raw_space(name: str, *, seed: int | None = None) -> ConfigurationSpace:
 @dataclass(frozen=True)  # type: ignore[misc]
 class NB201Result(Result):
     metric_defs: ClassVar[Mapping[str, Metric]] = {
-        "train_loss": Metric(minimize=False, bounds=(0, np.inf)),
+        "train_loss": Metric(minimize=True, bounds=(0, np.inf)),
         "train_accuracy": Metric(minimize=False, bounds=(0, 100)),
         "train_per_time": Metric(minimize=True, bounds=(0, np.inf)),
         "train_all_time": Metric(minimize=True, bounds=(0, np.inf)),
-        "test_loss": Metric(minimize=False, bounds=(0, np.inf)),
+        "test_loss": Metric(minimize=True, bounds=(0, np.inf)),
         "test_accuracy": Metric(minimize=False, bounds=(0, 100)),
         "test_per_time": Metric(minimize=True, bounds=(0, np.inf)),
         "test_all_time": Metric(minimize=True, bounds=(0, np.inf)),
