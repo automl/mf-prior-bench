@@ -37,6 +37,7 @@ class RBV2Config(Config):
 class RBV2Result(Result[C, float]):
     default_value_metric: ClassVar[str] = "bac"
     default_cost_metric: ClassVar[str] = "timetrain"
+    default_cost_metric_test: ClassVar[None] = None
     metric_defs: ClassVar[Mapping[str, Metric]] = {
         "acc": Metric(minimize=False, bounds=(0, 1)),
         "bac": Metric(minimize=False, bounds=(0, 1)),

@@ -56,6 +56,7 @@ class MFHartmann3Result(Result[MFHartmann3Config, int]):
         "fid_cost": Metric(minimize=True, bounds=(0.05, 1)),
     }
     default_value_metric: ClassVar[str] = "value"
+    default_value_metric_test: ClassVar[None] = None
     default_cost_metric: ClassVar[str] = "fid_cost"
 
     value: Metric.Value
@@ -70,6 +71,7 @@ class MFHartmann6Result(Result[MFHartmann6Config, int]):
         "fid_cost": Metric(minimize=True, bounds=(0.05, 1)),
     }
     default_value_metric: ClassVar[str] = "value"
+    default_value_metric_test: ClassVar[None] = None
     default_cost_metric: ClassVar[str] = "fid_cost"
 
     value: Metric.Value

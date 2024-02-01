@@ -129,6 +129,7 @@ class BenchmarkDownloadHandler(CommandHandler):
             download=True,
             install=False,
             force=args.force,
+            workers=args.workers,
         )
 
     @override
@@ -148,6 +149,15 @@ class BenchmarkDownloadHandler(CommandHandler):
             "--list",
             action="store_true",
             help="Print out the available benchmarks data sources",
+        )
+        parser.add_argument(
+            "--workers",
+            type=int,
+            default=1,
+            help=(
+                "The number of workers to use for downloading"
+                " if the downlaoder supports it"
+            ),
         )
         parser.add_argument(
             "--benchmark",

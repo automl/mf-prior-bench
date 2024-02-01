@@ -140,14 +140,15 @@ class LCBenchTabularConfig(TabularConfig):
 class LCBenchTabularResult(Result[LCBenchTabularConfig, int]):
     metric_defs: ClassVar[Mapping[str, Metric]] = {
         "val_accuracy": Metric(minimize=False, bounds=(0, 100)),
-        "val_balanced_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "val_balanced_accuracy": Metric(minimize=False, bounds=(0, 1)),
         "val_cross_entropy": Metric(minimize=True, bounds=(0, np.inf)),
         "test_accuracy": Metric(minimize=False, bounds=(0, 100)),
-        "test_balanced_accuracy": Metric(minimize=False, bounds=(0, 100)),
+        "test_balanced_accuracy": Metric(minimize=False, bounds=(0, 1)),
         "test_cross_entropy": Metric(minimize=True, bounds=(0, np.inf)),
         "time": Metric(minimize=True, bounds=(0, np.inf)),
     }
     default_value_metric: ClassVar[str] = "val_balanced_accuracy"
+    default_value_metric_test: ClassVar[str] = "test_balanced_accuracy"
     default_cost_metric: ClassVar[str] = "time"
 
     time: Metric.Value
@@ -214,6 +215,7 @@ class LCBenchTabularBenchmark(TabularBenchmark):
         prior: str | Path | LCBenchTabularConfig | Mapping[str, Any] | None = None,
         perturb_prior: float | None = None,
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
     ) -> None:
         """Initialize the benchmark.
@@ -282,6 +284,7 @@ class LCBenchTabularBenchmark(TabularBenchmark):
             result_type=LCBenchTabularResult,
             config_type=LCBenchTabularConfig,
             value_metric=value_metric,
+            value_metric_test=value_metric_test,
             cost_metric=cost_metric,
             space=space,
             seed=seed,

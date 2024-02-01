@@ -118,6 +118,7 @@ class NB301Config(Config):
 @dataclass(frozen=True)  # type: ignore[misc]
 class NB301Result(Result[NB301Config, int]):
     default_value_metric: ClassVar[str] = "val_accuracy"
+    default_value_metric_test: ClassVar[None] = None
     default_cost_metric: ClassVar[str] = "runtime"
     metric_defs: ClassVar[Mapping[str, Metric]] = {
         "runtime": Metric(minimize=True, bounds=(0, np.inf)),

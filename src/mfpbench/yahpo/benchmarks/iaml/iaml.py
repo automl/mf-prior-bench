@@ -36,6 +36,7 @@ class IAMLConfig(Config):
 @dataclass(frozen=True)  # type: ignore[misc]
 class IAMLResult(Result[C, float]):
     default_value_metric: ClassVar[str] = "f1"
+    default_value_metric_test: ClassVar[None] = None
     default_cost_metric: ClassVar[str] = "timetrain"
     metric_defs: ClassVar[Mapping[str, Metric]] = {
         "mmce": Metric(minimize=True, bounds=(0, np.inf)),

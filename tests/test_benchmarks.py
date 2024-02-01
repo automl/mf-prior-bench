@@ -129,6 +129,7 @@ def case_generic_tabular() -> BenchmarkTest:
     @dataclass(frozen=True)
     class MyResult(Result):
         default_value_metric: ClassVar[str] = "balanced_accuracy"
+        default_value_metric_test: ClassVar[str] = "balanced_accuracy"
         default_cost_metric: ClassVar[str] = "ffloat"
         metric_defs: ClassVar[Mapping[str, Metric]] = {
             "balanced_accuracy": Metric(minimize=False, bounds=(0, 1)),

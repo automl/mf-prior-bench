@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, Mapping, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Iterable, Mapping, Sequence, TypeVar, overload
 from typing_extensions import override
 
 import numpy as np
@@ -28,7 +28,7 @@ F = TypeVar("F", int, float)
 
 
 class TabularBenchmark(Benchmark[CTabular, R, F]):
-    def __init__(  # noqa: PLR0913
+    def __init__(  # noqa: PLR0913, C901
         self,
         name: str,
         table: pd.DataFrame,
@@ -37,7 +37,9 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         fidelity_key: str,
         result_type: type[R],
         config_type: type[CTabular],
+        info_keys: Sequence[str] | None = None,
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
         space: ConfigurationSpace | None = None,
         seed: int | None = None,
@@ -51,10 +53,16 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             table: The table to use for the benchmark.
             id_key: The column in the table that contains the config id
             fidelity_key: The column in the table that contains the fidelity
+            info_keys: Sequence of columns in the table that contain additional
+                information. These will not be included in any config or results, and
+                are only kept in the `.table` attribute.
             result_type: The result type for this benchmark.
             config_type: The config type for this benchmark.
             value_metric: The metric to use for this benchmark. Uses
                 the default metric from the Result if None.
+            value_metric_test: The metric to use as a test metric for this benchmark.
+                Uses the default test metric from the Result if left as None, and
+                if there is no default test metric, will return None.
             cost_metric: The cost to use for this benchmark. Uses
                 the default cost from the Result if None.
             space: The configuration space to use for the benchmark. If None, will
@@ -79,6 +87,9 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         if fidelity_key not in table.columns:
             raise ValueError(f"'{fidelity_key=}' not in columns {table.columns}")
 
+        if info_keys is not None and not all(c in table.columns for c in info_keys):
+            raise ValueError(f"'{info_keys=}' not in columns {table.columns}")
+
         result_keys: list[str] = list(result_type.metric_defs.keys())
         if not all(key in table.columns for key in result_keys):
             raise ValueError(
@@ -97,7 +108,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             )
 
         # Remap their id column to `id`
-        table = table.rename(columns={id_key: "id"})
+        table = table.rename(columns={id_key: "id"}).astype({"id": str})
 
         # Index the table
         index_cols: list[str] = ["id", fidelity_key]
@@ -108,8 +119,15 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             *result_keys,
             *config_keys,
         ]
+        if info_keys is not None:
+            relevant_cols.extend(info_keys)
+
         table = table[relevant_cols]  # type: ignore
         table = table.set_index(index_cols).sort_index()
+        # MARK: put this back in after testing
+        # table.index = table.index.set_levels(
+        # [table.index.levels[0].astype(int), table.index.levels[1].astype(int)],
+        # )
 
         # We now have the following table
         #
@@ -124,6 +142,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
 
         # Make sure we have equidistance fidelities for all configs
         fidelity_values = table.index.get_level_values(fidelity_key)
+        # MARK: Comment this out after testing
         fidelity_counts = fidelity_values.value_counts()
         if not (fidelity_counts == fidelity_counts.iloc[0]).all():
             raise ValueError(f"{fidelity_key=} not uniform. \n{fidelity_counts}")
@@ -171,6 +190,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             prior=prior,
             perturb_prior=perturb_prior,
             value_metric=value_metric,
+            value_metric_test=value_metric_test,
             cost_metric=cost_metric,
         )
 
@@ -196,6 +216,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         *,
         at: F | None = None,
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
     ) -> R:
         """Submit a query and get a result.
@@ -223,6 +244,10 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             value_metric: The metric to use for this result. Uses
                 the value metric passed in to the constructor if not specified,
                 otherwise the default metric from the Result if None.
+            value_metric_test: The metric to use for this result. Uses
+                the value metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None. If that
+                is still None, then the `value_metric_test` will be None as well.
             cost_metric: The metric to use for this result. Uses
                 the cost metric passed in to the constructor if not specified,
                 otherwise the default metric from the Result if None.
@@ -241,6 +266,11 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
         value_metric = value_metric if value_metric is not None else self.value_metric
+        value_metric_test = (
+            value_metric_test
+            if value_metric_test is not None
+            else self.value_metric_test
+        )
         cost_metric = cost_metric if cost_metric is not None else self.cost_metric
 
         return self.Result.from_dict(
@@ -248,6 +278,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             fidelity=at,
             result=self._objective_function(__config, at=at),
             value_metric=str(value_metric),
+            value_metric_test=value_metric_test,
             cost_metric=str(cost_metric),
             renames=self._result_renames,
         )
@@ -261,6 +292,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         to: F | None = None,
         step: F | None = None,
         value_metric: str | None = None,
+        value_metric_test: str | None = None,
         cost_metric: str | None = None,
     ) -> list[R]:
         """Submit a query and get a result.
@@ -290,6 +322,10 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             value_metric: The metric to use for this result. Uses
                 the value metric passed in to the constructor if not specified,
                 otherwise the default metric from the Result if None.
+            value_metric_test: The metric to use for this result. Uses
+                the value metric passed in to the constructor if not specified,
+                otherwise the default metric from the Result if None. If that
+                is still None, then the `value_metric_test` will be None as well.
             cost_metric: The metric to use for this result. Uses
                 the cost metric passed in to the constructor if not specified,
                 otherwise the default metric from the Result if None.
@@ -309,6 +345,11 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
             __config = {k: __config.get(v, v) for k, v in _reverse_renames.items()}
 
         value_metric = value_metric if value_metric is not None else self.value_metric
+        value_metric_test = (
+            value_metric_test
+            if value_metric_test is not None
+            else self.value_metric_test
+        )
         cost_metric = cost_metric if cost_metric is not None else self.cost_metric
 
         return [
@@ -317,6 +358,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
                 fidelity=fidelity,
                 result=result,
                 value_metric=str(value_metric),
+                value_metric_test=value_metric_test,
                 cost_metric=str(cost_metric),
                 renames=self._result_renames,
             )
@@ -359,7 +401,7 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
 
         # Also ... not sure but anywho
         if "id" in config:
-            _id = config["id"]
+            _id = str(config["id"])
             return self.configs[_id]
 
         # Alright, nothing worked, here we try to match the actual hyperparameter
@@ -396,7 +438,6 @@ class TabularBenchmark(Benchmark[CTabular, R, F]):
         config = dict(config)
         _id = config.pop("id")
         row = self.table.loc[(_id, at)]
-
         row.name = _id
         _config = dict(row[self.config_keys])
         if config != _config:

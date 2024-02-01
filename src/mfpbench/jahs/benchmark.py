@@ -56,6 +56,7 @@ class JAHSConfig(Config):
 class JAHSResult(Result[JAHSConfig, int]):
     default_value_metric: ClassVar[str] = "valid_acc"
     default_cost_metric: ClassVar[str] = "runtime"
+    default_value_metric_test: ClassVar[str] = "test_acc"
 
     metric_defs: ClassVar[Mapping[str, Metric]] = {
         "runtime": Metric(minimize=True, bounds=(0, np.inf)),
