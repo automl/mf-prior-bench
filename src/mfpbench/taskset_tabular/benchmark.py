@@ -51,7 +51,7 @@ def _get_raw_taskset_space(
                 ),
                 UniformFloatHyperparameter(
                     "epsilon",
-                    lower=0,
+                    lower=1e-12,
                     upper=1000,
                     log=True,
                 ),
