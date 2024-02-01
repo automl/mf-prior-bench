@@ -35,7 +35,7 @@ def _get_raw_pd1_space(
             ),
             UniformFloatHyperparameter(
                 "lr_initial",
-                lower=1.0e-4,
+                lower=1.0e-5,
                 upper=10,
                 log=True,
             ),
@@ -46,7 +46,7 @@ def _get_raw_pd1_space(
             ),
             UniformFloatHyperparameter(
                 "opt_momentum",
-                lower=1.0e-4,
+                lower=1.0e-5,
                 upper=1.0,
                 log=True,
             ),
