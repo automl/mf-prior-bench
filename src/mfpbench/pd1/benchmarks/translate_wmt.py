@@ -8,7 +8,7 @@ from mfpbench.pd1.benchmark import PD1Benchmark, PD1ResultTransformer
 class PD1translatewmt_xformer_64(PD1Benchmark):
     pd1_fidelity_range = (1, 19, 1)
     pd1_result_type = PD1ResultTransformer
-    pd1_name = "translate-wmt-xformer-64"
+    pd1_name = "translate_wmt-xformer_translate-64"
 
     @classmethod
     def _create_space(cls, seed: int | None = None) -> ConfigurationSpace:
