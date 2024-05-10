@@ -10,7 +10,7 @@ dependencies = [
   "more_itertools",
   "pyarrow"
 ]
-version = "1.8.1"
+version = "1.9.0"
 description = "A wrapper for multi-fidelity benchmarks with priors"
 authors = [{name = "Eddie Bergman", email="eddiebergmanhs@gmail.com"}]
 readme = "README.md"
