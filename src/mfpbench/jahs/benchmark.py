@@ -77,7 +77,7 @@ class JAHSResult(Result[JAHSConfig, int]):
 
 class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
     JAHS_FIDELITY_NAME: ClassVar[str] = "epoch"
-    JAHS_FIDELITY_RANGE: ClassVar[tuple[int, int, int]] = (3, 200, 1)
+    JAHS_FIDELITY_RANGE: ClassVar[tuple[int, int, int]] = (1, 200, 1)
     JAHS_METRICS_TO_ACTIVATE: ClassVar[tuple[str, ...]] = (
         "valid-acc",
         "test-acc",
@@ -198,7 +198,7 @@ class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
                 )
 
             self._bench = jahs_bench.Benchmark(
-                task=self.task_id,
+                task=task,
                 save_dir=self.datadir,
                 download=False,
                 metrics=self.JAHS_METRICS_TO_ACTIVATE,

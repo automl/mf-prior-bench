@@ -7,7 +7,7 @@ from mfpbench.pd1.benchmark import PD1Benchmark, PD1ResultTransformer
 
 class PD1imagenet_resnet_512(PD1Benchmark):
     pd1_result_type = PD1ResultTransformer
-    pd1_fidelity_range = (3, 99, 1)
+    pd1_fidelity_range = (1, 99, 1)
     pd1_name = "imagenet-resnet-512"
 
     @classmethod

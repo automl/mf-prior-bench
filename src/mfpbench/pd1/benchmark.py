@@ -201,7 +201,8 @@ class PD1Benchmark(Benchmark[PD1Config, R, int]):
         features = xs.columns
         for metric, surrogate in self.surrogates.items():
             # We clip as sometimes the surrogate produces negative values
-            xs[metric] = surrogate.predict(xs[features]).clip(min=0)
+            bounds = self.Result.metric_defs[metric].bounds
+            xs[metric] = surrogate.predict(xs[features]).clip(*bounds)
 
         metrics = list(self.surrogates.keys())
         return [dict(r[metrics]) for _, r in xs.iterrows()]

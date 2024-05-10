@@ -160,7 +160,7 @@ class MFHartmannBenchmark(Benchmark[C, R, int], Generic[G, C, R]):
             config_type=self.mfh_config_type,
             result_type=self.mfh_result_type,
             fidelity_name="z",
-            fidelity_range=(3, _max_fidelity, 1),
+            fidelity_range=(1, _max_fidelity, 1),
             space=space,
             seed=seed,
             prior=prior,
