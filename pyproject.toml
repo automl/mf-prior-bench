@@ -5,7 +5,7 @@ name = "mf-prior-bench"
 dependencies = [
   "pyyaml",
   "numpy",
-  "configspace<=0.7",
+  "configspace==0.7.1",
   "pandas",
   "more_itertools",
   "pyarrow"
