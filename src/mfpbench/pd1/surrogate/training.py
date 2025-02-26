@@ -131,7 +131,7 @@ def find_xgboost_surrogate(
     dehb = DEHB(
         f=dehb_target_function,
         cs=cs,
-        dimensions=len(cs.get_hyperparameters()),
+        dimensions=len(list(cs.values())),
         min_budget=MIN_ESTIMATORS,
         max_budget=MAX_ESTIMATORS,
         n_workers=n_workers,

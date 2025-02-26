@@ -43,7 +43,7 @@ def _get_raw_lcbench_space(
     """
     # obtained from https://github.com/automl/lcbench#dataset-overview
     cs = ConfigurationSpace(name=name, seed=seed)
-    cs.add_hyperparameters(
+    cs.add(
         [
             UniformIntegerHyperparameter(
                 "batch_size",
@@ -98,7 +98,7 @@ def _get_raw_lcbench_space(
     )
 
     if with_constants:
-        cs.add_hyperparameters(
+        cs.add(
             [
                 Constant("cosine_annealing_T_max", 50),
                 Constant("cosine_annealing_eta_min", 0.0),

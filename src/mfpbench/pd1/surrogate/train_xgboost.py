@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
@@ -17,7 +17,7 @@ DATADIR = HERE.parent.parent.parent / "data"
 
 
 def train_xgboost(
-    config: Configuration,
+    config: Configuration | dict[str, Any],
     budget: int,
     X: pd.DataFrame,
     y: pd.Series,
