@@ -29,15 +29,23 @@ class BenchmarkSetup(ABC):
     name: ClassVar[str]
     """The name of the benchmark group."""
 
+    supports_parallel: ClassVar[bool] = False
+    """Whether this benchmark supports parallel downloading.
+
+    The download method will be called with a `workers` argument.
+    """
+
     @classmethod
     @abstractmethod
-    def download(cls, path: Path) -> None:
+    def download(cls, path: Path, workers: int = 1) -> None:
         """Download the data from the source.
 
         Args:
             path: The root path to download to.
                 Will install to
                 path/[name][mfpbench.setup_benchmark.BenchmarkSetup.name]
+            workers: The number of workers to use for downloading. This
+                can be ignored for benchmarks that do not support parallel.
         """
         ...
 
@@ -97,7 +105,7 @@ class YAHPOSource(BenchmarkSetup):
 
     @override
     @classmethod
-    def download(cls, path: Path) -> None:
+    def download(cls, path: Path, workers: int = 1) -> None:
         cmd = f"git clone --depth 1 --branch {cls.tag} {cls.git_url} {path}"
         subprocess.run(cmd.split(), check=True)  # noqa: S603
 
@@ -135,7 +143,7 @@ class PD1Source(BenchmarkSetup):
 
     @override
     @classmethod
-    def download(cls, path: Path) -> None:
+    def download(cls, path: Path, workers: int = 1) -> None:
         cls._download_surrogates(path)
 
     @classmethod
@@ -176,13 +184,36 @@ class PD1Source(BenchmarkSetup):
 
 
 @dataclass(frozen=True)
+class NB201TabularSource(BenchmarkSetup):
+    url: str = "https://ml.informatik.uni-freiburg.de/research-artifacts/mfp-bench"
+    tabular_version: str = "v1"
+    name = "nb201-tabular"
+
+    @override
+    @classmethod
+    def download(cls, path: Path, workers: int = 1) -> None:
+        zippath = path / "nb201-tabular-data.zip"
+        url = f"{cls.url}/{cls.name}/{cls.tabular_version}/nb201-tabular-data.zip"
+        if not zippath.exists():
+            _urlopen = urllib.request.urlopen
+            print(f"Downloading from {url}")
+            with _urlopen(url) as response, zippath.open("wb") as f:
+                shutil.copyfileobj(response, f)
+
+        with zipfile.ZipFile(zippath, "r") as zip_ref:
+            zip_ref.extractall(path)
+
+        print(f"Downloaded {cls.name}")
+
+
+@dataclass(frozen=True)
 class LCBenchTabularSource(BenchmarkSetup):
     url: str = "https://figshare.com/ndownloader/files/21188607"
     name = "lcbench-tabular"
 
     @override
     @classmethod
-    def download(cls, path: Path) -> None:
+    def download(cls, path: Path, workers: int = 1) -> None:
         zippath = path / "data_2k.zip"
         if not zippath.exists():
             _urlopen = urllib.request.urlopen
@@ -255,6 +286,45 @@ class LCBenchTabularSource(BenchmarkSetup):
             table_path = path / f"{dataset_name}.parquet"
             df_for_dataset.to_parquet(table_path)
             logger.info(f"Processed {dataset_name} to {table_path}")
+
+
+class PD1TabularSource(BenchmarkSetup):
+    url: str = "http://storage.googleapis.com/gresearch/pint/pd1.tar.gz"
+    name = "pd1-tabular"
+
+    @override
+    @classmethod
+    def download(cls, path: Path, workers: int = 1) -> None:
+        zippath = path / "pd1.tar.gz"
+        if not zippath.exists():
+            _urlopen = urllib.request.urlopen
+            print(f"Downloading from {cls.url}")
+            with _urlopen(cls.url) as response, zippath.open("wb") as f:
+                shutil.copyfileobj(response, f)
+        print(f"Downloaded {cls.name}")
+        cls._process(zippath)
+
+    @classmethod
+    def _process(cls, path: Path) -> None:
+        from mfpbench.pd1.processing.process_script import process_pd1
+
+        process_pd1(path, process_tabular=True)
+
+
+class TaskSetabularSource(BenchmarkSetup):
+    name = "taskset-tabular"
+    supports_parallel = True
+
+    @override
+    @classmethod
+    def download(cls, path: Path, workers: int = 1) -> None:
+        cls._process(path, workers=workers)
+
+    @classmethod
+    def _process(cls, path: Path, workers: int = 1) -> None:
+        from mfpbench.taskset_tabular.processing.process import process_taskset
+
+        process_taskset(output_dir=path, workers=workers)
 
 
 def download_status(source: str, datadir: Path | None = None) -> bool:
@@ -337,6 +407,7 @@ def setup(
     download: bool = True,
     install: str | bool = False,
     force: bool = False,
+    workers: int = 1,
 ) -> None:
     """Download data for a benchmark.
 
@@ -348,6 +419,9 @@ def setup(
             If True, will install the default. If a str, tries to interpret
             it as a full path.
         force: Whether to force redownload of the data
+        workers: The number of workers to use for downloading. This
+            will be ignored for benchmarks that do not support parallel
+            setup.
     """
     datadir = datadir if datadir is not None else DATAROOT
 
@@ -362,7 +436,7 @@ def setup(
         if not source_path.exists() or next(source_path.iterdir(), None) is None:
             print(f"Downloading to {source_path}")
             source_path.mkdir(exist_ok=True, parents=True)
-            source.download(source_path)
+            source.download(source_path, workers=workers)
             print(f"Finished downloading to {source_path}")
         else:
             print(f"Already found something at {source_path}")

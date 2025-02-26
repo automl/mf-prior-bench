@@ -4,9 +4,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from mfpbench.jahs import JAHSBenchmark
-from mfpbench.lcbench_tabular import (
-    LCBenchTabularBenchmark,
-)
+from mfpbench.lcbench_tabular import LCBenchTabularBenchmark
+from mfpbench.nb201_tabular.benchmark import NB201TabularBenchmark
 from mfpbench.pd1 import (
     PD1cifar100_wideresnet_2048,
     PD1imagenet_resnet_512,
@@ -14,6 +13,7 @@ from mfpbench.pd1 import (
     PD1translatewmt_xformer_64,
     PD1uniref50_transformer_128,
 )
+from mfpbench.pd1_tabular import PD1TabularBenchmark
 from mfpbench.synthetic.hartmann import (
     MFHartmann3Benchmark,
     MFHartmann3BenchmarkBad,
@@ -26,6 +26,7 @@ from mfpbench.synthetic.hartmann import (
     MFHartmann6BenchmarkModerate,
     MFHartmann6BenchmarkTerrible,
 )
+from mfpbench.taskset_tabular import TaskSetTabularBenchmark
 from mfpbench.yahpo import (
     IAMLglmnetBenchmark,
     IAMLrangerBenchmark,
@@ -84,6 +85,12 @@ _mapping: dict[str, type[Benchmark]] = {
     "imagenet_resnet_512": PD1imagenet_resnet_512,
     # LCBenchTabular
     "lcbench_tabular": LCBenchTabularBenchmark,
+    # PD1Tabular
+    "pd1_tabular": PD1TabularBenchmark,
+    # TaskSetTabular
+    "taskset_tabular": TaskSetTabularBenchmark,
+    # nb201 tabular
+    "nb201_tabular": NB201TabularBenchmark,
 }
 
 

@@ -42,6 +42,7 @@ class PD1ResultSimple(Result[PD1Config, int]):
         "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
     }
     default_value_metric: ClassVar[str] = "valid_error_rate"
+    default_value_metric_test: ClassVar[str] = "test_error_rate"
     default_cost_metric: ClassVar[str] = "train_cost"
 
     valid_error_rate: Metric.Value
@@ -58,6 +59,7 @@ class PD1ResultTransformer(Result[PD1Config, int]):
         "train_cost": Metric(minimize=True, bounds=(0, np.inf)),
     }
     default_value_metric: ClassVar[str] = "valid_error_rate"
+    default_value_metric_test: ClassVar[None] = None
     default_cost_metric: ClassVar[str] = "train_cost"
 
     valid_error_rate: Metric.Value
@@ -200,6 +202,7 @@ class PD1Benchmark(Benchmark[PD1Config, R, int]):
         # Predict the metric for everything in the dataframe
         features = xs.columns
         for metric, surrogate in self.surrogates.items():
+            metric_min, metric_max = self.Result.metric_defs[metric].bounds
             # We clip as sometimes the surrogate produces negative values
             bounds = self.Result.metric_defs[metric].bounds
             xs[metric] = surrogate.predict(xs[features]).clip(*bounds)
