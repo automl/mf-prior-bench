@@ -13,7 +13,7 @@ class PD1imagenet_resnet_512(PD1Benchmark):
     @classmethod
     def _create_space(cls, seed: int | None = None) -> ConfigurationSpace:
         cs = ConfigurationSpace(seed=seed)
-        cs.add_hyperparameters(
+        cs.add(
             [
                 UniformFloatHyperparameter(
                     "lr_decay_factor",

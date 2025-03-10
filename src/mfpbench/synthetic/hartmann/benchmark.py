@@ -151,7 +151,7 @@ class MFHartmannBenchmark(Benchmark[C, R, int], Generic[G, C, R]):
             else f"mfh{cls.mfh_dims}"
         )
         space = ConfigurationSpace(name=name, seed=seed)
-        space.add_hyperparameters(
+        space.add(
             [
                 UniformFloatHyperparameter(f"X_{i}", lower=0.0, upper=1.0)
                 for i in range(cls.mfh_dims)
