@@ -68,17 +68,18 @@ class Result(ABC, Generic[C, F]):
         renames: Mapping[str, str] | None = None,
     ) -> Self:
         """Create from a dict or mapping object."""
+        if renames is not None:
+            values = {renames.get(k, k): v for k, v in result.items()}
+        else:
+            values = result
         values = {
             k: (
                 metric.as_value(v)
                 if (metric := cls.metric_defs.get(k)) is not None
                 else v
             )
-            for k, v in result.items()
+            for k, v in values.items()
         }
-        if renames is not None:
-            values = {renames.get(k, k): v for k, v in values.items()}
-
         if value_metric is None:
             value_metric = cls.default_value_metric
 

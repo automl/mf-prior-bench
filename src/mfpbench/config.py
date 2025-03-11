@@ -146,7 +146,9 @@ class Config(ABC, Mapping[str, Any]):
                     )
                 # No need to do anything here
             else:
-                hp.default_value = hp.check_default(v)
+                if not hp.legal_value(v):
+                    raise ValueError(f"Value {v} is not legal for {k}")
+                hp.default_value = v
 
     @classmethod
     def from_file(cls, path: str | Path) -> Self:

@@ -5,9 +5,10 @@
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, ClassVar, Literal, Mapping
+from typing import Any, ClassVar, Literal
 
 import numpy as np
 import pandas as pd
@@ -28,7 +29,7 @@ def _raw_space(name: str, *, seed: int | None = None) -> ConfigurationSpace:
         "avg_pool_3x3",
     ]
     cs = ConfigurationSpace(name=name, seed=seed)
-    cs.add_hyperparameters(
+    cs.add(
         [
             CategoricalHyperparameter("edge_0_1", choices=choices.copy()),
             CategoricalHyperparameter("edge_0_2", choices=choices.copy()),

@@ -15,7 +15,7 @@ def space(seed: int | None) -> ConfigurationSpace:
     """Space for the xgboost surrogate."""
     cs = ConfigurationSpace(seed=seed)
 
-    cs.add_hyperparameters(
+    cs.add(
         [
             UniformFloatHyperparameter(
                 "learning_rate",

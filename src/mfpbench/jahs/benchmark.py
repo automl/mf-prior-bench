@@ -264,7 +264,7 @@ class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
             ) from e
 
         space = ConfigurationSpace(name=name, seed=seed)
-        space.add_hyperparameters(
+        space.add(
             [
                 Constant(
                     "N",
@@ -342,5 +342,5 @@ class JAHSBenchmark(Benchmark[JAHSConfig, JAHSResult, int], ABC):
             log=True,
         )
 
-        space.add_hyperparameters([optimizers, lr, weight_decay])
+        space.add([optimizers, lr, weight_decay])
         return space

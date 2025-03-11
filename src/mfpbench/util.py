@@ -51,25 +51,25 @@ def remove_hyperparameter(name: str, space: ConfigurationSpace) -> Configuration
     Returns:
         The space with the hyperparameter removed
     """
-    if name not in space._hyperparameters:
+    if name not in space:
         raise ValueError(f"{name} not in {space}")
 
-    if any(space.get_conditions()):
+    if any(space.conditions):
         raise NotImplementedError("We do not handle conditionals for now")
 
-    if any(space.get_forbiddens()):
+    if any(space.forbidden_clauses):
         raise NotImplementedError("We do not handle forbiddems for now")
 
     # Copying conditionals only work on objects and not named entities
     # Seeing as we copy objects and don't use the originals, transfering these
     # to the new objects is a bit tedious, possible but not required at this time
     # ... same goes for forbiddens
-    assert name not in space._conditionals, "Can't handle conditionals"
+    assert name not in space.conditional_hyperparameters, "Can't handle conditionals"
     assert not any(
-        name != f.hyperparameter.name for f in space.get_forbiddens()
+        name != f.hyperparameter.name for f in space.forbidden_clauses
     ), "Can't handle forbiddens"
 
-    hps = [copy(hp) for hp in space.get_hyperparameters() if hp.name != name]
+    hps = [copy(hp) for hp in list(space.values()) if hp.name != name]
 
     if isinstance(space.random, np.random.RandomState):
         new_seed = space.random.randint(2**31 - 1)
@@ -82,7 +82,7 @@ def remove_hyperparameter(name: str, space: ConfigurationSpace) -> Configuration
         name=copy(space.name),
         meta=copy(space.meta),
     )
-    new_space.add_hyperparameters(hps)
+    new_space.add(hps)
 
     return new_space
 
@@ -215,24 +215,28 @@ def perturb(  # noqa: C901, PLR0912, PLR0911, PLR0915
         # Doesn't act as intended
         assert hp.upper is not None
         assert hp.lower is not None
-        assert hp.q is None
         assert isinstance(value, (int, float))
 
-        if isinstance(hp, UniformIntegerHyperparameter):
-            if hp.log:
-                _lower = np.log(hp.lower)
-                _upper = np.log(hp.upper)
-            else:
-                _lower = hp.lower
-                _upper = hp.upper
-        elif isinstance(hp, NormalIntegerHyperparameter):
-            _lower = hp.nfhp._lower
-            _upper = hp.nfhp._upper
-        elif isinstance(hp, (UniformFloatHyperparameter, NormalFloatHyperparameter)):
-            _lower = hp._lower
-            _upper = hp._upper
-        else:
-            raise RuntimeError("Wut")
+        match hp:
+            case UniformIntegerHyperparameter():
+                if hp.log:
+                    _lower = np.log(hp.lower)
+                    _upper = np.log(hp.upper)
+                else:
+                    _lower = hp.lower
+                    _upper = hp.upper
+            case NormalIntegerHyperparameter():
+                if hp.log:
+                    _lower = np.log(hp.lower)
+                    _upper = np.log(hp.upper)
+                else:
+                    _lower = hp.lower
+                    _upper = hp.upper
+            case UniformFloatHyperparameter() | NormalFloatHyperparameter():
+                _lower = hp.lower_vectorized
+                _upper = hp.upper_vectorized
+            case _:
+                raise RuntimeError("Wut")
 
         space_length = std * (_upper - _lower)
         rescaled_std = std * space_length
