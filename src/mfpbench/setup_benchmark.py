@@ -113,7 +113,7 @@ class YAHPOSource(BenchmarkSetup):
 @dataclass(frozen=True)
 class JAHSBenchSource(BenchmarkSetup):
     name = "jahs"
-    url = "https://ml.informatik.uni-freiburg.de/research-artifacts/jahs_bench_201/v1.1.0/assembled_surrogates.tar"
+    url = "https://ml.informatik.uni-freiburg.de/research-artifacts/jahs_bench_201/v1.2.0/assembled_surrogates.tar"
 
     @override
     @classmethod
