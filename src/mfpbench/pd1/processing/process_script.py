@@ -235,7 +235,7 @@ def process_pd1(  # noqa: C901, PLR0912, PLR0915
             for r in dataset["train_cost"]  # type: ignore
         ]
 
-        # Explode out the lists in the entries of the datamframe to be a single long
+        # Explode out the lists in the entries of the dataframe to be a single long
         # dataframe with each element of that list on its own row
         dataset = dataset.explode(explode_columns, ignore_index=True)
         logger.info(f"{len(dataset)} rows")

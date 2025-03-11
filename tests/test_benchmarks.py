@@ -80,7 +80,7 @@ def case_lcbench_yahpo() -> BenchmarkTest:
     reason="pd1 is not downloaded",
 )
 def case_pd1() -> BenchmarkTest:
-    return BenchmarkTest("lm1b_transformer_2048")
+    return BenchmarkTest("cifar100_wideresnet_2048")
 
 
 @pytest.mark.skipif(
@@ -90,6 +90,52 @@ def case_pd1() -> BenchmarkTest:
 @case(tags="tabular")
 def case_lcbench_tabular() -> BenchmarkTest:
     return BenchmarkTest("lcbench_tabular", kwargs={"task_id": "adult"})
+
+
+@case
+@pytest.mark.skipif(
+    download_status("pd1-tabular") is False,
+    reason="pd1-tabular is not downloaded",
+)
+def case_pd1_tabular() -> BenchmarkTest:
+    return BenchmarkTest(
+        "pd1_tabular",
+        kwargs={
+            "dataset": "cifar10",
+            "model": "wide_resnet",
+            "batch_size": 256,
+            },
+        )
+
+
+@case
+@pytest.mark.skipif(
+    download_status("taskset-tabular") is False,
+    reason="taskset-tabular is not downloaded",
+)
+def case_taskset_tabular() -> BenchmarkTest:
+    return BenchmarkTest(
+        "taskset_tabular",
+        kwargs={
+            "task_id": "Associative_GRU128_BS128_Pairs10_Tokens50",
+            "optimizer": "adam1p",
+            },
+        )
+
+
+@case
+@pytest.mark.skipif(
+    download_status("nb201-tabular") is False,
+    reason="nb201-tabular is not downloaded",
+)
+def case_nb201_tabular() -> BenchmarkTest:
+    return BenchmarkTest(
+        "nb201_tabular",
+        kwargs={
+            "task_id": "cifar10",
+            "max_epoch": 12,
+            },
+        )
 
 
 @case
