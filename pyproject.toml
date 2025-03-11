@@ -4,7 +4,7 @@
 name = "mf-prior-bench"
 dependencies = [
   "pyyaml",
-  "numpy",
+  "numpy<2.0",
   "configspace>=1.0",
   "pandas",
   "more_itertools",
@@ -15,7 +15,7 @@ description = "A wrapper for multi-fidelity benchmarks with priors"
 authors = [{name = "Eddie Bergman", email="eddiebergmanhs@gmail.com"}]
 readme = "README.md"
 license = { file = "LICENSE.txt" }
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
   'Intended Audience :: Science/Research',
   'Intended Audience :: Developers',
@@ -33,11 +33,12 @@ classifiers = [
 yahpo = ["yahpo-gym==1.0.1"]
 jahs-bench = [
   "jahs_bench==1.2.0",
-  # "pandas<1.4",
+  "pandas<2.0",
   "numpy<2.0.0"
 ]
 tabular = ["pandas>2", "pyarrow"]
 pd1 = ["xgboost[scikit-learn]>=1.7"]
+taskset_tabular = ["tensorflow<=2.18.0"]
 surrogates = ["dehb"]
 docs = [
   "mkdocs",
@@ -83,10 +84,10 @@ exclude_lines = [
 ] # These are lines to exclude from coverage
 
 [tool.black]
-target-version = ['py38']
+target-version = ['py310']
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py310"
 line-length = 88
 src = ["src", "tests"]
 
@@ -225,7 +226,7 @@ convention = "google"
 max-args = 10 # Changed from default of 5
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 packages = ["src/mfpbench", "tests"]
 
 show_error_codes = true
