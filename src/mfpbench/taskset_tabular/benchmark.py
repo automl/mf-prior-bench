@@ -24,7 +24,7 @@ def _get_raw_taskset_space(
     optimizer: str,
 ) -> ConfigurationSpace:
     cs = ConfigurationSpace(name=name, seed=seed)
-    cs.add_hyperparameters(
+    cs.add(
         [
             UniformFloatHyperparameter(
                 "learning_rate",
@@ -35,7 +35,7 @@ def _get_raw_taskset_space(
         ],
     )
     if optimizer.split("_")[0] in ["adam4p", "adam6p", "adam8p"]:
-        cs.add_hyperparameters(
+        cs.add(
             [
                 UniformFloatHyperparameter(
                     "beta1",
@@ -58,7 +58,7 @@ def _get_raw_taskset_space(
             ],
         )
     if optimizer.split("_")[0] in ["adam6p", "adam8p"]:
-        cs.add_hyperparameters(
+        cs.add(
             [
                 UniformFloatHyperparameter(
                     "l1",
@@ -75,7 +75,7 @@ def _get_raw_taskset_space(
             ],
         )
     if optimizer.split("_")[0] in ["adam8p"]:
-        cs.add_hyperparameters(
+        cs.add(
             [
                 UniformFloatHyperparameter(
                     "linear_decay",
@@ -1128,7 +1128,7 @@ class TaskSetTabularBenchmark(
         return df.groupby("id").transform(_normalize_metrics)
 
     def _remove_zero_step(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Drops the loss curve at step 0, that is, at initialization"""
+        """Drops the loss curve at step 0, that is, at initialization."""
         unique_ids = df.index.get_level_values(0).unique()
         # check if step=0 exists for all unique IDs
         step_zero_exists_for_all = sum(df["step"] == 0) == len(unique_ids)

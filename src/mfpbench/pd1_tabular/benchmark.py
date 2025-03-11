@@ -23,10 +23,10 @@ def _get_raw_pd1_space(
     name: str,
     seed: int | None = None,
     *,
-    with_constants: bool | None = None,
+    with_constants: bool | None = None, # noqa: ARG001
 ) -> ConfigurationSpace:
     cs = ConfigurationSpace(name=name, seed=seed)
-    cs.add_hyperparameters(
+    cs.add(
         [
             UniformFloatHyperparameter(
                 "lr_decay_factor",
@@ -117,7 +117,7 @@ class PD1TabularBenchmark(TabularBenchmark):
         "translate_wmt-xformer_translate-64_tabular",
     )
 
-    def __init__(
+    def __init__(  # noqa: D107, PLR0913
         self,
         dataset: str,
         model: str,
