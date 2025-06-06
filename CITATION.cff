@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Bergman
+    given-names: Eddie
+  - family-names: Mallik
+    given-names: Neeratyoy
+  - family-names: Hvarfner
+    given-names: Carl
+  - family-names: Hutter
+    given-names: Frank
+title: "mf-prior-bench"
+version: 1.10.0
+date-released: 2025-03-17
+url: "https://github.com/automl/mf-prior-bench"
